@@ -1,0 +1,70 @@
+# ==========================================
+# SwiftForge — macOS & Xcode .gitignore
+# ==========================================
+
+# ── macOS System Files ──
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.caches
+ehthumbs.db
+Thumbs.db
+
+# ── Xcode DerivedData & Build Outputs ──
+build/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ── Xcode User Data & Personal Schemes ──
+xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.xcodeproj/project.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+*.xcscmblueprint
+*.xccheckout
+*.moved-aside
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+
+# ── Swift Package Manager (SPM) ──
+.build/
+Packages/
+.swiftpm/
+
+# ── Xcode Playgrounds & Scratches ──
+timeline.xctimeline
+playground.xcworkspace
+
+# ── Temporary Execution Files & Local Logs ──
+*.log
+app_test.log
+interview_practice_*.swift
+*.tmp
+
+# ── Project Backup Folders ──
+.backups/
+backup_temp/
+
+# ── Antigravity / IDE Artifacts ──
+.antigravity/
+.gemini/
+
+# ── Local Environment & Keys ──
+.env
+.env.local
+.env.*.local
