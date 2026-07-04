@@ -40,16 +40,14 @@ public class DSAPracticeViewModel: ObservableObject {
         guard let question = currentQuestion else { return }
         self.code = question.templateCode
         self.testcaseResults = []
-        self.consoleOutput = "Code reset to template."
+        self.consoleOutput = "Code reset to starter template."
         self.compilerError = nil
     }
     
-    public func loadSolution() {
+    public func insertSolutionToEditor() {
         guard let question = currentQuestion else { return }
         self.code = question.solutionCode
-        self.testcaseResults = []
-        self.consoleOutput = "Working solution loaded."
-        self.compilerError = nil
+        self.consoleOutput = "Official reference solution inserted into editor."
     }
     
     public func runCode() async {

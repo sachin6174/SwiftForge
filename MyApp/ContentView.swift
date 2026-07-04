@@ -27,6 +27,7 @@ public struct ContentView: View {
     
     enum DSAPaneTab {
         case description
+        case solution
         case testSuite
     }
     
@@ -174,16 +175,18 @@ public struct ContentView: View {
             VStack(spacing: 0) {
                 CustomSegmentedPicker(
                     selection: $dsaPaneTab,
-                    items: [.description, .testSuite],
+                    items: [.description, .solution, .testSuite],
                     titleFor: { tab in
                         switch tab {
                         case .description: return "Description"
+                        case .solution: return "Solution"
                         case .testSuite: return "Test Suite"
                         }
                     },
                     iconFor: { tab in
                         switch tab {
                         case .description: return "doc.text.fill"
+                        case .solution: return "lightbulb.fill"
                         case .testSuite: return "checkmark.seal.fill"
                         }
                     }
@@ -198,6 +201,10 @@ public struct ContentView: View {
                     switch dsaPaneTab {
                     case .description:
                         DSADescriptionView(question: dsaViewModel.currentQuestion)
+                    case .solution:
+                        DSASolutionView(question: dsaViewModel.currentQuestion, onInsertToEditor: {
+                            dsaViewModel.insertSolutionToEditor()
+                        })
                     case .testSuite:
                         DSATestCasesView(viewModel: dsaViewModel)
                             .padding(12)
@@ -239,8 +246,8 @@ public struct ContentView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    // Orange outline Load Solution
-                    Button(action: { dsaViewModel.loadSolution() }) {
+                    // View Solution tab toggle button
+                    Button(action: { withAnimation { dsaPaneTab = .solution } }) {
                         HStack(spacing: 5) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.system(size: 10, weight: .medium))
