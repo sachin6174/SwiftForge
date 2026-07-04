@@ -40,10 +40,14 @@ public class AppState: ObservableObject {
         self.questions = databaseService.loadQuestions()
         self.userActivity = activityService.loadActivity()
         
-        // Sanitize drafts: if draft matches solutionCode for any question, purge it so empty template loads!
+        // Sanitize drafts: if draft matches solutionCode or is missing return statement, purge it!
         for q in self.questions {
             if let draft = self.userActivity.draftCodes[q.id] {
-                if draft.trimmingCharacters(in: .whitespacesAndNewlines) == q.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines) || draft.contains("\\\"Completed") || draft.contains("\"Completed") {
+                let cleanDraft = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                let cleanSol = q.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines)
+                let missingReturn = q.templateCode.contains("return ") && !cleanDraft.contains("return ")
+                
+                if cleanDraft == cleanSol || draft.contains("\"Completed") || missingReturn {
                     self.userActivity.draftCodes.removeValue(forKey: q.id)
                 }
             }

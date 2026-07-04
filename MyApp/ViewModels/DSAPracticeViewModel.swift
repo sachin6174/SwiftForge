@@ -20,10 +20,12 @@ public class DSAPracticeViewModel: ObservableObject {
     
     public func loadQuestion(_ question: Question, draft: String? = nil) {
         self.currentQuestion = question
-        let cleanDraft = draft?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanDraft = draft?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let cleanSolution = question.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        if cleanDraft == cleanSolution {
+        let missingReturn = question.templateCode.contains("return ") && !cleanDraft.contains("return ")
+        
+        if cleanDraft.isEmpty || cleanDraft == cleanSolution || missingReturn {
             self.code = question.templateCode
         } else {
             self.code = draft ?? question.templateCode
