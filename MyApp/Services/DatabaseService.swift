@@ -75,7 +75,8 @@ public class DatabaseService: DatabaseServiceProtocol {
                 templateCode: """
 class Solution {
     func twoSum(_ nums: [Int], _ target: Int) -> [Int] {
-        
+        // TODO: Write your solution here
+        return []
     }
 }
 """,
