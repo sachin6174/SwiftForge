@@ -10,10 +10,18 @@ public class DatabaseService: DatabaseServiceProtocol {
     public func loadQuestions() -> [Question] {
         var dsaList: [Question] = []
         
-        // Load DSA questions from dsa_questions.json
-        if let dsaUrl = Bundle.main.url(forResource: "dsa_questions", withExtension: "json") {
+        // Load DSA questions from dsa_questions.json (Bundle or local path)
+        var dsaUrl = Bundle.main.url(forResource: "dsa_questions", withExtension: "json")
+        if dsaUrl == nil {
+            let localPath = "MyApp/Resources/dsa_questions.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                dsaUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+        
+        if let url = dsaUrl {
             do {
-                let data = try Data(contentsOf: dsaUrl)
+                let data = try Data(contentsOf: url)
                 let decoder = JSONDecoder()
                 dsaList = try decoder.decode([Question].self, from: data)
             } catch {
@@ -27,9 +35,17 @@ public class DatabaseService: DatabaseServiceProtocol {
         
         // Load Swift practice questions from swift_questions.json
         var swiftList: [Question] = []
-        if let swiftUrl = Bundle.main.url(forResource: "swift_questions", withExtension: "json") {
+        var swiftUrl = Bundle.main.url(forResource: "swift_questions", withExtension: "json")
+        if swiftUrl == nil {
+            let localPath = "MyApp/Resources/swift_questions.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                swiftUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+        
+        if let url = swiftUrl {
             do {
-                let data = try Data(contentsOf: swiftUrl)
+                let data = try Data(contentsOf: url)
                 let decoder = JSONDecoder()
                 swiftList = try decoder.decode([Question].self, from: data)
             } catch {

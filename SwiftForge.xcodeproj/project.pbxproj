@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXFileReference section */
-		000000000000000000000120 /* SwiftPrep.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftPrep.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000120 /* SwiftForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -38,7 +38,7 @@
 		000000000000000000000020 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				000000000000000000000120 /* SwiftPrep.app */,
+				000000000000000000000120 /* SwiftForge.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -46,9 +46,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		000000000000000100000000 /* SwiftPrep */ = {
+		000000000000000100000000 /* SwiftForge */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "SwiftPrep" */;
+			buildConfigurationList = 000000000000000110000000 /* Build configuration list for PBXNativeTarget "SwiftForge" */;
 			buildPhases = (
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
@@ -59,9 +59,9 @@
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* MyApp */,
 			);
-			name = SwiftPrep;
-			productName = SwiftPrep;
-			productReference = 000000000000000000000120 /* SwiftPrep.app */;
+			name = SwiftForge;
+			productName = SwiftForge;
+			productReference = 000000000000000000000120 /* SwiftForge.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -93,7 +93,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				000000000000000100000000 /* SwiftPrep */,
+				000000000000000100000000 /* SwiftForge */,
 			);
 		};
 /* End PBXProject section */
@@ -247,7 +247,7 @@
 			};
 			name = Release;
 		};
-		000000000000000111000000 /* Debug configuration for PBXNativeTarget "SwiftPrep" */ = {
+		000000000000000111000000 /* Debug configuration for PBXNativeTarget "SwiftForge" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -289,7 +289,7 @@
 			};
 			name = Debug;
 		};
-		000000000000000112000000 /* Release configuration for PBXNativeTarget "SwiftPrep" */ = {
+		000000000000000112000000 /* Release configuration for PBXNativeTarget "SwiftForge" */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -342,11 +342,11 @@
 			);
 			defaultConfigurationName = Release;
 		};
-		000000000000000110000000 /* Build configuration list for PBXNativeTarget "SwiftPrep" */ = {
+		000000000000000110000000 /* Build configuration list for PBXNativeTarget "SwiftForge" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				000000000000000111000000 /* Debug configuration for PBXNativeTarget "SwiftPrep" */,
-				000000000000000112000000 /* Release configuration for PBXNativeTarget "SwiftPrep" */,
+				000000000000000111000000 /* Debug configuration for PBXNativeTarget "SwiftForge" */,
+				000000000000000112000000 /* Release configuration for PBXNativeTarget "SwiftForge" */,
 			);
 			defaultConfigurationName = Release;
 		};

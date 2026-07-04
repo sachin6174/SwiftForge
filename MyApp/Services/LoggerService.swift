@@ -16,11 +16,11 @@ public enum LogLevel: String {
 public class LoggerService: LoggerServiceProtocol {
     public static let shared = LoggerService()
     private let fileManager = FileManager.default
-    private let queue = DispatchQueue(label: "com.swiftprep.logger", qos: .utility)
+    private let queue = DispatchQueue(label: "com.swiftforge.logger", qos: .utility)
     
     public var logFileUrl: URL {
         let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        return docs.appendingPathComponent("swiftprep_execution.log")
+        return docs.appendingPathComponent("swiftforge_execution.log")
     }
     
     public var workspaceLogUrl: URL {

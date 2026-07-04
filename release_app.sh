@@ -17,6 +17,15 @@ ARCHIVE_PATH="${BUILD_DIR}/${PROJECT_NAME}.xcarchive"
 EXPORT_PATH="${BUILD_DIR}/AppStore"
 EXPORT_OPTIONS_PLIST="./ExportOptions.plist"
 
+# 0. Auto-detect full Xcode Developer directory
+if [ -d "/Applications/Xcode-beta.app" ]; then
+    export DEVELOPER_DIR="/Applications/Xcode-beta.app/Contents/Developer"
+    echo "ℹ️  Using Xcode Beta at ${DEVELOPER_DIR}"
+elif [ -d "/Applications/Xcode.app" ]; then
+    export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+    echo "ℹ️  Using Xcode at ${DEVELOPER_DIR}"
+fi
+
 # 1. Clean previous build artifacts
 echo "🧹 Cleaning previous build artifacts..."
 rm -rf "${BUILD_DIR}"
