@@ -1,0 +1,97 @@
+# fastlane/Fastfile
+default_platform(:mac)
+
+# ── macOS Platform Release ──
+platform :mac do
+  desc "Build, archive, sign, and upload SwiftForge macOS app to App Store Connect / TestFlight"
+  lane :release do
+    build_num = Time.now.strftime("%Y%m%d%H%M")
+    increment_build_number(
+      build_number: build_num,
+      xcodeproj: "SwiftForge.xcodeproj"
+    )
+
+    build_mac_app(
+      scheme: "SwiftForge",
+      project: "SwiftForge.xcodeproj",
+      export_method: "app-store",
+      output_directory: "./build/macOS",
+      output_name: "SwiftForge.pkg",
+      clean: true
+    )
+
+    upload_to_app_store(
+      platform: "mac",
+      pkg: "./build/macOS/SwiftForge.pkg",
+      skip_metadata: false,
+      skip_screenshots: true,
+      reject_if_possible: false,
+      verify_only: false
+    )
+  end
+
+  desc "Build local macOS App Store package (.pkg) without uploading"
+  lane :build_pkg do
+    build_mac_app(
+      scheme: "SwiftForge",
+      project: "SwiftForge.xcodeproj",
+      export_method: "app-store",
+      output_directory: "./build/macOS",
+      output_name: "SwiftForge.pkg",
+      clean: true
+    )
+  end
+end
+
+# ── iOS Platform Release ──
+platform :ios do
+  desc "Build, archive, sign, and upload SwiftForge iOS/iPadOS app to TestFlight / App Store"
+  lane :release do
+    build_num = Time.now.strftime("%Y%m%d%H%M")
+    increment_build_number(
+      build_number: build_num,
+      xcodeproj: "SwiftForge.xcodeproj"
+    )
+
+    build_app(
+      scheme: "SwiftForge",
+      project: "SwiftForge.xcodeproj",
+      export_method: "app-store",
+      output_directory: "./build/iOS",
+      output_name: "SwiftForge.ipa",
+      clean: true
+    )
+
+    upload_to_app_store(
+      platform: "ios",
+      ipa: "./build/iOS/SwiftForge.ipa",
+      skip_metadata: false,
+      skip_screenshots: true,
+      reject_if_possible: false,
+      verify_only: false
+    )
+  end
+
+  desc "Upload iOS build to TestFlight beta testing"
+  lane :beta do
+    build_num = Time.now.strftime("%Y%m%d%H%M")
+    increment_build_number(
+      build_number: build_num,
+      xcodeproj: "SwiftForge.xcodeproj"
+    )
+
+    build_app(
+      scheme: "SwiftForge",
+      project: "SwiftForge.xcodeproj",
+      export_method: "app-store",
+      output_directory: "./build/iOS",
+      output_name: "SwiftForge.ipa",
+      clean: true
+    )
+
+    upload_to_testflight(
+      ipa: "./build/iOS/SwiftForge.ipa",
+      skip_waiting_for_build_processing: true
+    )
+  end
+end

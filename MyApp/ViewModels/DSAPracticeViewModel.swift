@@ -83,10 +83,60 @@ public class DSAPracticeViewModel: ObservableObject {
         let transpiled = codeRunner.transpileSwiftToJS(swift: code)
         
         let runnerScript: String
-        if question.id == "climb_stairs" {
+        switch question.id {
+        case "two_sum":
             runnerScript = """
             \(transpiled)
-            
+            function runTests() {
+                const solution = new Solution();
+                const testCases = [
+                    { nums: [2, 7, 11, 15], target: 9, expected: [0, 1], name: "Example 1 ([2,7,11,15], target 9)" },
+                    { nums: [3, 2, 4], target: 6, expected: [1, 2], name: "Example 2 ([3,2,4], target 6)" },
+                    { nums: [3, 3], target: 6, expected: [0, 1], name: "Example 3 ([3,3], target 6)" }
+                ];
+                let passedCount = 0; const results = [];
+                for (let i = 0; i < testCases.length; i++) {
+                    const tc = testCases[i]; const start = Date.now();
+                    try {
+                        const res = solution.twoSum(tc.nums, tc.target);
+                        const passed = JSON.stringify(res) === JSON.stringify(tc.expected);
+                        if (passed) passedCount++;
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: [${res}] | Expected: [${tc.expected}] | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
+                }
+                return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
+            }
+            runTests();
+            """
+        case "valid_parentheses":
+            runnerScript = """
+            \(transpiled)
+            function runTests() {
+                const solution = new Solution();
+                const testCases = [
+                    { s: "()", expected: true, name: "Example 1 (\\"()\\")" },
+                    { s: "()[]{}", expected: true, name: "Example 2 (\\"()[]{}\\")" },
+                    { s: "(]", expected: false, name: "Example 3 (\\"(]\\")" },
+                    { s: "([)]", expected: false, name: "Example 4 (\\"([)]\\")" },
+                    { s: "{[]}", expected: true, name: "Example 5 (\\"{[]}\\")" }
+                ];
+                let passedCount = 0; const results = [];
+                for (let i = 0; i < testCases.length; i++) {
+                    const tc = testCases[i]; const start = Date.now();
+                    try {
+                        const res = solution.isValid(tc.s);
+                        const passed = res === tc.expected;
+                        if (passed) passedCount++;
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${res} | Expected: ${tc.expected} | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
+                }
+                return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
+            }
+            runTests();
+            """
+        case "climb_stairs":
+            runnerScript = """
+            \(transpiled)
             function runTests() {
                 const solution = new Solution();
                 const testCases = [
@@ -96,35 +146,52 @@ public class DSAPracticeViewModel: ObservableObject {
                     { n: 1, expected: 1, name: "Edge Case (n = 1)" },
                     { n: 10, expected: 89, name: "n = 10" }
                 ];
-                
-                let passedCount = 0;
-                const results = [];
+                let passedCount = 0; const results = [];
                 for (let i = 0; i < testCases.length; i++) {
-                    const tc = testCases[i];
-                    const start = Date.now();
-                    let result;
+                    const tc = testCases[i]; const start = Date.now();
                     try {
-                        if (typeof solution.climbStairs !== 'function') {
-                            throw new Error("Method 'climbStairs' not found on Solution class.");
-                        }
-                        result = solution.climbStairs(tc.n);
-                        const duration = Date.now() - start;
-                        const passed = result === tc.expected;
+                        const res = solution.climbStairs(tc.n);
+                        const passed = res === tc.expected;
                         if (passed) passedCount++;
-                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${result} | Expected: ${tc.expected} | Time: ${duration}ms`);
-                    } catch (e) {
-                        results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`);
-                    }
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${res} | Expected: ${tc.expected} | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
                 }
                 return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
             }
             runTests();
             """
-        } else {
-            // Default: Maximal Square fallback
+        case "rod_cutting":
             runnerScript = """
             \(transpiled)
-            
+            function runTests() {
+                const solution = new Solution();
+                const testCases = [
+                    { price: [0, 1, 5, 8, 9, 10, 17, 17, 20], expected: 22, name: "Example 1 (Cut into lengths 2 & 6 -> 5+17=22)" },
+                    { price: [0, 3, 5, 8, 9, 10, 17, 17, 20], expected: 24, name: "Example 2 (8 cuts of length 1 -> 8*3=24)" },
+                    { price: [0, 3], expected: 3, name: "Example 3 (Single length 1 rod)" },
+                    { price: [0, 1, 1, 1, 100], expected: 100, name: "Edge Case 1 (Single full length piece optimal)" },
+                    { price: [0, 0, 0, 0], expected: 0, name: "Edge Case 2 (All zero prices)" },
+                    { price: [0], expected: 0, name: "Edge Case 3 (Zero length rod)" },
+                    { price: [0, 2, 5, 9, 10, 15, 17, 20, 24, 30], expected: 30, name: "Normal Case (Length 9 rod)" }
+                ];
+                let passedCount = 0; const results = [];
+                for (let i = 0; i < testCases.length; i++) {
+                    const tc = testCases[i]; const start = Date.now();
+                    try {
+                        const res = solution.cutRod(tc.price);
+                        const passed = res === tc.expected;
+                        if (passed) passedCount++;
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${res} | Expected: ${tc.expected} | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
+                }
+                return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
+            }
+            runTests();
+            """
+        default:
+            // Maximal Square & default fallback
+            runnerScript = """
+            \(transpiled)
             function runTests() {
                 const solution = new Solution();
                 const testCases = [
@@ -136,28 +203,16 @@ public class DSAPracticeViewModel: ObservableObject {
                     { matrix: [["0","0"],["0","0"]], expected: 0, name: "Edge Case 3 (2x2 all zeros)" },
                     { matrix: [["1","1","1"],["1","1","1"],["1","1","1"]], expected: 9, name: "Normal Case (3x3 all ones)" }
                 ];
-                
-                let passedCount = 0;
-                const results = [];
-                
+                let passedCount = 0; const results = [];
                 for (let i = 0; i < testCases.length; i++) {
-                    const tc = testCases[i];
-                    const start = Date.now();
-                    let result;
+                    const tc = testCases[i]; const start = Date.now();
                     try {
-                        if (typeof solution.maximalSquare !== 'function') {
-                            throw new Error("Method 'maximalSquare' not found on Solution class.");
-                        }
-                        result = solution.maximalSquare(tc.matrix);
-                        const duration = Date.now() - start;
-                        const passed = result === tc.expected;
+                        const res = solution.maximalSquare(tc.matrix);
+                        const passed = res === tc.expected;
                         if (passed) passedCount++;
-                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${result} | Expected: ${tc.expected} | Time: ${duration}ms`);
-                    } catch (e) {
-                        results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`);
-                    }
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: ${res} | Expected: ${tc.expected} | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
                 }
-                
                 return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
             }
             runTests();

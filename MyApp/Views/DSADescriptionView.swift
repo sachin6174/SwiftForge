@@ -33,18 +33,19 @@ public struct DSADescriptionView: View {
                     }
                     
                     if let networkUrl = question.networkUrl {
+                        let isPost = question.id == "post_todo"
                         VStack(alignment: .leading, spacing: 8) {
                             Text("API ENDPOINT")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(Color(white: 0.5))
                             
                             HStack(spacing: 8) {
-                                Text("GET")
+                                Text(isPost ? "POST" : "GET")
                                     .font(.system(size: 11, weight: .bold, design: .monospaced))
-                                    .foregroundColor(.green)
+                                    .foregroundColor(isPost ? .orange : .green)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 3)
-                                    .background(Color.green.opacity(0.15))
+                                    .background(isPost ? Color.orange.opacity(0.15) : Color.green.opacity(0.15))
                                     .cornerRadius(4)
                                 
                                 Text(networkUrl)
@@ -63,11 +64,17 @@ public struct DSADescriptionView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("EXPECTED JSON SCHEMA")
+                            Text(isPost ? "REQUEST JSON PAYLOAD" : "EXPECTED JSON SCHEMA")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundColor(Color(white: 0.5))
                             
-                            Text("""
+                            Text(isPost ? """
+                            {
+                              "userId": 1,
+                              "title": "Learn Swift Architecture",
+                              "completed": true
+                            }
+                            """ : """
                             {
                               "userId": 1,
                               "id": 1,

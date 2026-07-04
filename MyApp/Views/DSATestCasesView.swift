@@ -121,6 +121,8 @@ public struct DSATestCasesView: View {
                                     ValidParenthesesVisualizerView(index: result.index)
                                 case "reverse_linked_list":
                                     LinkedListVisualizerView(index: result.index)
+                                case "rod_cutting":
+                                    RodCuttingVisualizerView(index: result.index)
                                 case "climb_stairs":
                                     let stairsN = getStairsInput(for: result.index)
                                     StaircaseVisualizerView(steps: stairsN)
@@ -439,4 +441,53 @@ struct LinkedListVisualizerView: View {
         }
     }
 }
+
+// MARK: - Rod Cutting Visualizer Component
+struct RodCuttingVisualizerView: View {
+    let index: Int
+    
+    var body: some View {
+        let sampleCases: [(prices: [Int], length: Int, expected: Int)] = [
+            ([0, 1, 5, 8, 9, 10, 17, 17, 20], 8, 22),
+            ([0, 3, 5, 8, 9, 10, 17, 17, 20], 8, 24),
+            ([0, 3], 1, 3),
+            ([0, 1, 1, 1, 100], 4, 100),
+            ([0, 0, 0, 0], 3, 0),
+            ([0], 0, 0),
+            ([0, 2, 5, 9, 10, 15, 17, 20, 24, 30], 9, 30)
+        ]
+        let item = (index >= 0 && index < sampleCases.count) ? sampleCases[index] : sampleCases[0]
+        
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Unbounded Knapsack Rod Visualizer")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.gray)
+                Spacer()
+                Text("Max Revenue: $\(item.expected)")
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundColor(.green)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(Color.green.opacity(0.15))
+                    .cornerRadius(4)
+            }
+            
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Price Array: \(item.prices.description)")
+                    .font(.system(size: 9, design: .monospaced))
+                    .foregroundColor(.cyan)
+                
+                Text("Rod Length (N): \(item.length)")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            .padding(8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.black.opacity(0.2))
+            .cornerRadius(8)
+        }
+    }
+}
+
 

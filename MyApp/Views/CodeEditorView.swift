@@ -1,5 +1,9 @@
 import SwiftUI
+#if os(macOS)
 import AppKit
+#elseif os(iOS)
+import UIKit
+#endif
 
 public struct CodeEditorView: View {
     @Binding var code: String
@@ -58,8 +62,19 @@ public struct CodeEditorView: View {
                 Divider()
                     .background(Color.white.opacity(0.06))
 
+                #if os(macOS)
                 MacCodeEditor(text: $code)
                     .frame(maxHeight: .infinity)
+                #else
+                TextEditor(text: $code)
+                    .font(.system(size: 13, weight: .regular, design: .monospaced))
+                    .scrollContentBackground(.hidden)
+                    .background(Color(red: 0.07, green: 0.07, blue: 0.09))
+                    .foregroundColor(.white)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .frame(maxHeight: .infinity)
+                #endif
             }
             .frame(maxHeight: .infinity)
         }
@@ -67,6 +82,7 @@ public struct CodeEditorView: View {
     }
 }
 
+#if os(macOS)
 // MARK: - Mac NSTextView Representable with Syntax Highlighting & Line Numbers
 struct MacCodeEditor: NSViewRepresentable {
     @Binding var text: String
@@ -238,4 +254,6 @@ struct MacCodeEditor: NSViewRepresentable {
         }
     }
 }
+#endif
+
 

@@ -1,0 +1,11 @@
+Thank you for reviewing SwiftForge!
+
+App Overview:
+SwiftForge is an offline native macOS IDE for practicing Swift Data Structures, Algorithms, and iOS networking concepts.
+
+Testing Guidance:
+1. Launch the app. The sidebar displays two primary practice tracks: "DSA Practice" and "Swift Practice".
+2. Select any DSA challenge (e.g., "1. Two Sum" or "206. Reverse Linked List"). Click the "Run Suite" button at the top right to execute the test harness locally and observe the pass/fail results and interactive data structure visualizers.
+3. Select "1. Network GET Request" under Swift Practice. Click "Run Suite" to test URLSession network requests.
+
+No login, account registration, or external backend authentication is required to access any app feature. Code runs locally on the user's Mac.

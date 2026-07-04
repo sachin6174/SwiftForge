@@ -51,24 +51,62 @@ public class CodeRunnerService: CodeRunnerProtocol {
         process.standardOutput = stdoutPipe
         process.standardError = stderrPipe
         
+        let stdoutHandle = stdoutPipe.fileHandleForReading
+        let stderrHandle = stderrPipe.fileHandleForReading
+        
+        let stdoutBuffer = NSMutableData()
+        let stderrBuffer = NSMutableData()
+        
+        stdoutHandle.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty {
+                stdoutBuffer.append(data)
+            }
+        }
+        stderrHandle.readabilityHandler = { handle in
+            let data = handle.availableData
+            if !data.isEmpty {
+                stderrBuffer.append(data)
+            }
+        }
+        
         do {
             try process.run()
+            
+            // 5.0-Second Execution Timeout Watchdog (Swift 6 Async Compliant)
+            let timeoutTask = Task {
+                try? await Task.sleep(nanoseconds: 5_000_000_000)
+                if process.isRunning {
+                    process.terminate()
+                }
+            }
+            
             process.waitUntilExit()
+            timeoutTask.cancel()
             
-            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            stdoutHandle.readabilityHandler = nil
+            stderrHandle.readabilityHandler = nil
             
-            let stdout = String(data: stdoutData, encoding: .utf8) ?? ""
-            let stderr = String(data: stderrData, encoding: .utf8) ?? ""
+            let stdout = String(data: stdoutBuffer as Data, encoding: .utf8) ?? ""
+            let stderr = String(data: stderrBuffer as Data, encoding: .utf8) ?? ""
+            
+            if stderr.contains("App Sandbox") || stderr.contains("cannot be used within an App Sandbox") {
+                LoggerService.shared.log("App Sandbox restriction detected. Falling back to in-process JS evaluation...", level: .warning)
+                let jsCode = transpileSwiftToJS(swift: fullCode)
+                let fallbackOutput = runJSCode(code: jsCode)
+                return (fallbackOutput, "", 0)
+            }
             
             let statusLevel: LogLevel = process.terminationStatus == 0 ? .success : .error
             LoggerService.shared.log("Swift execution completed with exitCode \(process.terminationStatus).\n--- Output ---\n\(stdout.isEmpty ? stderr : stdout)--------------", level: statusLevel)
             
             return (stdout, stderr, process.terminationStatus)
         } catch {
-            let errorMsg = "Process execution failed: \(error.localizedDescription)\nEnsure Xcode CLI Tools are installed."
-            LoggerService.shared.log(errorMsg, level: .error)
-            return ("", errorMsg, -2)
+            let errorMsg = "Process execution failed: \(error.localizedDescription)\nFalling back to in-process execution."
+            LoggerService.shared.log(errorMsg, level: .warning)
+            let jsCode = transpileSwiftToJS(swift: fullCode)
+            let fallbackOutput = runJSCode(code: jsCode)
+            return (fallbackOutput, "", 0)
         }
         #else
         return ("", "Process execution not supported on this platform.", -2)

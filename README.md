@@ -7,6 +7,8 @@
   **A native, high-performance macOS IDE for mastering Data Structures, Algorithms, and Core iOS/Swift Engineering.**
 
   [![macOS](https://img.shields.io/badge/macOS-14.0%2B-blue?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![iOS](https://img.shields.io/badge/iOS-17.0%2B-black?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![iPadOS](https://img.shields.io/badge/iPadOS-17.0%2B-purple?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
   [![Swift](https://img.shields.io/badge/Swift-5.10%2B-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
   [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-007ACC?style=flat-square&logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
   [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)

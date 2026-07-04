@@ -14,11 +14,15 @@ Icon?
 ehthumbs.db
 Thumbs.db
 
-# ── Xcode DerivedData & Build Outputs ──
+# ── Xcode DerivedData, Build Archives & Packages ──
 build/
 DerivedData/
-*.hmap
+*.xcarchive
+*.pkg
+*.app
 *.ipa
+*.xcresult
+*.hmap
 *.dSYM.zip
 *.dSYM
 
@@ -41,10 +45,29 @@ xcuserdata/
 *.perspectivev3
 !default.perspectivev3
 
-# ── Swift Package Manager (SPM) ──
+# ── Fastlane Generated Reports & Outputs ──
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/
+fastlane/README.md
+
+# ── Node.js / Playwright Automation ──
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+playwright-report/
+test-results/
+
+# ── Swift Package Manager & CocoaPods ──
 .build/
 Packages/
 .swiftpm/
+Pods/
+Podfile.lock
+xcframeworks/
 
 # ── Xcode Playgrounds & Scratches ──
 timeline.xctimeline
@@ -55,16 +78,35 @@ playground.xcworkspace
 app_test.log
 interview_practice_*.swift
 *.tmp
+*.swp
+*~
+
+# ── Local User Data & Runtime Databases ──
+user_activity.json
+dsa_user_activity.json
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
 
 # ── Project Backup Folders ──
 .backups/
 backup_temp/
 
-# ── Antigravity / IDE Artifacts ──
+# ── IDE & Editor Artifacts ──
 .antigravity/
 .gemini/
+.vscode/
+.idea/
 
-# ── Local Environment & Keys ──
+# ── Sensitive Credentials, API Keys & Certificates ──
 .env
 .env.local
 .env.*.local
+*.p12
+*.p8
+AuthKey_*.p8
+*.pem
+*.cer
+*.key
+*.mobileprovision
+*.provisionprofile

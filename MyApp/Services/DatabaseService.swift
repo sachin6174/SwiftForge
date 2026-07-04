@@ -242,6 +242,76 @@ for (index, tc) in testCases.enumerated() {
 print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
 print("---DSA_TEST_RESULTS_END---")
 """
+            ),
+            Question(
+                id: "rod_cutting",
+                title: "Rod Cutting Problem",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["DP", "Unbounded Knapsack"],
+                description: "Given a rod of length n and an array price[]. price[i] denotes the price of a piece of length i. Determine the maximum amount obtained by cutting the rod into pieces and selling the pieces.\n\nNote: price[0] is always 0.",
+                templateCode: """
+class Solution {
+    func cutRod(_ price: [Int]) -> Int {
+        
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func cutRod(_ price: [Int]) -> Int {
+        let n = price.count - 1
+        if n <= 0 { return 0 }
+        var dp = Array(repeating: 0, count: n + 1)
+        
+        for i in 1...n {
+            var maxVal = 0
+            for j in 1...i {
+                if j < price.count {
+                    maxVal = max(maxVal, price[j] + dp[i - j])
+                }
+            }
+            dp[i] = maxVal
+        }
+        
+        return dp[n]
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let price: [Int]
+    let expected: Int
+    let name: String
+}
+let testCases = [
+    TestCase(price: [0, 1, 5, 8, 9, 10, 17, 17, 20], expected: 22, name: "Example 1 (Cut into lengths 2 & 6 -> 5+17=22)"),
+    TestCase(price: [0, 3, 5, 8, 9, 10, 17, 17, 20], expected: 24, name: "Example 2 (8 cuts of length 1 -> 8*3=24)"),
+    TestCase(price: [0, 3], expected: 3, name: "Example 3 (Single length 1 rod)"),
+    TestCase(price: [0, 1, 1, 1, 100], expected: 100, name: "Edge Case 1 (Single full length piece optimal)"),
+    TestCase(price: [0, 0, 0, 0], expected: 0, name: "Edge Case 2 (All zero prices)"),
+    TestCase(price: [0], expected: 0, name: "Edge Case 3 (Zero length rod)"),
+    TestCase(price: [0, 2, 5, 9, 10, 15, 17, 20, 24, 30], expected: 30, name: "Normal Case (Length 9 rod)")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.cutRod(tc.price)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
             )
         ]
     }
@@ -251,11 +321,11 @@ print("---DSA_TEST_RESULTS_END---")
         return [
             Question(
                 id: "fetch_todo",
-                title: "Network GET Request",
+                title: "1. Network GET Request (URLSession)",
                 category: "swiftPractice",
                 difficulty: "Easy",
-                topics: ["URLSession", "Codable"],
-                description: "Write Swift code to perform an HTTP GET request to a JSON endpoint, decode the response payload into a proper model format, and print the output details.",
+                topics: ["URLSession", "Codable", "Networking"],
+                description: "Write Swift code to perform an HTTP GET request to https://jsonplaceholder.typicode.com/todos/1, decode the JSON payload into a `Todo` model format, and print the output details.",
                 templateCode: """
 import Foundation
 
@@ -292,20 +362,25 @@ struct Todo: Codable {
 func performFetch() {
     let urlString = "https://jsonplaceholder.typicode.com/todos/1"
     guard let url = URL(string: urlString) else { return }
+    let semaphore = DispatchSemaphore(value: 0)
     let task = URLSession.shared.dataTask(with: url) { data, response, error in
+        defer { semaphore.signal() }
         guard let data = data else { return }
         do {
             let todo = try JSONDecoder().decode(Todo.self, from: data)
-            let statusStr = todo.completed ? "Completed" : "Pending"
+            let statusStr = todo.completed ? "Completed ✅" : "Pending ⏳"
+            print("\\n=== Response Successfully Decoded ===")
             print("User ID: \\(todo.userId)")
             print("Todo ID: \\(todo.id)")
-            print("Title: \\(todo.title)")
-            print("Status: \\(statusStr)")
+            print("Title:   \\(todo.title)")
+            print("Status:  \\(statusStr)")
+            print("=====================================")
         } catch {
             print("Error: \\(error)")
         }
     }
     task.resume()
+    semaphore.wait()
 }
 performFetch()
 """,
@@ -314,7 +389,7 @@ performFetch()
             ),
             Question(
                 id: "post_todo",
-                title: "Network POST Request",
+                title: "2. Network POST Request (Codable)",
                 category: "swiftPractice",
                 difficulty: "Medium",
                 topics: ["URLSession", "HTTP POST", "Codable"],
@@ -343,7 +418,9 @@ func createTodo() {
         
         print("Sending POST request to /todos...")
         
+        let semaphore = DispatchSemaphore(value: 0)
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { semaphore.signal() }
             guard let data = data else { return }
             do {
                 let todo = try JSONDecoder().decode(Todo.self, from: data)
@@ -358,6 +435,7 @@ func createTodo() {
             } 
         }
         task.resume()
+        semaphore.wait()
     } catch {
         print("Encoding Error: \\(error)")
     }
@@ -381,27 +459,390 @@ func createTodo() {
     request.httpMethod = "POST"
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     let newTodo = Todo(userId: 1, id: nil, title: "Learn Swift Architecture", completed: true)
+    let semaphore = DispatchSemaphore(value: 0)
     do {
         request.httpBody = try JSONEncoder().encode(newTodo)
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            defer { semaphore.signal() }
             guard let data = data else { return }
             do {
                 let todo = try JSONDecoder().decode(Todo.self, from: data)
                 print("User ID: \\(todo.userId)")
                 print("Todo ID: \\(todo.id ?? 0)")
                 print("Title: \\(todo.title)")
-                print("Status: \\(todo.completed ? \\"Completed\\" : \\"Pending\\")")
+                print("Status: \\(todo.completed ? \\"Completed ✅\\" : \\"Pending\\")")
             } catch {
                 print("Error: \\(error)")
             }
         } 
         task.resume()
+        semaphore.wait()
     } catch {}
 }
 createTodo()
 """,
                 testHarness: "",
                 networkUrl: "https://jsonplaceholder.typicode.com/todos"
+            ),
+            Question(
+                id: "retain_cycle_fix",
+                title: "3. ARC & Memory Leaks (Retain Cycle Fix)",
+                category: "swiftPractice",
+                difficulty: "Hard",
+                topics: ["ARC", "Memory Management", "Closures"],
+                description: "Fix a memory leak! The DataLoader class creates a strong retain cycle because the completion closure captures 'self' strongly while 'self' holds a reference to the closure handler.\n\nUse [weak self] inside the closure capture list and verify that deinit is executed when the object reference is cleared.",
+                templateCode: """
+import Foundation
+
+class DataLoader {
+    var onDataLoaded: ((String) -> Void)?
+    var name: String = "UserDataFetcher"
+    
+    init() {
+        print("[Init] DataLoader allocated in memory")
+    }
+    
+    func startFetching() {
+        // TODO: Fix the retain cycle below by adding [weak self] in capture list
+        self.onDataLoaded = { data in
+            print("Data received in \\(self.name): \\(data)")
+        }
+    }
+    
+    deinit {
+        print("[Deinit] ✅ DataLoader successfully deallocated! (No Retain Cycle)")
+    }
+}
+
+func testMemoryLeak() {
+    var loader: DataLoader? = DataLoader()
+    loader?.startFetching()
+    loader?.onDataLoaded?("Payload 101")
+    
+    print("Clearing loader reference...")
+    loader = nil // If retain cycle exists, deinit will NOT be called!
+}
+
+testMemoryLeak()
+""",
+                solutionCode: """
+import Foundation
+
+class DataLoader {
+    var onDataLoaded: ((String) -> Void)?
+    var name: String = "UserDataFetcher"
+    
+    init() {
+        print("[Init] DataLoader allocated in memory")
+    }
+    
+    func startFetching() {
+        self.onDataLoaded = { [weak self] data in
+            guard let self = self else { return }
+            print("Data received in \\(self.name): \\(data)")
+        }
+    }
+    
+    deinit {
+        print("[Deinit] ✅ DataLoader successfully deallocated! (No Retain Cycle)")
+    }
+}
+
+func testMemoryLeak() {
+    var loader: DataLoader? = DataLoader()
+    loader?.startFetching()
+    loader?.onDataLoaded?("Payload 101")
+    
+    print("Clearing loader reference...")
+    loader = nil
+}
+
+testMemoryLeak()
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "actor_cache",
+                title: "4. Swift Concurrency (Thread-Safe Actor Cache)",
+                category: "swiftPractice",
+                difficulty: "Hard",
+                topics: ["Actors", "Concurrency", "Data Race Safety"],
+                description: "Implement a thread-safe in-memory cache using Swift's 'actor' keyword to guarantee isolation and data-race safety across concurrent background tasks.\n\nImplement set(key:value:) and get(key:) methods and access them asynchronously using await.",
+                templateCode: """
+import Foundation
+
+actor ImageCache {
+    private var cache = [String: String]()
+    
+    func set(key: String, value: String) {
+        cache[key] = value
+    }
+    
+    func get(key: String) -> String? {
+        return cache[key]
+    }
+}
+
+func runConcurrentTasks() async {
+    let imageCache = ImageCache()
+    
+    await imageCache.set(key: "avatar_1", value: "https://cdn.example.com/user1.png")
+    await imageCache.set(key: "avatar_2", value: "https://cdn.example.com/user2.png")
+    
+    if let url = await imageCache.get(key: "avatar_1") {
+        print("✅ Retrieved from Actor Cache: \\(url)")
+    }
+}
+
+Task {
+    await runConcurrentTasks()
+}
+""",
+                solutionCode: """
+import Foundation
+
+actor ImageCache {
+    private var cache = [String: String]()
+    
+    func set(key: String, value: String) {
+        cache[key] = value
+    }
+    
+    func get(key: String) -> String? {
+        return cache[key]
+    }
+}
+
+func runConcurrentTasks() async {
+    let imageCache = ImageCache()
+    await imageCache.set(key: "avatar_1", value: "https://cdn.example.com/user1.png")
+    await imageCache.set(key: "avatar_2", value: "https://cdn.example.com/user2.png")
+    
+    if let url = await imageCache.get(key: "avatar_1") {
+        print("=== Thread-Safe Actor Cache Test ===")
+        print("Key: avatar_1 -> Value: \\(url)")
+        print("====================================")
+    }
+}
+
+let semaphore = DispatchSemaphore(value: 0)
+Task {
+    await runConcurrentTasks()
+    semaphore.signal()
+}
+semaphore.wait()
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "combine_search_debounce",
+                title: "5. Combine Reactive Search Bar (Debouncer)",
+                category: "swiftPractice",
+                difficulty: "Hard",
+                topics: ["Combine", "Publishers", "Debounce"],
+                description: "Build a reactive search debouncer using Combine's PassthroughSubject. Use .debounce() to throttle rapid user keystrokes so network calls are only fired after 100ms of pause.",
+                templateCode: """
+import Foundation
+import Combine
+
+class SearchViewModel {
+    let searchPublisher = PassthroughSubject<String, Never>()
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        searchPublisher
+            .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { query in
+                print("🔎 Executing Search API query: '\\(query)'")
+            }
+            .store(in: &cancellables)
+    }
+}
+
+let vm = SearchViewModel()
+print("Simulating fast keystrokes: S -> Sw -> Swi -> Swift...")
+vm.searchPublisher.send("S")
+vm.searchPublisher.send("Sw")
+vm.searchPublisher.send("Swi")
+vm.searchPublisher.send("Swift")
+""",
+                solutionCode: """
+import Foundation
+import Combine
+
+class SearchViewModel {
+    let searchPublisher = PassthroughSubject<String, Never>()
+    private var cancellables = Set<AnyCancellable>()
+    
+    init() {
+        searchPublisher
+            .debounce(for: .milliseconds(100), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { query in
+                print("=== Combine Search Debouncer Result ===")
+                print("🔎 Executing Search API query: '\\(query)'")
+                print("=======================================")
+            }
+            .store(in: &cancellables)
+    }
+}
+
+let vm = SearchViewModel()
+vm.searchPublisher.send("S")
+vm.searchPublisher.send("Sw")
+vm.searchPublisher.send("Swi")
+vm.searchPublisher.send("Swift")
+RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.5))
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "userdefault_property_wrapper",
+                title: "6. Custom @UserDefault Property Wrapper",
+                category: "swiftPractice",
+                difficulty: "Medium",
+                topics: ["Property Wrappers", "Generics", "UserDefaults"],
+                description: "Implement a custom generic @UserDefault property wrapper in Swift that automatically syncs struct properties with UserDefaults using a specified key and default fallback value.",
+                templateCode: """
+import Foundation
+
+@propertyWrapper
+struct UserDefault<T> {
+    let key: String
+    let defaultValue: T
+    
+    var wrappedValue: T {
+        get {
+            return (UserDefaults.standard.object(forKey: key) as? T) ?? defaultValue
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: key)
+        }
+    }
+}
+
+struct AppSettings {
+    @UserDefault(key: "is_dark_mode", defaultValue: false)
+    static var isDarkMode: Bool
+}
+
+print("Initial Dark Mode:", AppSettings.isDarkMode)
+AppSettings.isDarkMode = true
+print("Updated Dark Mode:", AppSettings.isDarkMode)
+""",
+                solutionCode: """
+import Foundation
+
+@propertyWrapper
+struct UserDefault<T> {
+    let key: String
+    let defaultValue: T
+    
+    var wrappedValue: T {
+        get {
+            return (UserDefaults.standard.object(forKey: key) as? T) ?? defaultValue
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: key)
+        }
+    }
+}
+
+struct AppSettings {
+    @UserDefault(key: "is_dark_mode", defaultValue: false)
+    static var isDarkMode: Bool
+}
+
+print("=== @UserDefault Property Wrapper Test ===")
+print("Initial Dark Mode:", AppSettings.isDarkMode)
+AppSettings.isDarkMode = true
+print("Updated Dark Mode:", AppSettings.isDarkMode)
+print("=========================================")
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "cow_optimization",
+                title: "7. Copy-on-Write (COW) Custom Data Structure",
+                category: "swiftPractice",
+                difficulty: "Hard",
+                topics: ["Copy-On-Write", "COW", "Memory Optimization"],
+                description: "Implement a Copy-on-Write (COW) optimization for a custom value type using an internal reference box class and isKnownUniquelyReferenced.",
+                templateCode: """
+import Foundation
+
+private class StorageBox<T> {
+    var value: T
+    init(value: T) { self.value = value }
+}
+
+struct CustomBuffer<T> {
+    private var box: StorageBox<T>
+    
+    init(value: T) {
+        self.box = StorageBox(value: value)
+    }
+    
+    var value: T {
+        get { return box.value }
+        set {
+            if !isKnownUniquelyReferenced(&box) {
+                print("📋 Unique copy created due to COW mutation!")
+                box = StorageBox(value: newValue)
+            } else {
+                print("⚡ In-place mutation (no copy needed)")
+                box.value = newValue
+            }
+        }
+    }
+}
+
+var buffer1 = CustomBuffer(value: "Initial Payload")
+var buffer2 = buffer1 // Shared storage box!
+
+buffer2.value = "Mutated Payload"
+print("Buffer 1:", buffer1.value)
+print("Buffer 2:", buffer2.value)
+""",
+                solutionCode: """
+import Foundation
+
+private class StorageBox<T> {
+    var value: T
+    init(value: T) { self.value = value }
+}
+
+struct CustomBuffer<T> {
+    private var box: StorageBox<T>
+    
+    init(value: T) {
+        self.box = StorageBox(value: value)
+    }
+    
+    var value: T {
+        get { return box.value }
+        set {
+            if !isKnownUniquelyReferenced(&box) {
+                print("📋 Unique copy created due to COW mutation!")
+                box = StorageBox(value: newValue)
+            } else {
+                print("⚡ In-place mutation (no copy needed)")
+                box.value = newValue
+            }
+        }
+    }
+}
+
+print("=== Copy-on-Write (COW) Test ===")
+var buffer1 = CustomBuffer(value: "Initial Payload")
+var buffer2 = buffer1
+buffer2.value = "Mutated Payload"
+print("Buffer 1:", buffer1.value)
+print("Buffer 2:", buffer2.value)
+print("=================================")
+""",
+                testHarness: ""
             )
         ]
     }

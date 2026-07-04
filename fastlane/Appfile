@@ -1,0 +1,7 @@
+# fastlane/Appfile
+# App Store Connect & Apple Developer Credentials Configuration
+
+app_identifier(ENV["APP_IDENTIFIER"] || "in.sachinserver.swiftforge")
+apple_id(ENV["APPLE_ID"] || "letslearngpt@gmail.com")
+team_id(ENV["APPLE_TEAM_ID"] || "M5Q7N9D29M")
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"] || "M5Q7N9D29M")

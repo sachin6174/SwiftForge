@@ -56,13 +56,23 @@ public class AppState: ObservableObject {
         self.logActivity()
     }
     
+    private var saveWorkItem: DispatchWorkItem?
+    
     public func saveActivity() {
         activityService.saveActivity(userActivity)
     }
     
     public func updateDraft(questionId: String, code: String) {
         userActivity.draftCodes[questionId] = code
-        saveActivity()
+        
+        saveWorkItem?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            Task { @MainActor in
+                self?.saveActivity()
+            }
+        }
+        saveWorkItem = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: item)
     }
     
     public func markQuestionSolved(questionId: String) {

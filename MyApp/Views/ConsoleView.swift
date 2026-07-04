@@ -28,7 +28,9 @@ public struct ConsoleView: View {
                 // Open Log File button
                 Button(action: {
                     let logPath = LoggerService.shared.getLogFilePath()
+                    #if os(macOS)
                     NSWorkspace.shared.open(URL(fileURLWithPath: logPath))
+                    #endif
                 }) {
                     HStack(spacing: 4) {
                         Image(systemName: "doc.text")
@@ -52,8 +54,12 @@ public struct ConsoleView: View {
                 Button(action: {
                     let textToCopy = compilerError ?? output
                     if !textToCopy.isEmpty {
+                        #if os(macOS)
                         NSPasteboard.general.clearContents()
                         NSPasteboard.general.setString(textToCopy, forType: .string)
+                        #elseif os(iOS)
+                        UIPasteboard.general.string = textToCopy
+                        #endif
                         withAnimation(.easeInOut(duration: 0.15)) {
                             isCopied = true
                         }

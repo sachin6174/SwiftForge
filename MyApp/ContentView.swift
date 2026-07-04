@@ -436,8 +436,12 @@ struct CopyCodeButton: View {
     var body: some View {
         Button(action: {
             if !code.isEmpty {
+                #if os(macOS)
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(code, forType: .string)
+                #elseif os(iOS)
+                UIPasteboard.general.string = code
+                #endif
                 withAnimation(.easeInOut(duration: 0.15)) {
                     isCopied = true
                 }

@@ -1,0 +1,9 @@
+🚀 Welcome to SwiftForge v1.0.0!
+
+Key Features in this Initial Release:
+• Dual Practice Tracks: DSA Algorithmic Challenges & Core Swift/iOS Architecture Practice.
+• Local Code Runner: Ultra-low latency Swift compilation and execution engine right on your Mac.
+• Interactive Test Suite: Real-time assertion checks with Pass/Fail indicators and execution timing (ms).
+• Data Structure Visualizers: Dynamic 2D Matrix visualizers, Linked List pointers, Stack token streams, and DP Staircase steps.
+• Streak & Progress Tracking: Daily activity tracking and local draft auto-saving.
+• Modern Glassmorphic Dark UI: High-contrast monospace code editors with customizable typography.
