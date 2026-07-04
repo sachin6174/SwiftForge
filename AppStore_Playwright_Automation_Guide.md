@@ -8,8 +8,8 @@ This guide details how the automated Playwright browser script logs into **App S
 
 The script automatically pulls your credentials from your local [`.env`](file:///Users/sachinkumar/Desktop/Untitled%20Project/.env) file:
 
-- **Apple ID**: `letslearngpt@gmail.com`
-- **Password**: `OURappleaccount1@#`
+- **Apple ID**: Configured in `.env` (`APPLE_ID`)
+- **Password**: Configured in `.env` (`APPLE_PASS`)
 - **Bundle ID**: `in.sachinserver.swiftforge`
 - **Team ID**: `M5Q7N9D29M`
 

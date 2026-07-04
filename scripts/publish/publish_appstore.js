@@ -3,8 +3,13 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config({ path: path.join(__dirname, '../../.env') });
 
-const APPLE_ID = process.env.APPLE_ID || 'letslearngpt@gmail.com';
-const APPLE_PASS = process.env.APPLE_PASS || 'OURappleaccount1@#';
+const APPLE_ID = process.env.APPLE_ID;
+const APPLE_PASS = process.env.APPLE_PASS;
+
+if (!APPLE_ID || !APPLE_PASS) {
+  console.error('❌ Security Error: APPLE_ID and APPLE_PASS must be configured in your local .env file.');
+  process.exit(1);
+}
 const APP_NAME = 'SwiftForge: DSA & iOS Studio';
 const APP_SUBTITLE = 'DSA & iOS Engineering IDE';
 const BUNDLE_ID = process.env.APP_IDENTIFIER || 'in.sachinserver.swiftforge';
