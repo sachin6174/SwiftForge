@@ -3,6 +3,7 @@ import JavaScriptCore
 import Combine
 import AppIntents
 
+@available(macOS 13.0, iOS 16.0, *)
 struct SwiftForgeShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         return []
@@ -65,7 +66,7 @@ public struct ContentView: View {
             setupCallbacks()
             loadInitialQuestions()
         }
-        .onChange(of: dsaViewModel.code) { _, newCode in
+        .onChange(of: dsaViewModel.code) { newCode in
             if let q = dsaViewModel.currentQuestion {
                 let currentDraft = appState.userActivity.draftCodes[q.id]
                 if currentDraft != newCode {

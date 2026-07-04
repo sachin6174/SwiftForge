@@ -78,12 +78,12 @@ public struct ConsoleView: View {
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .onChange(of: output) { _, _ in
+                .onChange(of: output) { _ in
                     withAnimation {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
-                .onChange(of: compilerError) { _, _ in
+                .onChange(of: compilerError) { _ in
                     withAnimation {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
