@@ -57,11 +57,18 @@ jobs:
         run: |
           fastlane mac release
 
+      - name: 💿 Build DMG Disk Image
+        run: |
+          chmod +x ./create_dmg.sh
+          ./create_dmg.sh
+
       - name: 📤 Create GitHub Release Artifact
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: build/AppStore/*.pkg
+          files: |
+            SwiftForge.dmg
+            build/AppStore/*.pkg
           draft: false
           prerelease: false
         env:
