@@ -114,8 +114,7 @@ fi
 if [ -n "$GH_TOKEN_TO_USE" ]; then
     GH_TOKEN="$GH_TOKEN_TO_USE" gh release create "${RELEASE_TAG}" "${DMG_OUTPUT}" \
         --title "SwiftForge ${RELEASE_TAG}" \
-        --notes "Official SwiftForge ${RELEASE_TAG} Release — macOS & iOS Studio IDE" \
-        --clobber || \
+        --notes "Official SwiftForge ${RELEASE_TAG} Release — macOS & iOS Studio IDE" || \
     GH_TOKEN="$GH_TOKEN_TO_USE" gh release upload "${RELEASE_TAG}" "${DMG_OUTPUT}" --clobber
     echo "🎉 Release ${RELEASE_TAG} successfully published to GitHub!"
     echo "🔗 URL: https://github.com/sachin6174/SwiftForge/releases/tag/${RELEASE_TAG}"
