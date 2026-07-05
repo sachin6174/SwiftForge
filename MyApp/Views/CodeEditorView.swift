@@ -77,7 +77,8 @@ public struct CodeEditorView: View {
             
             // Syntax Highlighting Editor & Line Numbers Gutter
             HStack(alignment: .top, spacing: 0) {
-                // Line Numbers Gutter
+                #if os(iOS)
+                // Line Numbers Gutter (iOS)
                 let lineCount = max(1, code.components(separatedBy: .newlines).count)
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .trailing, spacing: 0) {
@@ -97,6 +98,7 @@ public struct CodeEditorView: View {
                 
                 Divider()
                     .background(Color.white.opacity(0.06))
+                #endif
 
                 #if os(macOS)
                 MacCodeEditor(text: $code)
@@ -129,6 +131,67 @@ public struct CodeEditorView: View {
 }
 
 #if os(macOS)
+// MARK: - AppKit Line Number Ruler View for Synchronized Scrolling & Line Heights
+final class LineNumberRulerView: NSRulerView {
+    init(scrollView: NSScrollView) {
+        super.init(scrollView: scrollView, orientation: .verticalRuler)
+        self.clientView = scrollView.documentView
+        self.ruleThickness = 40
+    }
+
+    required init(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func drawHashMarksAndLabels(in rect: NSRect) {
+        guard let textView = clientView as? NSTextView,
+              let layoutManager = textView.layoutManager,
+              let textContainer = textView.textContainer else { return }
+
+        NSColor(red: 0.05, green: 0.05, blue: 0.07, alpha: 1.0).set()
+        rect.fill()
+
+        let visibleRect = textView.visibleRect
+        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+        let characterRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
+
+        let string = textView.string as NSString
+        let textLen = string.length
+        guard textLen > 0 else { return }
+
+        let startCharLoc = min(characterRange.location, textLen)
+        let endCharLoc = min(characterRange.location + characterRange.length, textLen)
+
+        // Fast count of line breaks prior to visible viewport
+        var lineNumber = 1
+        if startCharLoc > 0 {
+            string.enumerateSubstrings(in: NSRange(location: 0, length: startCharLoc), options: [.byLines, .substringNotRequired]) { _, _, _, _ in
+                lineNumber += 1
+            }
+        }
+
+        // Render visible line numbers
+        string.enumerateSubstrings(in: NSRange(location: startCharLoc, length: textLen - startCharLoc), options: [.byLines, .substringNotRequired]) { _, substringRange, _, stop in
+            if substringRange.location >= endCharLoc {
+                stop.pointee = true
+                return
+            }
+            let glyphIndex = layoutManager.glyphIndexForCharacter(at: substringRange.location)
+            let lineRect = layoutManager.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
+            let y = lineRect.origin.y + textView.textContainerOrigin.y - visibleRect.origin.y + 1
+            
+            let numStr = "\(lineNumber)" as NSString
+            let attrs: [NSAttributedString.Key: Any] = [
+                .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
+                .foregroundColor: NSColor(white: 0.4, alpha: 1.0)
+            ]
+            let size = numStr.size(withAttributes: attrs)
+            numStr.draw(at: NSPoint(x: self.ruleThickness - size.width - 6, y: y), withAttributes: attrs)
+            lineNumber += 1
+        }
+    }
+}
+
 // MARK: - Mac NSTextView Representable with Syntax Highlighting & Line Numbers
 struct MacCodeEditor: NSViewRepresentable {
     @Binding var text: String
@@ -142,7 +205,7 @@ struct MacCodeEditor: NSViewRepresentable {
         scrollView.drawsBackground = true
         scrollView.backgroundColor = NSColor(red: 0.07, green: 0.07, blue: 0.09, alpha: 1.0)
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = false
+        scrollView.hasHorizontalScroller = true
         scrollView.autohidesScrollers = true
 
         let contentSize = scrollView.contentSize
@@ -150,11 +213,11 @@ struct MacCodeEditor: NSViewRepresentable {
         textView.minSize = NSSize(width: 0, height: contentSize.height)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = false
-        textView.autoresizingMask = [.width]
+        textView.isHorizontallyResizable = true
+        textView.autoresizingMask = [.height]
 
-        textView.textContainer?.containerSize = NSSize(width: contentSize.width, height: CGFloat.greatestFiniteMagnitude)
-        textView.textContainer?.widthTracksTextView = true
+        textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = false
 
         textView.backgroundColor = NSColor(red: 0.07, green: 0.07, blue: 0.09, alpha: 1.0)
         textView.textColor = NSColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
@@ -169,6 +232,11 @@ struct MacCodeEditor: NSViewRepresentable {
 
         scrollView.documentView = textView
 
+        let rulerView = LineNumberRulerView(scrollView: scrollView)
+        scrollView.verticalRulerView = rulerView
+        scrollView.hasVerticalRuler = true
+        scrollView.rulersVisible = true
+
         // Initial Highlighting
         context.coordinator.applyHighlighting(to: textView, text: text)
 
@@ -181,6 +249,7 @@ struct MacCodeEditor: NSViewRepresentable {
             let selectedRanges = textView.selectedRanges
             context.coordinator.applyHighlighting(to: textView, text: text)
             textView.selectedRanges = selectedRanges
+            nsView.verticalRulerView?.needsDisplay = true
         }
     }
 
@@ -202,6 +271,7 @@ struct MacCodeEditor: NSViewRepresentable {
             let selectedRanges = textView.selectedRanges
             applyHighlighting(to: textView, text: newText)
             textView.selectedRanges = selectedRanges
+            textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
         }
 
         func applyHighlighting(to textView: NSTextView, text: String) {

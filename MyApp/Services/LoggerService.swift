@@ -87,21 +87,21 @@ public class LoggerService: LoggerServiceProtocol, @unchecked Sendable {
         line: Int = #line
     ) {
         let fileName = (file as NSString).lastPathComponent
-        let timestamp = Self.dateFormatter.string(from: Date())
-        let formattedLog = "[\(timestamp)] [\(level.rawValue)] [\(category.rawValue)] [\(fileName):\(line) \(function)] \(level.emoji) \(message)\n"
 
         // 1. Unified OSLog Stream (Mac Console.app & Xcode Console)
         if let osLogger = osLoggers[category] {
             osLogger.log(level: level.osLogType, "[\(category.rawValue)] [\(fileName):\(line)] \(message)")
         }
 
-        // 2. Stdout print for debugging
-        #if DEBUG
-        print(formattedLog, terminator: "")
-        #endif
-
-        // 3. Persistent File Logging with Auto-Rotation
+        // 2. Thread-safe Persistent File Logging & Output Stream
         queue.async {
+            let timestamp = Self.dateFormatter.string(from: Date())
+            let formattedLog = "[\(timestamp)] [\(level.rawValue)] [\(category.rawValue)] [\(fileName):\(line) \(function)] \(level.emoji) \(message)\n"
+            
+            #if DEBUG
+            print(formattedLog, terminator: "")
+            #endif
+            
             self.rotateLogIfNeeded()
             self.appendString(formattedLog, to: self.logFileUrl)
         }

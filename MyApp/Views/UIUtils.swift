@@ -208,5 +208,6 @@ public struct DSARunButton: View {
         }
         .disabled(isRunning)
         .buttonStyle(PlainButtonStyle())
+        .keyboardShortcut("r", modifiers: [.command])
     }
 }

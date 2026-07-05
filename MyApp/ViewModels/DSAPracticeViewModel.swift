@@ -23,9 +23,7 @@ public class DSAPracticeViewModel: ObservableObject {
         let cleanDraft = draft?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let cleanSolution = question.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        let missingReturn = question.templateCode.contains("return ") && !cleanDraft.contains("return ")
-        
-        if cleanDraft.isEmpty || cleanDraft == cleanSolution || missingReturn {
+        if cleanDraft.isEmpty || cleanDraft == cleanSolution {
             self.code = question.templateCode
         } else {
             self.code = draft ?? question.templateCode
@@ -193,8 +191,55 @@ public class DSAPracticeViewModel: ObservableObject {
             }
             runTests();
             """
-        default:
-            // Maximal Square & default fallback
+        case "reverse_linked_list":
+            runnerScript = """
+            \(transpiled)
+            function ListNode(val, next) {
+                this.val = (val===undefined ? 0 : val);
+                this.next = (next===undefined ? null : next);
+            }
+            function arrayToList(arr) {
+                let dummy = new ListNode(0);
+                let curr = dummy;
+                for (let val of arr) {
+                    curr.next = new ListNode(val);
+                    curr = curr.next;
+                }
+                return dummy.next;
+            }
+            function listToArray(head) {
+                let res = [];
+                let curr = head;
+                while (curr) {
+                    res.push(curr.val);
+                    curr = curr.next;
+                }
+                return res;
+            }
+            function runTests() {
+                const solution = new Solution();
+                const testCases = [
+                    { input: [1, 2, 3, 4, 5], expected: [5, 4, 3, 2, 1], name: "Example 1 ([1,2,3,4,5])" },
+                    { input: [1, 2], expected: [2, 1], name: "Example 2 ([1,2])" },
+                    { input: [], expected: [], name: "Example 3 ([])" }
+                ];
+                let passedCount = 0; const results = [];
+                for (let i = 0; i < testCases.length; i++) {
+                    const tc = testCases[i]; const start = Date.now();
+                    try {
+                        const head = arrayToList(tc.input);
+                        const rev = solution.reverseList(head);
+                        const res = listToArray(rev);
+                        const passed = JSON.stringify(res) === JSON.stringify(tc.expected);
+                        if (passed) passedCount++;
+                        results.push(`CASE ${i} | ${passed ? 'PASS' : 'FAIL'} | Name: ${tc.name} | Output: [${res}] | Expected: [${tc.expected}] | Time: ${Date.now() - start}ms`);
+                    } catch (e) { results.push(`CASE ${i} | FAIL | Name: ${tc.name} | Error: ${e.message}`); }
+                }
+                return `---DSA_TEST_RESULTS_START---\\n` + results.join('\\n') + `\\nSUMMARY | ${passedCount}/${testCases.length} PASSED\\n---DSA_TEST_RESULTS_END---`;
+            }
+            runTests();
+            """
+        case "maximal_square":
             runnerScript = """
             \(transpiled)
             function runTests() {
@@ -222,12 +267,21 @@ public class DSAPracticeViewModel: ObservableObject {
             }
             runTests();
             """
+        default:
+            runnerScript = transpiled
         }
         
         let result = codeRunner.runJSCode(code: runnerScript)
         self.consoleOutput += "\n" + result
         LoggerService.shared.log("JS Sandbox execution output for \(question.title):\n--- EXECUTION OUTPUT ---\n\(result)", level: .info, category: .codeRunner)
-        self.parseDSAResults(stdout: result)
+        if question.category == "swiftPractice" {
+            let cleanRes = result.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !cleanRes.isEmpty && !cleanRes.contains("Error:") && !cleanRes.contains("Exception:") {
+                self.onSuccess?()
+            }
+        } else {
+            self.parseDSAResults(stdout: result)
+        }
     }
     
     private func parseDSAResults(stdout: String) {

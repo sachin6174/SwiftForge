@@ -27,7 +27,18 @@ private final class SafeDataBuffer: @unchecked Sendable {
 public class CodeRunnerService: CodeRunnerProtocol {
     public static let shared = CodeRunnerService()
     
-    public init() {}
+    public init() {
+        cleanupTempFiles()
+    }
+    
+    private func cleanupTempFiles() {
+        let tempDir = FileManager.default.temporaryDirectory
+        if let files = try? FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil) {
+            for file in files where file.lastPathComponent.hasPrefix("interview_practice_") {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+    }
     
     public func runSwiftCode(code: String, appendHarness: String) async -> (stdout: String, stderr: String, exitCode: Int32) {
         var fullCode = code + "\n\n" + appendHarness
@@ -63,78 +74,84 @@ public class CodeRunnerService: CodeRunnerProtocol {
         LoggerService.shared.log("Compiling & executing Swift script: \(tempFile.lastPathComponent)", level: .info)
         
         #if os(macOS)
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
-        process.arguments = [tempFile.path]
-        
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-        
-        let stdoutHandle = stdoutPipe.fileHandleForReading
-        let stderrHandle = stderrPipe.fileHandleForReading
-        
-        let stdoutBuffer = SafeDataBuffer()
-        let stderrBuffer = SafeDataBuffer()
-        
-        stdoutHandle.readabilityHandler = { handle in
-            let data = handle.availableData
-            if !data.isEmpty {
-                stdoutBuffer.append(data)
-            }
-        }
-        stderrHandle.readabilityHandler = { handle in
-            let data = handle.availableData
-            if !data.isEmpty {
-                stderrBuffer.append(data)
-            }
-        }
-        
-        do {
-            try process.run()
+        return await Task.detached(priority: .userInitiated) {
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
+            process.arguments = [tempFile.path]
             
-            // 5.0-Second Execution Timeout Watchdog (Swift 6 Async Compliant)
-            let timeoutTask = Task {
-                try? await Task.sleep(nanoseconds: 5_000_000_000)
-                if process.isRunning {
-                    process.terminate()
+            let stdoutPipe = Pipe()
+            let stderrPipe = Pipe()
+            process.standardOutput = stdoutPipe
+            process.standardError = stderrPipe
+            
+            let stdoutHandle = stdoutPipe.fileHandleForReading
+            let stderrHandle = stderrPipe.fileHandleForReading
+            
+            let stdoutBuffer = SafeDataBuffer()
+            let stderrBuffer = SafeDataBuffer()
+            
+            stdoutHandle.readabilityHandler = { handle in
+                let data = handle.availableData
+                if !data.isEmpty {
+                    stdoutBuffer.append(data)
+                }
+            }
+            stderrHandle.readabilityHandler = { handle in
+                let data = handle.availableData
+                if !data.isEmpty {
+                    stderrBuffer.append(data)
                 }
             }
             
-            process.waitUntilExit()
-            timeoutTask.cancel()
-            
-            stdoutHandle.readabilityHandler = nil
-            stderrHandle.readabilityHandler = nil
-            
-            let stdout = String(data: stdoutBuffer.getData(), encoding: .utf8) ?? ""
-            let stderr = String(data: stderrBuffer.getData(), encoding: .utf8) ?? ""
+            do {
+                try process.run()
+                
+                // 5.0-Second Execution Timeout Watchdog
+                let timeoutTask = Task {
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    if process.isRunning {
+                        process.terminate()
+                    }
+                }
+                
+                process.waitUntilExit()
+                timeoutTask.cancel()
+                
+                stdoutHandle.readabilityHandler = nil
+                stderrHandle.readabilityHandler = nil
+                
+                let remStdout = stdoutHandle.readDataToEndOfFile()
+                if !remStdout.isEmpty { stdoutBuffer.append(remStdout) }
+                let remStderr = stderrHandle.readDataToEndOfFile()
+                if !remStderr.isEmpty { stderrBuffer.append(remStderr) }
+                
+                let stdout = String(data: stdoutBuffer.getData(), encoding: .utf8) ?? ""
+                let stderr = String(data: stderrBuffer.getData(), encoding: .utf8) ?? ""
 
-            // Cap output to 512 KB to prevent memory exhaustion from runaway loops
-            let cappedStdout = String(stdout.prefix(524_288))
-            let cappedStderr = String(stderr.prefix(524_288))
+                // Cap output to 512 KB to prevent memory exhaustion from runaway loops
+                let cappedStdout = String(stdout.prefix(524_288))
+                let cappedStderr = String(stderr.prefix(524_288))
 
-            if cappedStderr.contains("App Sandbox") || cappedStderr.contains("cannot be used within an App Sandbox") {
-                LoggerService.shared.log("App Sandbox restriction detected. Falling back to in-process JS evaluation...", level: .warning)
-                let jsCode = transpileSwiftToJS(swift: fullCode)
-                let fallbackOutput = runJSCode(code: jsCode)
+                if cappedStderr.contains("App Sandbox") || cappedStderr.contains("cannot be used within an App Sandbox") {
+                    LoggerService.shared.log("App Sandbox restriction detected. Falling back to in-process JS evaluation...", level: .warning)
+                    let jsCode = self.transpileSwiftToJS(swift: fullCode)
+                    let fallbackOutput = self.runJSCode(code: jsCode)
+                    return (fallbackOutput, "", 0)
+                }
+
+                let statusLevel: LogLevel = process.terminationStatus == 0 ? .success : .error
+                let logPreview = String((cappedStdout.isEmpty ? cappedStderr : cappedStdout).prefix(500))
+                LoggerService.shared.log("Swift execution completed with exitCode \(process.terminationStatus).\n--- Output (preview) ---\n\(logPreview)", level: statusLevel)
+
+                return (cappedStdout, cappedStderr, process.terminationStatus)
+            } catch {
+                let errorMsg = "Process execution failed: \(error.localizedDescription)\nFalling back to in-process execution."
+                LoggerService.shared.log(errorMsg, level: .warning)
+                let jsCode = self.transpileSwiftToJS(swift: fullCode)
+                let fallbackOutput = self.runJSCode(code: jsCode)
                 return (fallbackOutput, "", 0)
             }
-
-            let statusLevel: LogLevel = process.terminationStatus == 0 ? .success : .error
-            // Truncate logged output to 500 chars to avoid logging sensitive user code output
-            let logPreview = String((cappedStdout.isEmpty ? cappedStderr : cappedStdout).prefix(500))
-            LoggerService.shared.log("Swift execution completed with exitCode \(process.terminationStatus).\n--- Output (preview) ---\n\(logPreview)", level: statusLevel)
-
-            return (cappedStdout, cappedStderr, process.terminationStatus)
-        } catch {
-            let errorMsg = "Process execution failed: \(error.localizedDescription)\nFalling back to in-process execution."
-            LoggerService.shared.log(errorMsg, level: .warning)
-            let jsCode = transpileSwiftToJS(swift: fullCode)
-            let fallbackOutput = runJSCode(code: jsCode)
-            return (fallbackOutput, "", 0)
-        }
+        }.value
         #else
         let jsCode = transpileSwiftToJS(swift: fullCode)
         let fallbackOutput = runJSCode(code: jsCode)

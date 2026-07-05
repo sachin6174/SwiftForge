@@ -40,14 +40,13 @@ public class AppState: ObservableObject {
         self.questions = databaseService.loadQuestions()
         self.userActivity = activityService.loadActivity()
         
-        // Sanitize drafts: if draft matches solutionCode or is missing return statement, purge it!
+        // Sanitize drafts: if draft matches solutionCode or invalid residual output, purge it!
         for q in self.questions {
             if let draft = self.userActivity.draftCodes[q.id] {
                 let cleanDraft = draft.trimmingCharacters(in: .whitespacesAndNewlines)
                 let cleanSol = q.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                let missingReturn = q.templateCode.contains("return ") && !cleanDraft.contains("return ")
                 
-                if cleanDraft == cleanSol || draft.contains("\"Completed") || missingReturn {
+                if cleanDraft == cleanSol || draft.contains("\"Completed") {
                     self.userActivity.draftCodes.removeValue(forKey: q.id)
                 }
             }

@@ -3,6 +3,7 @@ import SwiftUI
 public struct ConsoleView: View {
     let output: String
     let compilerError: String?
+    @State private var isCleared = false
 
     public init(output: String, compilerError: String?) {
         self.output = output
@@ -21,16 +22,26 @@ public struct ConsoleView: View {
                     Text(compilerError == nil ? "CONSOLE OUTPUT" : "COMPILATION ERROR")
                         .font(.system(size: 10, weight: .bold))
                         .foregroundColor(compilerError == nil ? .green : .red)
+
+                    Text(compilerError == nil ? "EXIT 0" : "EXIT 1")
+                        .font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .foregroundColor(compilerError == nil ? .green : .red)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(compilerError == nil ? Color.green.opacity(0.15) : Color.red.opacity(0.15))
+                        .cornerRadius(4)
                 }
 
                 Spacer()
 
-                // Clear / Reset indicator
-                Button(action: {}) {
+                // Clear / Reset Terminal
+                Button(action: {
+                    withAnimation { isCleared.toggle() }
+                }) {
                     HStack(spacing: 4) {
-                        Image(systemName: "clear")
+                        Image(systemName: "trash")
                             .font(.system(size: 9))
-                        Text("Terminal")
+                        Text(isCleared ? "Restore" : "Clear")
                             .font(.system(size: 10, weight: .medium))
                     }
                     .foregroundColor(Color(white: 0.5))
@@ -40,7 +51,7 @@ public struct ConsoleView: View {
                     .cornerRadius(4)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.cyan.opacity(0.3), lineWidth: 0.75)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 0.75)
                     )
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -59,7 +70,12 @@ public struct ConsoleView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 4) {
-                        if let error = compilerError, !error.isEmpty {
+                        if isCleared {
+                            Text("[Terminal output cleared. Click 'Restore' to view.]")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundColor(Color(white: 0.4))
+                                .italic()
+                        } else if let error = compilerError, !error.isEmpty {
                             Text(error)
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(Color(red: 1.0, green: 0.4, blue: 0.4))

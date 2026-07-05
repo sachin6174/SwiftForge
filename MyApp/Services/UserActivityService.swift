@@ -7,6 +7,7 @@ public protocol UserActivityServiceProtocol {
 
 public class UserActivityService: UserActivityServiceProtocol {
     private let fileManager = FileManager.default
+    private let saveQueue = DispatchQueue(label: "com.swiftforge.useractivity.save", qos: .utility)
     
     // Primary path: Application documents directory
     private var localStoreUrl: URL {
@@ -32,15 +33,17 @@ public class UserActivityService: UserActivityServiceProtocol {
     }
     
     public func saveActivity(_ activity: UserActivity) {
-        do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = .prettyPrinted
-            let data = try encoder.encode(activity)
-            
-            // Save to local Documents storage
-            try data.write(to: localStoreUrl, options: .atomic)
-        } catch {
-            print("UserActivityService: Error saving activity file: \(error.localizedDescription)")
+        saveQueue.async { [localStoreUrl] in
+            do {
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                let data = try encoder.encode(activity)
+                
+                // Save to local Documents storage
+                try data.write(to: localStoreUrl, options: .atomic)
+            } catch {
+                print("UserActivityService: Error saving activity file: \(error.localizedDescription)")
+            }
         }
     }
 }

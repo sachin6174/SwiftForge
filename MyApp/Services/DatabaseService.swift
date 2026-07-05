@@ -128,6 +128,171 @@ print("---DSA_TEST_RESULTS_END---")
 """
             ),
             Question(
+                id: "valid_parentheses",
+                title: "20. Valid Parentheses",
+                category: "dsa",
+                difficulty: "Easy",
+                topics: ["Stack", "String"],
+                description: "Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.",
+                templateCode: """
+class Solution {
+    func isValid(_ s: String) -> Bool {
+        return false
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func isValid(_ s: String) -> Bool {
+        var stack = [Character]()
+        let matching: [Character: Character] = [")": "(", "}": "{", "]": "["]
+        for char in s {
+            if let openBracket = matching[char] {
+                if stack.isEmpty || stack.removeLast() != openBracket {
+                    return false
+                }
+            } else {
+                stack.append(char)
+            }
+        }
+        return stack.isEmpty
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let s: String
+    let expected: Bool
+    let name: String
+}
+let testCases = [
+    TestCase(s: "()", expected: true, name: "Example 1 (\\"()\\")"),
+    TestCase(s: "()[]{}", expected: true, name: "Example 2 (\\"()[]{}\\\")"),
+    TestCase(s: "(]", expected: false, name: "Example 3 (\\"(]\\")"),
+    TestCase(s: "([)]", expected: false, name: "Example 4 (\\"([)]\\\")"),
+    TestCase(s: "{[]}", expected: true, name: "Example 5 (\\"{[]}\\\")")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.isValid(tc.s)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "reverse_linked_list",
+                title: "206. Reverse Linked List",
+                category: "dsa",
+                difficulty: "Easy",
+                topics: ["Linked List", "Recursion"],
+                description: "Given the head of a singly linked list, reverse the list, and return the reversed list.",
+                templateCode: """
+public class ListNode {
+    public var val: Int
+    public var next: ListNode?
+    public init(_ val: Int, _ next: ListNode? = nil) {
+        self.val = val
+        self.next = next
+    }
+}
+
+class Solution {
+    func reverseList(_ head: ListNode?) -> ListNode? {
+        return nil
+    }
+}
+""",
+                solutionCode: """
+public class ListNode {
+    public var val: Int
+    public var next: ListNode?
+    public init(_ val: Int, _ next: ListNode? = nil) {
+        self.val = val
+        self.next = next
+    }
+}
+
+class Solution {
+    func reverseList(_ head: ListNode?) -> ListNode? {
+        var prev: ListNode? = nil
+        var curr = head
+        while curr != nil {
+            let nextTemp = curr?.next
+            curr?.next = prev
+            prev = curr
+            curr = nextTemp
+        }
+        return prev
+    }
+}
+""",
+                testHarness: """
+func arrayToList(_ arr: [Int]) -> ListNode? {
+    let dummy = ListNode(0)
+    var curr = dummy
+    for val in arr {
+        curr.next = ListNode(val)
+        curr = curr.next!
+    }
+    return dummy.next
+}
+
+func listToArray(_ head: ListNode?) -> [Int] {
+    var res = [Int]()
+    var curr = head
+    while curr != nil {
+        res.append(curr!.val)
+        curr = curr!.next
+    }
+    return res
+}
+
+let solution = Solution()
+struct TestCase {
+    let input: [Int]
+    let expected: [Int]
+    let name: String
+}
+let testCases = [
+    TestCase(input: [1, 2, 3, 4, 5], expected: [5, 4, 3, 2, 1], name: "Example 1 ([1,2,3,4,5])"),
+    TestCase(input: [1, 2], expected: [2, 1], name: "Example 2 ([1,2])"),
+    TestCase(input: [], expected: [], name: "Example 3 ([])")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let head = arrayToList(tc.input)
+    let reversedHead = solution.reverseList(head)
+    let result = listToArray(reversedHead)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
                 id: "maximal_square",
                 title: "221. Maximal Square",
                 category: "dsa",

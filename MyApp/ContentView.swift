@@ -236,6 +236,7 @@ public struct ContentView: View {
                 )
             }
             .buttonStyle(PlainButtonStyle())
+            .keyboardShortcut("b", modifiers: [.command])
 
             // ── Stats Badges ──────────────────────────────────
             if !isCompact {
@@ -615,8 +616,9 @@ public struct ContentView: View {
     }
     
     private func loadInitialQuestions() {
-        if let dsaQ = appState.selectedDSAQuestion {
-            dsaViewModel.loadQuestion(dsaQ, draft: appState.userActivity.draftCodes[dsaQ.id])
+        let initialQuestion = (appState.activeTab == .swiftPractice ? appState.selectedSwiftQuestion : appState.selectedDSAQuestion) ?? appState.selectedDSAQuestion
+        if let question = initialQuestion {
+            dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
         }
     }
 }
