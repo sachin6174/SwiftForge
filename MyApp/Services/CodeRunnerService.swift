@@ -89,18 +89,24 @@ public class CodeRunnerService: CodeRunnerProtocol {
             
             let stdout = String(data: stdoutBuffer as Data, encoding: .utf8) ?? ""
             let stderr = String(data: stderrBuffer as Data, encoding: .utf8) ?? ""
-            
-            if stderr.contains("App Sandbox") || stderr.contains("cannot be used within an App Sandbox") {
+
+            // Cap output to 512 KB to prevent memory exhaustion from runaway loops
+            let cappedStdout = String(stdout.prefix(524_288))
+            let cappedStderr = String(stderr.prefix(524_288))
+
+            if cappedStderr.contains("App Sandbox") || cappedStderr.contains("cannot be used within an App Sandbox") {
                 LoggerService.shared.log("App Sandbox restriction detected. Falling back to in-process JS evaluation...", level: .warning)
                 let jsCode = transpileSwiftToJS(swift: fullCode)
                 let fallbackOutput = runJSCode(code: jsCode)
                 return (fallbackOutput, "", 0)
             }
-            
+
             let statusLevel: LogLevel = process.terminationStatus == 0 ? .success : .error
-            LoggerService.shared.log("Swift execution completed with exitCode \(process.terminationStatus).\n--- Output ---\n\(stdout.isEmpty ? stderr : stdout)--------------", level: statusLevel)
-            
-            return (stdout, stderr, process.terminationStatus)
+            // Truncate logged output to 500 chars to avoid logging sensitive user code output
+            let logPreview = String((cappedStdout.isEmpty ? cappedStderr : cappedStdout).prefix(500))
+            LoggerService.shared.log("Swift execution completed with exitCode \(process.terminationStatus).\n--- Output (preview) ---\n\(logPreview)", level: statusLevel)
+
+            return (cappedStdout, cappedStderr, process.terminationStatus)
         } catch {
             let errorMsg = "Process execution failed: \(error.localizedDescription)\nFalling back to in-process execution."
             LoggerService.shared.log(errorMsg, level: .warning)

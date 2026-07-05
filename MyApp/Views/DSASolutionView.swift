@@ -2,13 +2,17 @@ import SwiftUI
 
 public struct DSASolutionView: View {
     let question: Question?
+    let isFocused: Bool
+    let onToggleFocus: (() -> Void)?
     let onInsertToEditor: () -> Void
     
     @State private var copiedToClipboard = false
     @State private var insertedToEditor = false
     
-    public init(question: Question?, onInsertToEditor: @escaping () -> Void = {}) {
+    public init(question: Question?, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, onInsertToEditor: @escaping () -> Void = {}) {
         self.question = question
+        self.isFocused = isFocused
+        self.onToggleFocus = onToggleFocus
         self.onInsertToEditor = onInsertToEditor
     }
     
@@ -27,6 +31,29 @@ public struct DSASolutionView: View {
                                 .font(.title3)
                                 .fontWeight(.bold)
                                 .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            if let onToggleFocus = onToggleFocus {
+                                Button(action: onToggleFocus) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: isFocused ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                                            .font(.system(size: 10, weight: .bold))
+                                        Text(isFocused ? "Exit Full Screen" : "Full Screen Solution")
+                                            .font(.system(size: 10, weight: .semibold))
+                                    }
+                                    .foregroundColor(isFocused ? .orange : Color(white: 0.7))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(isFocused ? Color.orange.opacity(0.15) : Color.white.opacity(0.08))
+                                    .cornerRadius(5)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .stroke(isFocused ? Color.orange.opacity(0.4) : Color.white.opacity(0.12), lineWidth: 0.75)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
                         
                         Text(question.title)

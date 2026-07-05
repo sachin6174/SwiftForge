@@ -8,10 +8,14 @@ import UIKit
 public struct CodeEditorView: View {
     @Binding var code: String
     let fileName: String
+    let isFocused: Bool
+    let onToggleFocus: (() -> Void)?
     
-    public init(code: Binding<String>, fileName: String) {
+    public init(code: Binding<String>, fileName: String, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil) {
         self._code = code
         self.fileName = fileName
+        self.isFocused = isFocused
+        self.onToggleFocus = onToggleFocus
     }
     
     public var body: some View {
@@ -25,12 +29,44 @@ public struct CodeEditorView: View {
                     Text(fileName)
                         .font(.system(size: 12, weight: .medium, design: .monospaced))
                         .foregroundColor(.white)
+                    
+                    if isFocused {
+                        Text("FULL SCREEN")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(.orange)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.15))
+                            .cornerRadius(4)
+                    }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
                 .background(Color(red: 0.07, green: 0.07, blue: 0.09))
                 
                 Spacer()
+                
+                if let onToggleFocus = onToggleFocus {
+                    Button(action: onToggleFocus) {
+                        HStack(spacing: 4) {
+                            Image(systemName: isFocused ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                                .font(.system(size: 10, weight: .bold))
+                            Text(isFocused ? "Exit Full Screen" : "Full Screen Editor")
+                                .font(.system(size: 10, weight: .semibold))
+                        }
+                        .foregroundColor(isFocused ? .orange : Color(white: 0.6))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(isFocused ? Color.orange.opacity(0.15) : Color.white.opacity(0.06))
+                        .cornerRadius(5)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(isFocused ? Color.orange.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .padding(.trailing, 8)
+                }
                 
                 Text("Swift 6.0")
                     .font(.system(size: 10, design: .monospaced))

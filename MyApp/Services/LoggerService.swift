@@ -22,38 +22,47 @@ public class LoggerService: LoggerServiceProtocol {
         let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
         return docs.appendingPathComponent("swiftforge_execution.log")
     }
-    
-    public var workspaceLogUrl: URL {
-        return URL(fileURLWithPath: "/Users/sachinkumar/Desktop/Untitled Project/app_test.log")
-    }
-    
+
+    /// Maximum log file size before rotation (1 MB)
+    private let maxLogFileSizeBytes: Int = 1_048_576
+
     public init() {}
     
     public func log(_ message: String, level: LogLevel = .info) {
         queue.async {
             let timestamp = Self.dateFormatter.string(from: Date())
             let logLine = "[\(timestamp)] [\(level.rawValue)] \(message)\n"
-            
-            // Print to stdout
+
+            // Print to stdout (debug only)
+            #if DEBUG
             print(logLine, terminator: "")
-            
+            #endif
+
+            // Rotate log if over size limit before appending
+            self.rotateLogIfNeeded()
+
             // Append to primary log file in Documents
             self.appendString(logLine, to: self.logFileUrl)
-            
-            // Append to workspace app_test.log file
-            self.appendString(logLine, to: self.workspaceLogUrl)
         }
     }
     
     public func getLogFilePath() -> String {
-        return workspaceLogUrl.path
+        return logFileUrl.path
     }
-    
+
     public func clearLogs() {
         queue.async {
             try? "".write(to: self.logFileUrl, atomically: true, encoding: .utf8)
-            try? "".write(to: self.workspaceLogUrl, atomically: true, encoding: .utf8)
         }
+    }
+
+    private func rotateLogIfNeeded() {
+        guard fileManager.fileExists(atPath: logFileUrl.path),
+              let attrs = try? fileManager.attributesOfItem(atPath: logFileUrl.path),
+              let size = attrs[.size] as? Int,
+              size >= maxLogFileSizeBytes else { return }
+        // Truncate to empty — simple rotation strategy
+        try? "".write(to: logFileUrl, atomically: true, encoding: .utf8)
     }
     
     private func appendString(_ string: String, to url: URL) {

@@ -60,23 +60,25 @@ public class AppState: ObservableObject {
         self.logActivity()
     }
     
-    private var saveWorkItem: DispatchWorkItem?
-    
+    private var debounceSaveTask: Task<Void, Never>?
+
     public func saveActivity() {
         activityService.saveActivity(userActivity)
     }
-    
+
     public func updateDraft(questionId: String, code: String) {
         userActivity.draftCodes[questionId] = code
-        
-        saveWorkItem?.cancel()
-        let item = DispatchWorkItem { [weak self] in
-            Task { @MainActor in
+
+        // Debounce: cancel previous pending save and schedule a new one
+        debounceSaveTask?.cancel()
+        debounceSaveTask = Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(nanoseconds: 800_000_000) // 0.8 s
                 self?.saveActivity()
+            } catch {
+                // Task was cancelled — no-op
             }
         }
-        saveWorkItem = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: item)
     }
     
     public func markQuestionSolved(questionId: String) {
@@ -92,10 +94,16 @@ public class AppState: ObservableObject {
     public func logActivity() {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        // Explicit timezone prevents streak miscounts when user changes timezone
+        formatter.timeZone = TimeZone.current
         let todayStr = formatter.string(from: Date())
-        
+
         if !userActivity.activityHistory.contains(todayStr) {
             userActivity.activityHistory.append(todayStr)
+            // Cap history to last 365 days to prevent unbounded growth
+            if userActivity.activityHistory.count > 365 {
+                userActivity.activityHistory = Array(userActivity.activityHistory.suffix(365))
+            }
         }
         
         if let lastActive = userActivity.lastActiveDate {

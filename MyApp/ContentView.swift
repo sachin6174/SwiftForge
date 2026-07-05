@@ -22,9 +22,18 @@ public struct ContentView: View {
     @StateObject private var appState = AppState()
     @StateObject private var dsaViewModel = DSAPracticeViewModel()
     
-    // UI Pane state
-    @State private var dsaPaneTab: DSAPaneTab = .description
+    public enum WorkspaceFocusMode {
+        case split
+        case infoFocused
+        case editorFocused
+    }
     
+    @State private var focusMode: WorkspaceFocusMode = .split
+    @State private var dsaPaneTab: DSAPaneTab = .description
+    @State private var leftPaneWidth: CGFloat = 380
+    /// Open Book Mode: solution on left, editor on right — simultaneously
+    @State private var openBookMode: Bool = false
+
     enum DSAPaneTab {
         case description
         case solution
@@ -105,6 +114,64 @@ public struct ContentView: View {
 
             Spacer()
 
+            // ── Open Book Mode Toggle Button ──────────────────
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    openBookMode.toggle()
+                    // Exit any focus mode so both panes are visible
+                    if openBookMode { focusMode = .split }
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: openBookMode ? "book.fill" : "book")
+                        .font(.system(size: 11, weight: .semibold))
+                    Text(openBookMode ? "Close Book" : "Open Book")
+                        .font(.system(size: 11, weight: .semibold))
+                }
+                .foregroundStyle(
+                    openBookMode
+                        ? LinearGradient(colors: [Color(hue: 0.55, saturation: 0.85, brightness: 1.0),
+                                                  Color(hue: 0.6,  saturation: 0.9,  brightness: 0.9)],
+                                         startPoint: .leading, endPoint: .trailing)
+                        : LinearGradient(colors: [Color(white: 0.55), Color(white: 0.45)],
+                                         startPoint: .leading, endPoint: .trailing)
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Group {
+                        if openBookMode {
+                            RoundedRectangle(cornerRadius: 7)
+                                .fill(Color(hue: 0.57, saturation: 0.6, brightness: 0.25))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 7)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [Color(hue: 0.55, saturation: 0.85, brightness: 0.9).opacity(0.7),
+                                                         Color(hue: 0.6,  saturation: 0.9,  brightness: 0.8).opacity(0.5)],
+                                                startPoint: .topLeading, endPoint: .bottomTrailing
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
+                        } else {
+                            RoundedRectangle(cornerRadius: 7)
+                                .fill(Color.white.opacity(0.06))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 7)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 0.75)
+                                )
+                        }
+                    }
+                )
+                .shadow(
+                    color: openBookMode ? Color(hue: 0.57, saturation: 0.8, brightness: 0.8).opacity(0.35) : .clear,
+                    radius: 8, x: 0, y: 2
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .animation(.easeInOut(duration: 0.2), value: openBookMode)
+
             // ── Stats Badges ──────────────────────────────────
             HStack(spacing: 8) {
                 HStack(spacing: 5) {
@@ -170,9 +237,83 @@ public struct ContentView: View {
     }
 
     private var dsaWorkspace: some View {
-        HStack(spacing: 0) {
-            // Left Column Pane (Questions & Description & Test Suite tabs: 380px)
-            VStack(spacing: 0) {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                if openBookMode {
+                    // ══ OPEN BOOK MODE ════════════════════════════════════
+                    // Left = Official Solution (read-only)
+                    openBookSolutionPane
+                        .frame(width: leftPaneWidth)
+
+                    SplitDragHandle(leftPaneWidth: $leftPaneWidth,
+                                    minLeft: 280,
+                                    maxLeft: geo.size.width - 320)
+
+                    // Right = User's Code Editor (pure, no toolbar/console)
+                    openBookEditorPane
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                } else {
+                    // ══ NORMAL MODE ═══════════════════════════════════════
+                    if focusMode != .editorFocused {
+                        leftPane
+                            .frame(
+                                width: focusMode == .infoFocused ? nil : leftPaneWidth,
+                                alignment: .leading
+                            )
+                            .frame(
+                                maxWidth: focusMode == .infoFocused ? .infinity : leftPaneWidth
+                            )
+                    }
+
+                    if focusMode == .split {
+                        SplitDragHandle(leftPaneWidth: $leftPaneWidth,
+                                        minLeft: 260,
+                                        maxLeft: geo.size.width - 320)
+                    }
+
+                    if focusMode != .infoFocused {
+                        rightPane
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+            }
+            .background(Color(red: 0.11, green: 0.12, blue: 0.15))
+        }
+    }
+
+    // MARK: - Open Book Solution Pane
+    /// Left pane in Open Book Mode: ONLY the solution, full height, nothing else.
+    private var openBookSolutionPane: some View {
+        DSASolutionView(
+            question: dsaViewModel.currentQuestion,
+            isFocused: false,
+            onToggleFocus: nil,
+            onInsertToEditor: {
+                dsaViewModel.insertSolutionToEditor()
+            }
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 0.09, green: 0.11, blue: 0.16))
+    }
+
+    // MARK: - Open Book Editor Pane
+    /// Right pane in Open Book Mode: ONLY the code editor, full height, nothing else.
+    private var openBookEditorPane: some View {
+        CodeEditorView(
+            code: $dsaViewModel.code,
+            fileName: "Solution.swift",
+            isFocused: false,
+            onToggleFocus: {}
+        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(red: 0.09, green: 0.10, blue: 0.13))
+    }
+
+    // MARK: - Left Pane
+    private var leftPane: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
                 CustomSegmentedPicker(
                     selection: $dsaPaneTab,
                     items: [.description, .solution, .testSuite],
@@ -191,109 +332,154 @@ public struct ContentView: View {
                         }
                     }
                 )
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                
-                Divider()
-                    .background(Color.white.opacity(0.08))
-                
-                Group {
-                    switch dsaPaneTab {
-                    case .description:
-                        DSADescriptionView(question: dsaViewModel.currentQuestion)
-                    case .solution:
-                        DSASolutionView(question: dsaViewModel.currentQuestion, onInsertToEditor: {
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        focusMode = (focusMode == .infoFocused) ? .split : .infoFocused
+                    }
+                }) {
+                    HStack(spacing: 3) {
+                        Image(systemName: focusMode == .infoFocused
+                              ? "arrow.down.right.and.arrow.up.left"
+                              : "arrow.up.left.and.arrow.down.right")
+                            .font(.system(size: 10, weight: .bold))
+                    }
+                    .foregroundColor(focusMode == .infoFocused ? .orange : Color(white: 0.5))
+                    .padding(6)
+                    .background(focusMode == .infoFocused
+                                ? Color.orange.opacity(0.15)
+                                : Color.white.opacity(0.06))
+                    .cornerRadius(5)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.trailing, 8)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+
+            Divider().background(Color.white.opacity(0.08))
+
+            Group {
+                switch dsaPaneTab {
+                case .description:
+                    DSADescriptionView(question: dsaViewModel.currentQuestion)
+                case .solution:
+                    DSASolutionView(
+                        question: dsaViewModel.currentQuestion,
+                        isFocused: focusMode == .infoFocused,
+                        onToggleFocus: {
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                focusMode = (focusMode == .infoFocused) ? .split : .infoFocused
+                            }
+                        },
+                        onInsertToEditor: {
                             dsaViewModel.insertSolutionToEditor()
-                        })
-                    case .testSuite:
-                        DSATestCasesView(viewModel: dsaViewModel)
-                            .padding(12)
-                    }
+                        }
+                    )
+                case .testSuite:
+                    DSATestCasesView(viewModel: dsaViewModel)
+                        .padding(12)
                 }
-                .frame(maxHeight: .infinity)
             }
-            .frame(width: 380)
-            .background(Color(red: 0.12, green: 0.14, blue: 0.18))
-            
-            Divider()
-                .background(Color.white.opacity(0.12))
-            
-            // Right Column Pane (Fluid Code Editor and Terminal output)
-            VStack(spacing: 0) {
-                CodeEditorView(code: $dsaViewModel.code, fileName: "Solution.swift")
-                    .frame(maxHeight: .infinity)
-                
-                Divider()
-                    .background(Color.white.opacity(0.08))
-                
-                // Command Toolbar - DSA
-                HStack(spacing: 10) {
-                    // Ghost reset button
-                    Button(action: { dsaViewModel.resetCode() }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "arrow.counterclockwise")
-                                .font(.system(size: 10, weight: .medium))
-                            Text("Reset")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .foregroundColor(Color(white: 0.5))
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 0.75)
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-
-                    // View Solution tab toggle button
-                    Button(action: { withAnimation { dsaPaneTab = .solution } }) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "lightbulb.fill")
-                                .font(.system(size: 10, weight: .medium))
-                            Text("Solution")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .foregroundStyle(
-                            LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-                        )
-                        .padding(.horizontal, 11)
-                        .padding(.vertical, 6)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(
-                                    LinearGradient(colors: [Color.orange.opacity(0.5), Color.red.opacity(0.4)], startPoint: .leading, endPoint: .trailing),
-                                    lineWidth: 0.75
-                                )
-                        )
-                    }
-                    .buttonStyle(PlainButtonStyle())
-
-                    // Copy Code Button
-                    CopyCodeButton(code: dsaViewModel.code)
-
-                    Spacer()
-
-                    // Glowing Run Suite button
-                    DSARunButton(isRunning: dsaViewModel.isRunning) {
-                        appState.incrementRunCount()
-                        Task {
-                            withAnimation { dsaPaneTab = .testSuite }
-                            await dsaViewModel.runCode()
-                        }
-                    }
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(Color(red: 0.08, green: 0.09, blue: 0.11))
-                
-                Divider()
-                    .background(Color.white.opacity(0.08))
-                
-                ConsoleView(output: dsaViewModel.consoleOutput, compilerError: dsaViewModel.compilerError)
-            }
+            .frame(maxHeight: .infinity)
         }
-        .background(Color(red: 0.11, green: 0.12, blue: 0.15))
+        .background(Color(red: 0.12, green: 0.14, blue: 0.18))
+    }
+
+    // MARK: - Right Pane
+    private var rightPane: some View {
+        VStack(spacing: 0) {
+            CodeEditorView(
+                code: $dsaViewModel.code,
+                fileName: "Solution.swift",
+                isFocused: focusMode == .editorFocused && !openBookMode,
+                onToggleFocus: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        if !openBookMode {
+                            focusMode = (focusMode == .editorFocused) ? .split : .editorFocused
+                        }
+                    }
+                }
+            )
+            .frame(maxHeight: .infinity)
+
+            Divider().background(Color.white.opacity(0.08))
+
+            // Command Toolbar
+            HStack(spacing: 10) {
+                Button(action: { dsaViewModel.resetCode() }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .font(.system(size: 10, weight: .medium))
+                        Text("Reset")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundColor(Color(white: 0.5))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color.white.opacity(0.1), lineWidth: 0.75)
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                Button(action: {
+                    withAnimation {
+                        dsaPaneTab = .solution
+                        if focusMode == .editorFocused { focusMode = .split }
+                    }
+                }) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "lightbulb.fill")
+                            .font(.system(size: 10, weight: .medium))
+                        Text("Solution")
+                            .font(.system(size: 11, weight: .medium))
+                    }
+                    .foregroundStyle(
+                        LinearGradient(colors: [.orange, .red],
+                                       startPoint: .leading, endPoint: .trailing)
+                    )
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(
+                                LinearGradient(colors: [Color.orange.opacity(0.5), Color.red.opacity(0.4)],
+                                               startPoint: .leading, endPoint: .trailing),
+                                lineWidth: 0.75
+                            )
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+
+                CopyCodeButton(code: dsaViewModel.code)
+
+                Spacer()
+
+                DSARunButton(isRunning: dsaViewModel.isRunning) {
+                    appState.incrementRunCount()
+                    Task {
+                        withAnimation {
+                            if focusMode == .editorFocused { focusMode = .split }
+                            dsaPaneTab = .testSuite
+                        }
+                        await dsaViewModel.runCode()
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(Color(red: 0.08, green: 0.09, blue: 0.11))
+
+            Divider().background(Color.white.opacity(0.08))
+
+            ConsoleView(
+                output: dsaViewModel.consoleOutput,
+                compilerError: dsaViewModel.compilerError
+            )
+            .frame(height: 180)
+        }
     }
     
     private func setupCallbacks() {
@@ -308,6 +494,78 @@ public struct ContentView: View {
         if let dsaQ = appState.selectedDSAQuestion {
             dsaViewModel.loadQuestion(dsaQ, draft: appState.userActivity.draftCodes[dsaQ.id])
         }
+    }
+}
+
+// MARK: - Draggable Split Handle
+/// A slim, interactive divider that lets the user drag left/right
+/// to resize the left info pane vs the right code-editor pane.
+struct SplitDragHandle: View {
+    @Binding var leftPaneWidth: CGFloat
+    let minLeft: CGFloat
+    let maxLeft: CGFloat
+
+    @State private var isHovering = false
+    @State private var isDragging = false
+
+    var body: some View {
+        ZStack {
+            // Invisible wide hit area for easy grab
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: 12)
+                .contentShape(Rectangle())
+
+            // Visible thin line
+            Rectangle()
+                .fill(
+                    isDragging
+                        ? Color.orange.opacity(0.85)
+                        : isHovering
+                            ? Color.white.opacity(0.4)
+                            : Color.white.opacity(0.12)
+                )
+                .frame(width: isDragging ? 2 : 1)
+                .animation(.easeInOut(duration: 0.15), value: isDragging)
+                .animation(.easeInOut(duration: 0.12), value: isHovering)
+
+            // Grip dots
+            VStack(spacing: 4) {
+                ForEach(0..<4, id: \.self) { _ in
+                    Circle()
+                        .fill(
+                            isDragging ? Color.orange : (isHovering ? Color.white.opacity(0.7) : Color.white.opacity(0.25))
+                        )
+                        .frame(width: 3, height: 3)
+                }
+            }
+            .opacity(isHovering || isDragging ? 1 : 0)
+            .animation(.easeInOut(duration: 0.15), value: isHovering)
+        }
+        .frame(width: 12)
+        .onHover { hovering in
+            isHovering = hovering
+            if hovering {
+                NSCursor.resizeLeftRight.push()
+            } else if !isDragging {
+                NSCursor.pop()
+            }
+        }
+        .gesture(
+            DragGesture(minimumDistance: 1)
+                .onChanged { value in
+                    if !isDragging {
+                        isDragging = true
+                        NSCursor.resizeLeftRight.push()
+                    }
+                    let proposed = leftPaneWidth + value.translation.width
+                    leftPaneWidth = min(max(proposed, minLeft), maxLeft)
+                }
+                .onEnded { _ in
+                    isDragging = false
+                    NSCursor.pop()
+                }
+        )
     }
 }
 
