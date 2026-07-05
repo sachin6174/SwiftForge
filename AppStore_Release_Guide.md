@@ -19,9 +19,20 @@ This guide details the complete process for building, signing, and releasing **S
 Before releasing to the Mac App Store, ensure you have:
 1. **Apple Developer Program Membership** (Individual or Organization account).
 2. **Mac App Store Distribution Certificate** & **App Store Provisioning Profile**.
-3. **App Store Connect App Record**:
-   - Create an app entry in [App Store Connect](https://appstoreconnect.apple.com) matching Bundle Identifier `com.swiftforge.app`.
-4. **Fastlane installed on your Mac**:
+22. **App Store Connect App Record Setup**:
+   - Go to [App Store Connect > Apps](https://appstoreconnect.apple.com/apps) and click **+ New App**.
+   - Fill in the required fields as follows:
+
+| Field | Value | Description |
+| :--- | :--- | :--- |
+| **Platforms** | ✅ `iOS`, ✅ `macOS` | Enable both iOS and macOS support |
+| **Name** | `SwiftForge` | Public App Store name |
+| **Primary Language** | `English (U.S.)` | Default store localization |
+| **Bundle ID** | `SwiftForge - in.sachinserver.swiftforge` | Registered App ID |
+| **SKU** | `SWIFTFORGE-2026-001` | Internal unique tracking ID |
+| **User Access** | `Full Access` | Developer team access level |
+
+24. **Fastlane installed on your Mac**:
    ```bash
    brew install fastlane
    # or

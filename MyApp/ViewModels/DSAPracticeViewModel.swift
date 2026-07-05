@@ -57,17 +57,22 @@ public class DSAPracticeViewModel: ObservableObject {
         self.compilerError = nil
         self.testcaseResults = []
         
+        LoggerService.shared.log("Initiating code run for question: \(question.title)", level: .info, category: .codeRunner)
+        
         let result = await codeRunner.runSwiftCode(code: code, appendHarness: question.testHarness ?? "")
         
         self.isRunning = false
         if result.exitCode == -2 {
             self.consoleOutput = "Native Swift execution not supported. Running in sandbox simulation mode...\n"
+            LoggerService.shared.log("Native execution unavailable for \(question.title). Running JS sandbox...", level: .warning, category: .codeRunner)
             self.runJSFallback()
         } else if result.exitCode != 0 {
             self.compilerError = result.stderr.isEmpty ? result.stdout : result.stderr
             self.consoleOutput = "Compilation Failed.\n\n" + (self.compilerError ?? "")
+            LoggerService.shared.log("Compilation/Execution failed for \(question.title):\n--- ERROR OUTPUT ---\n\(self.compilerError ?? "")", level: .error, category: .codeRunner)
         } else {
             self.consoleOutput = result.stdout
+            LoggerService.shared.log("Execution succeeded for \(question.title):\n--- EXECUTION OUTPUT ---\n\(result.stdout)", level: .success, category: .codeRunner)
             if question.category == "swiftPractice" {
                 if !result.stdout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     self.onSuccess?()
@@ -221,6 +226,7 @@ public class DSAPracticeViewModel: ObservableObject {
         
         let result = codeRunner.runJSCode(code: runnerScript)
         self.consoleOutput += "\n" + result
+        LoggerService.shared.log("JS Sandbox execution output for \(question.title):\n--- EXECUTION OUTPUT ---\n\(result)", level: .info, category: .codeRunner)
         self.parseDSAResults(stdout: result)
     }
     
@@ -272,7 +278,9 @@ public class DSAPracticeViewModel: ObservableObject {
         self.testcaseResults = parsedResults
         if !parsedResults.isEmpty {
             self.selectedTestCaseIndex = 0
-            let allPassed = parsedResults.allSatisfy { $0.isPass }
+            let passCount = parsedResults.filter { $0.isPass }.count
+            let allPassed = passCount == parsedResults.count
+            LoggerService.shared.log("Test suite summary for \(currentQuestion?.title ?? "Question"): \(passCount)/\(parsedResults.count) PASSED", level: allPassed ? .success : .warning, category: .codeRunner)
             if allPassed {
                 self.onSuccess?()
             }
