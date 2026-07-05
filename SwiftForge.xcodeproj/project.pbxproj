@@ -76,6 +76,8 @@
 				TargetAttributes = {
 					000000000000000100000000 = {
 						CreatedOnToolsVersion = 26.3;
+						DevelopmentTeam = M5Q7N9D29M;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -254,6 +256,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyApp/SwiftForge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
@@ -296,6 +299,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyApp/SwiftForge.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = M5Q7N9D29M;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;

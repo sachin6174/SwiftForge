@@ -62,46 +62,133 @@ public struct DSASolutionView: View {
                     }
                     
                     // Action Buttons (Copy & Insert)
-                    HStack(spacing: 10) {
-                        Button(action: copySolution) {
-                            HStack(spacing: 5) {
-                                Image(systemName: copiedToClipboard ? "checkmark.circle.fill" : "doc.on.doc.fill")
-                                    .font(.system(size: 11))
-                                Text(copiedToClipboard ? "Copied!" : "Copy Solution")
-                                    .font(.system(size: 11, weight: .semibold))
+                    if #available(iOS 16.0, macOS 13.0, *) {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 10) {
+                                Button(action: copySolution) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: copiedToClipboard ? "checkmark.circle.fill" : "doc.on.doc.fill")
+                                            .font(.system(size: 11))
+                                        Text(copiedToClipboard ? "Copied!" : "Copy Solution")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundColor(copiedToClipboard ? .green : .white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(copiedToClipboard ? Color.green.opacity(0.15) : Color.white.opacity(0.08))
+                                    .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(copiedToClipboard ? Color.green.opacity(0.4) : Color.white.opacity(0.15), lineWidth: 0.75)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: insertToEditor) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: insertedToEditor ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
+                                            .font(.system(size: 11))
+                                        Text(insertedToEditor ? "Inserted to Editor!" : "Insert to Editor")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundStyle(
+                                        LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
+                                    )
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.orange.opacity(0.12))
+                                    .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.orange.opacity(0.35), lineWidth: 0.75)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .foregroundColor(copiedToClipboard ? .green : .white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(copiedToClipboard ? Color.green.opacity(0.15) : Color.white.opacity(0.08))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(copiedToClipboard ? Color.green.opacity(0.4) : Color.white.opacity(0.15), lineWidth: 0.75)
-                            )
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        
-                        Button(action: insertToEditor) {
-                            HStack(spacing: 5) {
-                                Image(systemName: insertedToEditor ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
-                                    .font(.system(size: 11))
-                                Text(insertedToEditor ? "Inserted to Editor!" : "Insert to Editor")
-                                    .font(.system(size: 11, weight: .semibold))
+                            VStack(alignment: .leading, spacing: 8) {
+                                Button(action: copySolution) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: copiedToClipboard ? "checkmark.circle.fill" : "doc.on.doc.fill")
+                                            .font(.system(size: 11))
+                                        Text(copiedToClipboard ? "Copied!" : "Copy Solution")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundColor(copiedToClipboard ? .green : .white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(copiedToClipboard ? Color.green.opacity(0.15) : Color.white.opacity(0.08))
+                                    .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(copiedToClipboard ? Color.green.opacity(0.4) : Color.white.opacity(0.15), lineWidth: 0.75)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                
+                                Button(action: insertToEditor) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: insertedToEditor ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
+                                            .font(.system(size: 11))
+                                        Text(insertedToEditor ? "Inserted to Editor!" : "Insert to Editor")
+                                            .font(.system(size: 11, weight: .semibold))
+                                    }
+                                    .foregroundStyle(
+                                        LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
+                                    )
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color.orange.opacity(0.12))
+                                    .cornerRadius(6)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.orange.opacity(0.35), lineWidth: 0.75)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .foregroundStyle(
-                                LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-                            )
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(Color.orange.opacity(0.12))
-                            .cornerRadius(6)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .stroke(Color.orange.opacity(0.35), lineWidth: 0.75)
-                            )
                         }
-                        .buttonStyle(PlainButtonStyle())
+                    } else {
+                        HStack(spacing: 10) {
+                            Button(action: copySolution) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: copiedToClipboard ? "checkmark.circle.fill" : "doc.on.doc.fill")
+                                        .font(.system(size: 11))
+                                    Text(copiedToClipboard ? "Copied!" : "Copy Solution")
+                                        .font(.system(size: 11, weight: .semibold))
+                                }
+                                .foregroundColor(copiedToClipboard ? .green : .white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(copiedToClipboard ? Color.green.opacity(0.15) : Color.white.opacity(0.08))
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(copiedToClipboard ? Color.green.opacity(0.4) : Color.white.opacity(0.15), lineWidth: 0.75)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
+                            Button(action: insertToEditor) {
+                                HStack(spacing: 5) {
+                                    Image(systemName: insertedToEditor ? "checkmark.circle.fill" : "square.and.arrow.down.fill")
+                                        .font(.system(size: 11))
+                                    Text(insertedToEditor ? "Inserted to Editor!" : "Insert to Editor")
+                                        .font(.system(size: 11, weight: .semibold))
+                                }
+                                .foregroundStyle(
+                                    LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
+                                )
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.orange.opacity(0.12))
+                                .cornerRadius(6)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(Color.orange.opacity(0.35), lineWidth: 0.75)
+                                )
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
                     }
                     
                     Divider()

@@ -17,18 +17,50 @@ public struct DSADescriptionView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                         
-                        HStack(spacing: 8) {
-                            Text(question.difficulty)
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(getDifficultyColor(question.difficulty))
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
-                                .background(getDifficultyColor(question.difficulty).opacity(0.15))
-                                .cornerRadius(4)
-                            
-                            Text("Topics: " + question.topics.joined(separator: ", "))
-                                .font(.system(size: 10))
-                                .foregroundColor(.gray)
+                        if #available(iOS 16.0, macOS 13.0, *) {
+                            ViewThatFits(in: .horizontal) {
+                                HStack(spacing: 8) {
+                                    Text(question.difficulty)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(getDifficultyColor(question.difficulty))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(getDifficultyColor(question.difficulty).opacity(0.15))
+                                        .cornerRadius(4)
+                                    
+                                    Text("Topics: " + question.topics.joined(separator: ", "))
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.gray)
+                                        .lineLimit(1)
+                                }
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(question.difficulty)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(getDifficultyColor(question.difficulty))
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(getDifficultyColor(question.difficulty).opacity(0.15))
+                                        .cornerRadius(4)
+                                    
+                                    Text("Topics: " + question.topics.joined(separator: ", "))
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.gray)
+                                }
+                            }
+                        } else {
+                            HStack(spacing: 8) {
+                                Text(question.difficulty)
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(getDifficultyColor(question.difficulty))
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 3)
+                                    .background(getDifficultyColor(question.difficulty).opacity(0.15))
+                                    .cornerRadius(4)
+                                
+                                Text("Topics: " + question.topics.joined(separator: ", "))
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.gray)
+                            }
                         }
                     }
                     

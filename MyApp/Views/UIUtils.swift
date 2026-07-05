@@ -167,3 +167,46 @@ public struct LineConnector: View {
         .frame(width: 30, height: 20)
     }
 }
+
+public struct DSARunButton: View {
+    let isRunning: Bool
+    let action: () -> Void
+
+    public init(isRunning: Bool, action: @escaping () -> Void) {
+        self.isRunning = isRunning
+        self.action = action
+    }
+
+    public var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if isRunning {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.7)
+                } else {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 10, weight: .bold))
+                }
+                Text(isRunning ? "Running..." : "Run Code")
+                    .font(.system(size: 11, weight: .bold))
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.green.opacity(0.85), Color.teal.opacity(0.75)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .shadow(color: Color.green.opacity(0.3), radius: 5, x: 0, y: 2)
+        }
+        .disabled(isRunning)
+        .buttonStyle(PlainButtonStyle())
+    }
+}

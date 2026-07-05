@@ -2,6 +2,9 @@ import SwiftUI
 import JavaScriptCore
 import Combine
 import AppIntents
+#if os(macOS)
+import AppKit
+#endif
 
 @available(macOS 13.0, iOS 16.0, *)
 struct SwiftForgeShortcuts: AppShortcutsProvider {
@@ -22,14 +25,34 @@ public struct ContentView: View {
     @StateObject private var appState = AppState()
     @StateObject private var dsaViewModel = DSAPracticeViewModel()
     
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @State private var isSidebarPresented: Bool = false
+    
     public enum WorkspaceFocusMode {
         case split
         case infoFocused
         case editorFocused
     }
     
+    public enum MobileWorkspaceTab: String, CaseIterable {
+        case description = "Description"
+        case editor = "Code"
+        case solution = "Solution"
+        case testSuite = "Tests"
+        
+        var icon: String {
+            switch self {
+            case .description: return "doc.text.fill"
+            case .editor: return "chevron.left.forwardslash.chevron.right"
+            case .solution: return "lightbulb.fill"
+            case .testSuite: return "checkmark.seal.fill"
+            }
+        }
+    }
+    
     @State private var focusMode: WorkspaceFocusMode = .split
     @State private var dsaPaneTab: DSAPaneTab = .description
+    @State private var mobileTab: MobileWorkspaceTab = .editor
     @State private var leftPaneWidth: CGFloat = 380
     /// Open Book Mode: solution on left, editor on right — simultaneously
     @State private var openBookMode: Bool = false
@@ -40,37 +63,70 @@ public struct ContentView: View {
         case testSuite
     }
     
+    private var isCompact: Bool {
+        horizontalSizeClass == .compact
+    }
+    
     public init() {}
     
     public var body: some View {
-        HStack(spacing: 0) {
-            SidebarView(
-                appState: appState,
-                onDSASelect: { question in
-                    dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
-                    withAnimation {
-                        dsaPaneTab = .description
+        Group {
+            if isCompact {
+                // ── iOS Compact Mobile Layout ────────────────────────
+                VStack(spacing: 0) {
+                    topHeader
+                    
+                    Divider().background(Color.white.opacity(0.08))
+                    
+                    mobileSegmentedTabBar
+                    
+                    Divider().background(Color.white.opacity(0.08))
+                    
+                    mobileWorkspace
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .sheet(isPresented: $isSidebarPresented) {
+                    SidebarView(
+                        appState: appState,
+                        onDSASelect: { question in
+                            dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
+                            isSidebarPresented = false
+                        }
+                    )
+                    .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+                }
+            } else {
+                // ── macOS & iPad Regular Desktop Layout ──────────────
+                HStack(spacing: 0) {
+                    SidebarView(
+                        appState: appState,
+                        onDSASelect: { question in
+                            dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
+                            withAnimation {
+                                dsaPaneTab = .description
+                            }
+                        }
+                    )
+                    
+                    Divider()
+                        .background(Color.white.opacity(0.12))
+                    
+                    VStack(spacing: 0) {
+                        topHeader
+                        
+                        Divider()
+                            .background(Color.white.opacity(0.08))
+                        
+                        dsaWorkspace
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
-            )
-            
-            Divider()
-                .background(Color.white.opacity(0.12))
-            
-            VStack(spacing: 0) {
-                // Premium Top Header Banner
-                topHeader
-                
-                Divider()
-                    .background(Color.white.opacity(0.08))
-                
-                // Main Content Area (DSA Workspace)
-                dsaWorkspace
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .preferredColorScheme(.dark)
-        .frame(minWidth: 1100, minHeight: 700)
+        #if os(macOS)
+        .frame(minWidth: 960, minHeight: 640)
+        #endif
         .environmentObject(appState)
         .onAppear {
             setupCallbacks()
@@ -86,8 +142,22 @@ public struct ContentView: View {
         }
     }
     
+    // MARK: - Top Header Bar
     private var topHeader: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
+            // Mobile Sidebar Toggle
+            if isCompact {
+                Button(action: { isSidebarPresented = true }) {
+                    Image(systemName: "sidebar.left")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(8)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
             // Header title / breadcrumb
             HStack(spacing: 6) {
                 Image(systemName: appState.activeTab == .swiftPractice ? "network" : "square.grid.3x3.fill")
@@ -109,6 +179,7 @@ public struct ContentView: View {
                     Text(question.title)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Color(white: 0.65))
+                        .lineLimit(1)
                 }
             }
 
@@ -118,11 +189,10 @@ public struct ContentView: View {
             Button(action: {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     openBookMode.toggle()
-                    // Exit any focus mode so both panes are visible
                     if openBookMode { focusMode = .split }
                 }
             }) {
-                HStack(spacing: 6) {
+                HStack(spacing: 5) {
                     Image(systemName: openBookMode ? "book.fill" : "book")
                         .font(.system(size: 11, weight: .semibold))
                     Text(openBookMode ? "Close Book" : "Open Book")
@@ -136,7 +206,7 @@ public struct ContentView: View {
                         : LinearGradient(colors: [Color(white: 0.55), Color(white: 0.45)],
                                          startPoint: .leading, endPoint: .trailing)
                 )
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 10)
                 .padding(.vertical, 6)
                 .background(
                     Group {
@@ -164,84 +234,141 @@ public struct ContentView: View {
                         }
                     }
                 )
-                .shadow(
-                    color: openBookMode ? Color(hue: 0.57, saturation: 0.8, brightness: 0.8).opacity(0.35) : .clear,
-                    radius: 8, x: 0, y: 2
-                )
             }
             .buttonStyle(PlainButtonStyle())
-            .animation(.easeInOut(duration: 0.2), value: openBookMode)
 
             // ── Stats Badges ──────────────────────────────────
-            HStack(spacing: 8) {
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(
-                            LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom)
-                        )
-                        .font(.system(size: 11))
-                    Text("\(appState.userActivity.streak) day streak")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(LinearGradient(
-                            colors: [Color.orange.opacity(0.18), Color.red.opacity(0.12)],
-                            startPoint: .topLeading, endPoint: .bottomTrailing
-                        ))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.orange.opacity(0.3), lineWidth: 0.75)
-                        )
-                )
+            if !isCompact {
+                HStack(spacing: 8) {
+                    HStack(spacing: 5) {
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(
+                                LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom)
+                            )
+                            .font(.system(size: 11))
+                        Text("\(appState.userActivity.streak) day streak")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(LinearGradient(
+                                colors: [Color.orange.opacity(0.18), Color.red.opacity(0.12)],
+                                startPoint: .topLeading, endPoint: .bottomTrailing
+                            ))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.orange.opacity(0.3), lineWidth: 0.75)
+                            )
+                    )
 
-                HStack(spacing: 5) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .foregroundColor(.green)
-                        .font(.system(size: 11))
-                    let solved = appState.userActivity.solvedQuestionIds.count
-                    Text("\(solved)/\(appState.questions.count) solved")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundColor(.green)
+                            .font(.system(size: 11))
+                        let solved = appState.userActivity.solvedQuestionIds.count
+                        Text("\(solved)/\(appState.questions.count) solved")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.green.opacity(0.1))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(Color.green.opacity(0.28), lineWidth: 0.75)
+                            )
+                    )
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.green.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 6)
-                                .stroke(Color.green.opacity(0.28), lineWidth: 0.75)
-                        )
-                )
             }
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(
-            ZStack {
-                Color(red: 0.07, green: 0.08, blue: 0.10)
-                VStack {
-                    Spacer()
-                    LinearGradient(
-                        colors: [Color.orange.opacity(0.10), Color.clear],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                    .frame(height: 1)
-                }
-            }
-        )
+        .background(Color(red: 0.07, green: 0.08, blue: 0.10))
     }
 
+    // MARK: - Mobile Segmented Tab Bar (iOS)
+    private var mobileSegmentedTabBar: some View {
+        HStack(spacing: 4) {
+            ForEach(MobileWorkspaceTab.allCases, id: \.self) { tab in
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.15)) {
+                        mobileTab = tab
+                        if tab == .solution { dsaPaneTab = .solution }
+                        if tab == .description { dsaPaneTab = .description }
+                        if tab == .testSuite { dsaPaneTab = .testSuite }
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 11, weight: .medium))
+                        Text(tab.rawValue)
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .foregroundColor(mobileTab == tab ? .white : Color(white: 0.5))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(
+                        Group {
+                            if mobileTab == tab {
+                                RoundedRectangle(cornerRadius: 7)
+                                    .fill(LinearGradient(colors: [Color.orange.opacity(0.8), Color.red.opacity(0.7)],
+                                                         startPoint: .leading, endPoint: .trailing))
+                            } else {
+                                Color.clear
+                            }
+                        }
+                    )
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+        .padding(4)
+        .background(Color(red: 0.10, green: 0.11, blue: 0.14))
+    }
+
+    // MARK: - Mobile Workspace (iOS)
+    private var mobileWorkspace: some View {
+        Group {
+            if openBookMode {
+                VStack(spacing: 0) {
+                    openBookSolutionPane
+                        .frame(maxHeight: .infinity)
+                    Divider().background(Color.orange.opacity(0.3))
+                    openBookEditorPane
+                        .frame(maxHeight: .infinity)
+                }
+            } else {
+                switch mobileTab {
+                case .description:
+                    DSADescriptionView(question: dsaViewModel.currentQuestion)
+                case .solution:
+                    openBookSolutionPane
+                case .editor:
+                    rightPane
+                case .testSuite:
+                    VStack(spacing: 0) {
+                        DSATestCasesView(viewModel: dsaViewModel)
+                            .padding(12)
+                        Divider().background(Color.white.opacity(0.08))
+                        ConsoleView(output: dsaViewModel.consoleOutput, compilerError: dsaViewModel.compilerError)
+                            .frame(height: 200)
+                    }
+                }
+            }
+        }
+        .background(Color(red: 0.11, green: 0.12, blue: 0.15))
+    }
+
+    // MARK: - Desktop / iPad DSA Workspace
     private var dsaWorkspace: some View {
         GeometryReader { geo in
             HStack(spacing: 0) {
                 if openBookMode {
-                    // ══ OPEN BOOK MODE ════════════════════════════════════
-                    // Left = Official Solution (read-only)
                     openBookSolutionPane
                         .frame(width: leftPaneWidth)
 
@@ -249,12 +376,9 @@ public struct ContentView: View {
                                     minLeft: 280,
                                     maxLeft: geo.size.width - 320)
 
-                    // Right = User's Code Editor (pure, no toolbar/console)
                     openBookEditorPane
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-
                 } else {
-                    // ══ NORMAL MODE ═══════════════════════════════════════
                     if focusMode != .editorFocused {
                         leftPane
                             .frame(
@@ -283,7 +407,6 @@ public struct ContentView: View {
     }
 
     // MARK: - Open Book Solution Pane
-    /// Left pane in Open Book Mode: ONLY the solution, full height, nothing else.
     private var openBookSolutionPane: some View {
         DSASolutionView(
             question: dsaViewModel.currentQuestion,
@@ -298,7 +421,6 @@ public struct ContentView: View {
     }
 
     // MARK: - Open Book Editor Pane
-    /// Right pane in Open Book Mode: ONLY the code editor, full height, nothing else.
     private var openBookEditorPane: some View {
         CodeEditorView(
             code: $dsaViewModel.code,
@@ -428,6 +550,7 @@ public struct ContentView: View {
                     withAnimation {
                         dsaPaneTab = .solution
                         if focusMode == .editorFocused { focusMode = .split }
+                        if isCompact { mobileTab = .solution }
                     }
                 }) {
                     HStack(spacing: 5) {
@@ -463,6 +586,7 @@ public struct ContentView: View {
                         withAnimation {
                             if focusMode == .editorFocused { focusMode = .split }
                             dsaPaneTab = .testSuite
+                            if isCompact { mobileTab = .testSuite }
                         }
                         await dsaViewModel.runCode()
                     }
@@ -498,8 +622,6 @@ public struct ContentView: View {
 }
 
 // MARK: - Draggable Split Handle
-/// A slim, interactive divider that lets the user drag left/right
-/// to resize the left info pane vs the right code-editor pane.
 struct SplitDragHandle: View {
     @Binding var leftPaneWidth: CGFloat
     let minLeft: CGFloat
@@ -510,13 +632,11 @@ struct SplitDragHandle: View {
 
     var body: some View {
         ZStack {
-            // Invisible wide hit area for easy grab
             Rectangle()
                 .fill(Color.clear)
                 .frame(width: 12)
                 .contentShape(Rectangle())
 
-            // Visible thin line
             Rectangle()
                 .fill(
                     isDragging
@@ -529,7 +649,6 @@ struct SplitDragHandle: View {
                 .animation(.easeInOut(duration: 0.15), value: isDragging)
                 .animation(.easeInOut(duration: 0.12), value: isHovering)
 
-            // Grip dots
             VStack(spacing: 4) {
                 ForEach(0..<4, id: \.self) { _ in
                     Circle()
@@ -545,25 +664,31 @@ struct SplitDragHandle: View {
         .frame(width: 12)
         .onHover { hovering in
             isHovering = hovering
+            #if os(macOS)
             if hovering {
                 NSCursor.resizeLeftRight.push()
             } else if !isDragging {
                 NSCursor.pop()
             }
+            #endif
         }
         .gesture(
             DragGesture(minimumDistance: 1)
                 .onChanged { value in
                     if !isDragging {
                         isDragging = true
+                        #if os(macOS)
                         NSCursor.resizeLeftRight.push()
+                        #endif
                     }
                     let proposed = leftPaneWidth + value.translation.width
                     leftPaneWidth = min(max(proposed, minLeft), maxLeft)
                 }
                 .onEnded { _ in
                     isDragging = false
+                    #if os(macOS)
                     NSCursor.pop()
+                    #endif
                 }
         )
     }
@@ -579,46 +704,31 @@ struct CustomSegmentedPicker<T: Hashable>: View {
         HStack(spacing: 2) {
             ForEach(items, id: \.self) { item in
                 let isSelected = selection == item
-
                 Button(action: {
-                    withAnimation(.interactiveSpring(response: 0.28, dampingFraction: 0.72)) {
+                    withAnimation(.easeInOut(duration: 0.15)) {
                         selection = item
                     }
                 }) {
                     HStack(spacing: 5) {
                         Image(systemName: iconFor(item))
-                            .font(.system(size: 10.5, weight: isSelected ? .semibold : .medium))
-                            .foregroundStyle(
-                                isSelected
-                                    ? LinearGradient(colors: [.orange, .red], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                    : LinearGradient(colors: [Color.gray.opacity(0.6), Color.gray.opacity(0.6)], startPoint: .top, endPoint: .bottom)
-                            )
+                            .font(.system(size: 11))
                         Text(titleFor(item))
-                            .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
-                            .foregroundColor(isSelected ? .white : Color(white: 0.5))
+                            .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                     }
+                    .foregroundColor(isSelected ? .white : Color(white: 0.5))
+                    .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .padding(.horizontal, 12)
-                    .frame(maxWidth: .infinity)
                     .background(
                         Group {
                             if isSelected {
                                 RoundedRectangle(cornerRadius: 6)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.orange.opacity(0.22), Color.red.opacity(0.14)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 6)
-                                            .stroke(Color.orange.opacity(0.3), lineWidth: 0.75)
-                                    )
-                                    .shadow(color: Color.orange.opacity(0.2), radius: 4, y: 2)
+                                    .fill(LinearGradient(
+                                        colors: [Color.orange.opacity(0.8), Color.red.opacity(0.7)],
+                                        startPoint: .leading, endPoint: .trailing
+                                    ))
+                                    .shadow(color: Color.orange.opacity(0.3), radius: 4, x: 0, y: 2)
                             } else {
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.clear)
+                                Color.clear
                             }
                         }
                     )
@@ -628,100 +738,38 @@ struct CustomSegmentedPicker<T: Hashable>: View {
         }
         .padding(3)
         .background(
-            RoundedRectangle(cornerRadius: 9)
-                .fill(Color(red: 0.06, green: 0.07, blue: 0.09))
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.05))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 9)
-                        .stroke(Color.white.opacity(0.06), lineWidth: 0.75)
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 0.75)
                 )
         )
     }
 }
-// MARK: - Premium Run Button with Glow Pulse
-struct DSARunButton: View {
-    let isRunning: Bool
-    let action: () -> Void
 
-    @State private var glowPulse = false
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                if isRunning {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                        .scaleEffect(0.65)
-                    Text("Running...")
-                        .font(.system(size: 11, weight: .semibold))
-                } else {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 10, weight: .bold))
-                    Text("Run Suite")
-                        .font(.system(size: 11, weight: .bold))
-                }
-            }
-            .foregroundColor(.white)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 7)
-            .background(
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.orange, Color(red: 0.9, green: 0.2, blue: 0.1)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .cornerRadius(7)
-
-                    // Outer glow pulse when idle
-                    if !isRunning {
-                        RoundedRectangle(cornerRadius: 7)
-                            .stroke(Color.orange.opacity(glowPulse ? 0.55 : 0.15), lineWidth: glowPulse ? 2 : 1)
-                            .scaleEffect(glowPulse ? 1.04 : 1.0)
-                            .animation(
-                                Animation.easeInOut(duration: 1.6).repeatForever(autoreverses: true),
-                                value: glowPulse
-                            )
-                    }
-                }
-            )
-            .shadow(color: Color.orange.opacity(isRunning ? 0.1 : 0.3), radius: isRunning ? 2 : 6, y: 2)
-            .cornerRadius(7)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .keyboardShortcut("r", modifiers: .command)
-        .disabled(isRunning)
-        .onAppear { glowPulse = true }
-    }
-}
-
-// MARK: - Reusable Copy Code Button Component
+// MARK: - Copy Code Button Component
 struct CopyCodeButton: View {
     let code: String
     @State private var isCopied = false
 
     var body: some View {
         Button(action: {
-            if !code.isEmpty {
-                #if os(macOS)
-                NSPasteboard.general.clearContents()
-                NSPasteboard.general.setString(code, forType: .string)
-                #elseif os(iOS)
-                UIPasteboard.general.string = code
-                #endif
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    isCopied = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation(.easeInOut(duration: 0.15)) {
-                        isCopied = false
-                    }
-                }
+            #if os(macOS)
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(code, forType: .string)
+            #elseif os(iOS)
+            UIPasteboard.general.string = code
+            #endif
+            withAnimation { isCopied = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                withAnimation { isCopied = false }
             }
         }) {
             HStack(spacing: 5) {
                 Image(systemName: isCopied ? "checkmark" : "doc.on.doc")
                     .font(.system(size: 10, weight: .medium))
-                Text(isCopied ? "Copied!" : "Copy Code")
+                Text(isCopied ? "Copied!" : "Copy")
                     .font(.system(size: 11, weight: .medium))
             }
             .foregroundColor(isCopied ? .green : Color(white: 0.5))

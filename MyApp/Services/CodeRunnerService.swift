@@ -7,12 +7,32 @@ public protocol CodeRunnerProtocol {
     func transpileSwiftToJS(swift: String) -> String
 }
 
+private final class SafeDataBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var data = Data()
+    
+    func append(_ newBuffer: Data) {
+        lock.lock()
+        defer { lock.unlock() }
+        data.append(newBuffer)
+    }
+    
+    func getData() -> Data {
+        lock.lock()
+        defer { lock.unlock() }
+        return data
+    }
+}
+
 public class CodeRunnerService: CodeRunnerProtocol {
+    public static let shared = CodeRunnerService()
+    
     public init() {}
     
     public func runSwiftCode(code: String, appendHarness: String) async -> (stdout: String, stderr: String, exitCode: Int32) {
-        #if os(macOS)
-        var fullCode = code + "\n" + appendHarness
+        var fullCode = code + "\n\n" + appendHarness
+        
+        // Ensure standard Foundation & Dispatch imports exist
         var imports = ""
         if !fullCode.contains("import Foundation") {
             imports += "import Foundation\n"
@@ -42,6 +62,7 @@ public class CodeRunnerService: CodeRunnerProtocol {
         
         LoggerService.shared.log("Compiling & executing Swift script: \(tempFile.lastPathComponent)", level: .info)
         
+        #if os(macOS)
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/swift")
         process.arguments = [tempFile.path]
@@ -54,8 +75,8 @@ public class CodeRunnerService: CodeRunnerProtocol {
         let stdoutHandle = stdoutPipe.fileHandleForReading
         let stderrHandle = stderrPipe.fileHandleForReading
         
-        let stdoutBuffer = NSMutableData()
-        let stderrBuffer = NSMutableData()
+        let stdoutBuffer = SafeDataBuffer()
+        let stderrBuffer = SafeDataBuffer()
         
         stdoutHandle.readabilityHandler = { handle in
             let data = handle.availableData
@@ -87,8 +108,8 @@ public class CodeRunnerService: CodeRunnerProtocol {
             stdoutHandle.readabilityHandler = nil
             stderrHandle.readabilityHandler = nil
             
-            let stdout = String(data: stdoutBuffer as Data, encoding: .utf8) ?? ""
-            let stderr = String(data: stderrBuffer as Data, encoding: .utf8) ?? ""
+            let stdout = String(data: stdoutBuffer.getData(), encoding: .utf8) ?? ""
+            let stderr = String(data: stderrBuffer.getData(), encoding: .utf8) ?? ""
 
             // Cap output to 512 KB to prevent memory exhaustion from runaway loops
             let cappedStdout = String(stdout.prefix(524_288))
@@ -115,7 +136,9 @@ public class CodeRunnerService: CodeRunnerProtocol {
             return (fallbackOutput, "", 0)
         }
         #else
-        return ("", "Process execution not supported on this platform.", -2)
+        let jsCode = transpileSwiftToJS(swift: fullCode)
+        let fallbackOutput = runJSCode(code: jsCode)
+        return (fallbackOutput, "", 0)
         #endif
     }
     
@@ -132,6 +155,37 @@ public class CodeRunnerService: CodeRunnerProtocol {
         context.setObject(consoleLog, forKeyedSubscript: "print" as NSString)
         context.evaluateScript("var console = { log: function() { var args = Array.prototype.slice.call(arguments); print(args.join(' ')); } };")
         
+        let dispatchMockHeader = """
+        var DispatchQueue = {
+            main: {
+                async: function(fn) { if (typeof fn === 'function') fn(); },
+                asyncAfter: function(opts, fn) { if (typeof fn === 'function') fn(); }
+            },
+            global: function(qos) {
+                return {
+                    async: function(fn) { if (typeof fn === 'function') fn(); },
+                    asyncAfter: function(opts, fn) { if (typeof fn === 'function') fn(); }
+                };
+            }
+        };
+
+        class DispatchGroup {
+            constructor() { this.count = 0; }
+            enter() { this.count++; }
+            leave() { this.count--; }
+            notify(queue, fn) { if (typeof fn === 'function') fn(); }
+        }
+
+        class DispatchWorkItem {
+            constructor(flags, block) {
+                this.block = typeof flags === 'function' ? flags : block;
+            }
+            perform() { if (typeof this.block === 'function') this.block(); }
+            cancel() {}
+        }
+        """
+        context.evaluateScript(dispatchMockHeader)
+        
         context.exceptionHandler = { ctx, exception in
             let error = exception?.toString() ?? "Unknown exception"
             logs += "JS Exception: \(error)\n"
@@ -146,13 +200,22 @@ public class CodeRunnerService: CodeRunnerProtocol {
     public func transpileSwiftToJS(swift: String) -> String {
         var js = swift
         
-        let types = [": [[Character]]", ": [[Int]]", ": [Character]", ": [Int]", ": Int", ": Double", ": String", ": Bool", "-> Int", "-> Double", "-> String", "-> Bool"]
+        js = js.replacingOccurrences(of: "import Foundation", with: "")
+        js = js.replacingOccurrences(of: "import SwiftUI", with: "")
+        js = js.replacingOccurrences(of: "import Dispatch", with: "")
+        js = js.replacingOccurrences(of: "import Combine", with: "")
+        
+        // Replace DispatchQueue trailing closures for JS execution
+        let dispatchAsyncRegex = try? NSRegularExpression(pattern: "DispatchQueue\\.(main|global\\([^)]*\\))\\.async\\s*\\{([\\s\\S]*?)\\}", options: [])
+        js = dispatchAsyncRegex?.stringByReplacingMatches(in: js, options: [], range: NSRange(js.startIndex..., in: js), withTemplate: "DispatchQueue.$1.async(function() { $2 })") ?? js
+        
+        let dispatchAsyncAfterRegex = try? NSRegularExpression(pattern: "DispatchQueue\\.(main|global\\([^)]*\\))\\.asyncAfter\\([^)]+\\)\\s*\\{([\\s\\S]*?)\\}", options: [])
+        js = dispatchAsyncAfterRegex?.stringByReplacingMatches(in: js, options: [], range: NSRange(js.startIndex..., in: js), withTemplate: "DispatchQueue.$1.asyncAfter(null, function() { $2 })") ?? js
+        
+        let types = [": [[Character]]", ": [[Int]]", ": [Character]", ": [Int]", ": Int", ": Double", ": String", ": Bool", "-> Int", "-> Double", "-> String", "-> Bool", "-> Void"]
         for type in types {
             js = js.replacingOccurrences(of: type, with: "")
         }
-        
-        js = js.replacingOccurrences(of: "import Foundation", with: "")
-        js = js.replacingOccurrences(of: "import SwiftUI", with: "")
         
         js = js.replacingOccurrences(of: ".count", with: ".length")
         js = js.replacingOccurrences(of: ".isEmpty", with: ".length === 0")
@@ -188,6 +251,9 @@ public class CodeRunnerService: CodeRunnerProtocol {
         
         let varRegex = try? NSRegularExpression(pattern: "\\bvar\\b", options: [])
         js = varRegex?.stringByReplacingMatches(in: js, options: [], range: NSRange(js.startIndex..., in: js), withTemplate: "let") ?? js
+        
+        let classInstRegex = try? NSRegularExpression(pattern: "(=\\s*)([A-Z]\\w*)\\(\\)", options: [])
+        js = classInstRegex?.stringByReplacingMatches(in: js, options: [], range: NSRange(js.startIndex..., in: js), withTemplate: "$1new $2()") ?? js
         
         let guardRegex = try? NSRegularExpression(pattern: "guard\\s+([^{]+)\\s+else\\s*\\{\\s*return\\s*([^}]*)\\s*\\}", options: [])
         js = guardRegex?.stringByReplacingMatches(in: js, options: [], range: NSRange(js.startIndex..., in: js), withTemplate: "if (!($1)) { return $2; }") ?? js

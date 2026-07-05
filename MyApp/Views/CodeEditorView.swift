@@ -102,14 +102,24 @@ public struct CodeEditorView: View {
                 MacCodeEditor(text: $code)
                     .frame(maxHeight: .infinity)
                 #else
-                TextEditor(text: $code)
-                    .font(.system(size: 13, weight: .regular, design: .monospaced))
-                    .scrollContentBackground(.hidden)
-                    .background(Color(red: 0.07, green: 0.07, blue: 0.09))
-                    .foregroundColor(.white)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-                    .frame(maxHeight: .infinity)
+                if #available(iOS 16.0, *) {
+                    TextEditor(text: $code)
+                        .font(.system(size: 13, weight: .regular, design: .monospaced))
+                        .scrollContentBackground(.hidden)
+                        .background(Color(red: 0.07, green: 0.07, blue: 0.09))
+                        .foregroundColor(.white)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .frame(maxHeight: .infinity)
+                } else {
+                    TextEditor(text: $code)
+                        .font(.system(size: 13, weight: .regular, design: .monospaced))
+                        .background(Color(red: 0.07, green: 0.07, blue: 0.09))
+                        .foregroundColor(.white)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .frame(maxHeight: .infinity)
+                }
                 #endif
             }
             .frame(maxHeight: .infinity)
