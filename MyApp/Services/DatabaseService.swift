@@ -205,6 +205,7 @@ class Solution {
         return stack.isEmpty
     }
 }
+""",
                 testHarness: """
 let solution = Solution()
 struct TestCase {
@@ -329,6 +330,7 @@ class Solution {
         return prev
     }
 }
+""",
                 testHarness: """
 func arrayToList(_ arr: [Int]) -> ListNode? {
     let dummy = ListNode(0)
