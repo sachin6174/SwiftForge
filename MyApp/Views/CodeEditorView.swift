@@ -10,7 +10,10 @@ public struct CodeEditorView: View {
     let fileName: String
     let isFocused: Bool
     let onToggleFocus: (() -> Void)?
-    
+    #if os(macOS)
+    @State private var scrollOffsetY: CGFloat = 0
+    #endif
+
     public init(code: Binding<String>, fileName: String, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil) {
         self._code = code
         self.fileName = fileName
@@ -20,15 +23,31 @@ public struct CodeEditorView: View {
     
     public var body: some View {
         VStack(spacing: 0) {
-            // Header Bar
+            // ── Header Bar ──
             HStack {
-                HStack(spacing: 6) {
+                HStack(spacing: 8) {
                     Image(systemName: "doc.text.fill")
+                        .font(.system(size: 11))
                         .foregroundColor(.orange)
-                        .font(.caption)
+                        .shadow(color: .orange.opacity(0.4), radius: 3)
+                    
                     Text(fileName)
-                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
                         .foregroundColor(.white)
+                    
+                    // Saved Indicator Badge
+                    HStack(spacing: 3) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 4, height: 4)
+                        Text("Autosaved")
+                            .font(.system(size: 8, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(4)
                     
                     if isFocused {
                         Text("FULL SCREEN")
@@ -42,7 +61,7 @@ public struct CodeEditorView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(red: 0.07, green: 0.07, blue: 0.09))
+                .background(Color(red: 0.1, green: 0.11, blue: 0.14))
                 
                 Spacer()
                 
@@ -50,135 +69,94 @@ public struct CodeEditorView: View {
                     Button(action: onToggleFocus) {
                         HStack(spacing: 4) {
                             Image(systemName: isFocused ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.system(size: 9, weight: .bold))
                             Text(isFocused ? "Exit Full Screen" : "Full Screen Editor")
-                                .font(.system(size: 10, weight: .semibold))
+                                .font(.system(size: 9, weight: .bold))
                         }
-                        .foregroundColor(isFocused ? .orange : Color(white: 0.6))
+                        .foregroundColor(isFocused ? .orange : Color.white.opacity(0.65))
                         .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(isFocused ? Color.orange.opacity(0.15) : Color.white.opacity(0.06))
-                        .cornerRadius(5)
+                        .padding(.vertical, 4.5)
+                        .background(isFocused ? Color.orange.opacity(0.12) : Color.white.opacity(0.04))
+                        .cornerRadius(6)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 5)
-                                .stroke(isFocused ? Color.orange.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(isFocused ? Color.orange.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 0.75)
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .padding(.trailing, 8)
                 }
-                
-                Text("Swift 6.0")
-                    .font(.system(size: 10, design: .monospaced))
-                    .foregroundColor(Color(white: 0.45))
-                    .padding(.trailing, 12)
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
             .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+            
+            Divider()
+                .background(Color.white.opacity(0.06))
             
             // Syntax Highlighting Editor & Line Numbers Gutter
             HStack(alignment: .top, spacing: 0) {
-                #if os(iOS)
-                // Line Numbers Gutter (iOS)
-                let lineCount = max(1, code.components(separatedBy: .newlines).count)
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .trailing, spacing: 0) {
-                        ForEach(1...lineCount, id: \.self) { line in
-                            Text("\(line)")
-                                .font(.system(size: 13, weight: .regular, design: .monospaced))
-                                .foregroundColor(Color(white: 0.35))
-                                .frame(height: 18, alignment: .trailing)
-                        }
-                    }
-                    .padding(.vertical, 0)
-                    .padding(.horizontal, 6)
-                }
-                .frame(width: 38)
-                .background(Color(red: 0.05, green: 0.05, blue: 0.07))
-                .disabled(true)
-                
-                Divider()
-                    .background(Color.white.opacity(0.06))
-                #endif
-
                 #if os(macOS)
-                MacCodeEditor(text: $code)
-                    .frame(maxHeight: .infinity)
+                LineNumberGutterView(text: code, scrollOffsetY: scrollOffsetY)
+                MacCodeEditor(text: $code, scrollOffsetY: $scrollOffsetY)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 #else
                 IOSCodeEditor(text: $code)
-                    .frame(maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 #endif
             }
             .frame(maxHeight: .infinity)
         }
-        .background(Color(red: 0.07, green: 0.07, blue: 0.09))
+        .background(Color(red: 0.05, green: 0.06, blue: 0.08))
     }
 }
 
 #if os(macOS)
-// MARK: - AppKit Line Number Ruler View for Synchronized Scrolling & Line Heights
-final class LineNumberRulerView: NSRulerView {
-    init(scrollView: NSScrollView) {
-        super.init(scrollView: scrollView, orientation: .verticalRuler)
-        self.clientView = scrollView.documentView
-        self.ruleThickness = 40
+// MARK: - SwiftUI Line Number Gutter
+//
+// A previous AppKit NSRulerView-based gutter (attached via
+// NSScrollView.verticalRulerView) turned out to break SwiftUI's compositor for
+// this entire window on the current beta SDK: mixing that ruler's legacy
+// drawRect-style drawing into the view tree left sibling SwiftUI views
+// (sidebar, header, description pane) permanently uncomposited, even after
+// forcing layer-backing on the ruler/scrollView/textView. Rendering line
+// numbers in plain SwiftUI instead, synced to AppKit's scroll position via
+// NSView.boundsDidChangeNotification, avoids that interop landmine entirely.
+struct LineNumberGutterView: View {
+    let text: String
+    let scrollOffsetY: CGFloat
+
+    private static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+    private static let lineHeight: CGFloat = ceil(font.ascender - font.descender + font.leading)
+    private static let topInset: CGFloat = 8
+
+    private var lineCount: Int {
+        text.isEmpty ? 1 : text.components(separatedBy: "\n").count
     }
 
-    required init(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func drawHashMarksAndLabels(in rect: NSRect) {
-        guard let textView = clientView as? NSTextView,
-              let layoutManager = textView.layoutManager,
-              let textContainer = textView.textContainer else { return }
-
-        NSColor(red: 0.05, green: 0.05, blue: 0.07, alpha: 1.0).set()
-        rect.fill()
-
-        let visibleRect = textView.visibleRect
-        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
-        let characterRange = layoutManager.characterRange(forGlyphRange: glyphRange, actualGlyphRange: nil)
-
-        let string = textView.string as NSString
-        let textLen = string.length
-        guard textLen > 0 else { return }
-
-        let startCharLoc = min(characterRange.location, textLen)
-        let endCharLoc = min(characterRange.location + characterRange.length, textLen)
-
-        // Fast count of line breaks prior to visible viewport
-        var lineNumber = 1
-        if startCharLoc > 0 {
-            string.enumerateSubstrings(in: NSRange(location: 0, length: startCharLoc), options: [.byLines, .substringNotRequired]) { _, _, _, _ in
-                lineNumber += 1
+    var body: some View {
+        VStack(spacing: 0) {
+            ForEach(1...max(1, lineCount), id: \.self) { i in
+                Text("\(i)")
+                    .font(.system(size: 11, design: .monospaced))
+                    .foregroundColor(Color.white.opacity(0.4))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .frame(height: Self.lineHeight)
             }
+            Spacer(minLength: 0)
         }
-
-        // Render visible line numbers
-        string.enumerateSubstrings(in: NSRange(location: startCharLoc, length: textLen - startCharLoc), options: [.byLines, .substringNotRequired]) { _, substringRange, _, stop in
-            if substringRange.location >= endCharLoc {
-                stop.pointee = true
-                return
-            }
-            let glyphIndex = layoutManager.glyphIndexForCharacter(at: substringRange.location)
-            let lineRect = layoutManager.lineFragmentUsedRect(forGlyphAt: glyphIndex, effectiveRange: nil)
-            let y = lineRect.origin.y + textView.textContainerOrigin.y - visibleRect.origin.y + 1
-            
-            let numStr = "\(lineNumber)" as NSString
-            let attrs: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedSystemFont(ofSize: 11, weight: .regular),
-                .foregroundColor: NSColor(white: 0.4, alpha: 1.0)
-            ]
-            let size = numStr.size(withAttributes: attrs)
-            numStr.draw(at: NSPoint(x: self.ruleThickness - size.width - 6, y: y), withAttributes: attrs)
-            lineNumber += 1
-        }
+        .padding(.top, Self.topInset)
+        .padding(.trailing, 6)
+        .offset(y: -scrollOffsetY)
+        .frame(width: 40)
+        .background(Color(red: 0.05, green: 0.05, blue: 0.07))
+        .clipped()
     }
 }
 
 // MARK: - Mac NSTextView Representable with Syntax Highlighting & Line Numbers
 struct MacCodeEditor: NSViewRepresentable {
     @Binding var text: String
+    @Binding var scrollOffsetY: CGFloat
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -189,19 +167,27 @@ struct MacCodeEditor: NSViewRepresentable {
         scrollView.drawsBackground = true
         scrollView.backgroundColor = NSColor(red: 0.07, green: 0.07, blue: 0.09, alpha: 1.0)
         scrollView.hasVerticalScroller = true
-        scrollView.hasHorizontalScroller = true
+        scrollView.hasHorizontalScroller = false
         scrollView.autohidesScrollers = true
 
+        // CRITICAL: Use a non-zero initial frame to prevent NSLayoutManager from
+        // caching a zero-width state during SwiftUI's initial layout pass.
+        // When contentSize is (0,0), the text container calculates a negative/zero
+        // width which causes the entire text view to collapse to invisible.
         let contentSize = scrollView.contentSize
-        let textView = NSTextView(frame: NSRect(origin: .zero, size: contentSize))
-        textView.minSize = NSSize(width: 0, height: 0)
+        let initialSize = NSSize(
+            width: max(contentSize.width, 600),
+            height: max(contentSize.height, 400)
+        )
+        let textView = NSTextView(frame: NSRect(origin: .zero, size: initialSize))
+        textView.minSize = NSSize(width: 0, height: initialSize.height)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
-        textView.isHorizontallyResizable = true
-        textView.autoresizingMask = [.width, .height]
+        textView.isHorizontallyResizable = false
+        textView.autoresizingMask = [.width]
 
-        textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
-        textView.textContainer?.widthTracksTextView = false
+        textView.textContainer?.containerSize = NSSize(width: initialSize.width, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = true
 
         textView.backgroundColor = NSColor(red: 0.07, green: 0.07, blue: 0.09, alpha: 1.0)
         textView.textColor = NSColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
@@ -217,13 +203,18 @@ struct MacCodeEditor: NSViewRepresentable {
 
         scrollView.documentView = textView
 
-        let rulerView = LineNumberRulerView(scrollView: scrollView)
-        scrollView.verticalRulerView = rulerView
-        scrollView.hasVerticalRuler = true
-        scrollView.rulersVisible = true
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.boundsDidChange(_:)),
+            name: NSView.boundsDidChangeNotification,
+            object: scrollView.contentView
+        )
 
-        // Initial Highlighting
-        context.coordinator.applyHighlighting(to: textView, text: text)
+        let initialText = text
+        DispatchQueue.main.async {
+            context.coordinator.applyHighlighting(to: textView, text: initialText)
+        }
 
         return scrollView
     }
@@ -234,7 +225,6 @@ struct MacCodeEditor: NSViewRepresentable {
             let selectedRanges = textView.selectedRanges
             context.coordinator.applyHighlighting(to: textView, text: text)
             textView.selectedRanges = selectedRanges
-            nsView.verticalRulerView?.needsDisplay = true
         }
     }
 
@@ -246,17 +236,25 @@ struct MacCodeEditor: NSViewRepresentable {
             self.parent = parent
         }
 
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+
+        @objc func boundsDidChange(_ notification: Notification) {
+            guard let clipView = notification.object as? NSClipView else { return }
+            parent.scrollOffsetY = clipView.bounds.origin.y
+        }
+
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
             guard !isUpdating else { return }
-            
+
             let newText = textView.string
             parent.text = newText
-            
+
             let selectedRanges = textView.selectedRanges
             applyHighlighting(to: textView, text: newText)
             textView.selectedRanges = selectedRanges
-            textView.enclosingScrollView?.verticalRulerView?.needsDisplay = true
         }
 
         func applyHighlighting(to textView: NSTextView, text: String) {

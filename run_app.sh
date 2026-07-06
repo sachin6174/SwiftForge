@@ -14,7 +14,7 @@ fi
 
 # 1. Build macOS Release Target
 echo "🖥️ Building macOS Release Target..."
-xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -configuration Release -derivedDataPath ./build/DerivedData build > /dev/null
+xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -configuration Release -derivedDataPath ./build/DerivedData CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build > /dev/null
 
 MAC_APP="./build/DerivedData/Build/Products/Release/SwiftForge.app"
 if [ -d "$MAC_APP" ]; then
@@ -26,11 +26,11 @@ fi
 echo "📱 Building iOS Target (sachin's iPhone / Simulator)..."
 PHYSICAL_DEVICE_ID="00008101-00120C8E3410801E"
 
-if xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -destination "id=$PHYSICAL_DEVICE_ID" -configuration Release -derivedDataPath ./build/DerivedData_iOSDevice build > /dev/null 2>&1; then
+if xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -destination "id=$PHYSICAL_DEVICE_ID" -configuration Release -derivedDataPath ./build/DerivedData_iOSDevice CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build > /dev/null 2>&1; then
     echo "✅ iOS Build Succeeded for sachin's iPhone ($PHYSICAL_DEVICE_ID)"
 else
     echo "📱 Physical device not ready, building for iOS Simulator..."
-    xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -sdk iphonesimulator -configuration Release -derivedDataPath ./build/DerivedData_iOS build > /dev/null
+    xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -sdk iphonesimulator -configuration Release -derivedDataPath ./build/DerivedData_iOS CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build > /dev/null
     echo "✅ iOS Simulator Build Succeeded."
 fi
 
