@@ -64,7 +64,11 @@ public struct ContentView: View {
     }
     
     private var isCompact: Bool {
-        horizontalSizeClass == .compact
+        #if os(iOS)
+        return true
+        #else
+        return horizontalSizeClass == .compact
+        #endif
     }
     
     public init() {}
@@ -148,12 +152,16 @@ public struct ContentView: View {
             // Mobile Sidebar Toggle
             if isCompact {
                 Button(action: { isSidebarPresented = true }) {
-                    Image(systemName: "sidebar.left")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.orange)
                         .padding(8)
-                        .background(Color.white.opacity(0.08))
+                        .background(Color.orange.opacity(0.12))
                         .cornerRadius(8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 0.75)
+                        )
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -176,10 +184,27 @@ public struct ContentView: View {
                     Text("/")
                         .font(.system(size: 12))
                         .foregroundColor(Color(white: 0.35))
-                    Text(question.title)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color(white: 0.65))
-                        .lineLimit(1)
+                    
+                    Button(action: { isSidebarPresented = true }) {
+                        HStack(spacing: 4) {
+                            Text(question.title)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            Image(systemName: "chevron.down")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(.orange)
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.orange.opacity(0.15))
+                        .cornerRadius(6)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(Color.orange.opacity(0.35), lineWidth: 0.75)
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
             }
 

@@ -227,7 +227,11 @@ public struct SidebarView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
         }
+        #if os(macOS)
         .frame(width: 210)
+        #else
+        .frame(maxWidth: .infinity)
+        #endif
         .background(
             ZStack {
                 Color(red: 0.065, green: 0.072, blue: 0.092)
