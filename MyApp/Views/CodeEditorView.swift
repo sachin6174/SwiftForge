@@ -194,11 +194,11 @@ struct MacCodeEditor: NSViewRepresentable {
 
         let contentSize = scrollView.contentSize
         let textView = NSTextView(frame: NSRect(origin: .zero, size: contentSize))
-        textView.minSize = NSSize(width: 0, height: contentSize.height)
+        textView.minSize = NSSize(width: 0, height: 0)
         textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = true
-        textView.autoresizingMask = [.height]
+        textView.autoresizingMask = [.width, .height]
 
         textView.textContainer?.containerSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
         textView.textContainer?.widthTracksTextView = false
@@ -211,6 +211,7 @@ struct MacCodeEditor: NSViewRepresentable {
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
         textView.allowsUndo = true
+        textView.textContainerInset = NSSize(width: 8, height: 8)
 
         textView.delegate = context.coordinator
 
