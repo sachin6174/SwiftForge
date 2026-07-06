@@ -104,24 +104,8 @@ public struct CodeEditorView: View {
                 MacCodeEditor(text: $code)
                     .frame(maxHeight: .infinity)
                 #else
-                if #available(iOS 16.0, *) {
-                    TextEditor(text: $code)
-                        .font(.system(size: 13, weight: .regular, design: .monospaced))
-                        .scrollContentBackground(.hidden)
-                        .background(Color(red: 0.07, green: 0.07, blue: 0.09))
-                        .foregroundColor(.white)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .frame(maxHeight: .infinity)
-                } else {
-                    TextEditor(text: $code)
-                        .font(.system(size: 13, weight: .regular, design: .monospaced))
-                        .background(Color(red: 0.07, green: 0.07, blue: 0.09))
-                        .foregroundColor(.white)
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .frame(maxHeight: .infinity)
-                }
+                IOSCodeEditor(text: $code)
+                    .frame(maxHeight: .infinity)
                 #endif
             }
             .frame(maxHeight: .infinity)
@@ -373,3 +357,152 @@ struct MacCodeEditor: NSViewRepresentable {
 #endif
 
 
+
+#if os(iOS)
+// MARK: - iOS UITextView Representable with Syntax Highlighting & Line Numbers
+struct IOSCodeEditor: UIViewRepresentable {
+    @Binding var text: String
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.backgroundColor = UIColor(red: 0.07, green: 0.07, blue: 0.09, alpha: 1.0)
+        textView.textColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)
+        textView.font = UIFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+        textView.tintColor = .systemOrange
+        textView.autocapitalizationType = .none
+        textView.autocorrectionType = .no
+        textView.smartQuotesType = .no
+        textView.smartDashesType = .no
+        textView.isScrollEnabled = true
+        textView.delegate = context.coordinator
+
+        context.coordinator.applyHighlighting(to: textView, text: text)
+        return textView
+    }
+
+    func updateUIView(_ uiView: UITextView, context: Context) {
+        if uiView.text != text {
+            let selectedRange = uiView.selectedRange
+            context.coordinator.applyHighlighting(to: uiView, text: text)
+            uiView.selectedRange = selectedRange
+        }
+    }
+
+    class Coordinator: NSObject, UITextViewDelegate {
+        var parent: IOSCodeEditor
+        var isUpdating = false
+
+        init(_ parent: IOSCodeEditor) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            guard !isUpdating else { return }
+            let newText = textView.text ?? ""
+            parent.text = newText
+            
+            let selectedRange = textView.selectedRange
+            applyHighlighting(to: textView, text: newText)
+            textView.selectedRange = selectedRange
+        }
+
+        func applyHighlighting(to textView: UITextView, text: String) {
+            isUpdating = true
+            defer { isUpdating = false }
+
+            let font = UIFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+            let boldFont = UIFont.monospacedSystemFont(ofSize: 13, weight: .bold)
+
+            // Theme Colors (LeetCode Dark Palette - Identical to macOS)
+            let defaultColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)      // Off-white
+            let keywordColor = UIColor(red: 0.33, green: 0.61, blue: 0.94, alpha: 1.0)      // LeetCode Cyan/Blue (#569CD6)
+            let typeColor = UIColor(red: 0.30, green: 0.78, blue: 0.69, alpha: 1.0)         // LeetCode Emerald Teal (#4EC9B0)
+            let stringColor = UIColor(red: 0.80, green: 0.56, blue: 0.47, alpha: 1.0)       // Warm Amber/Orange (#CE9178)
+            let numberColor = UIColor(red: 0.70, green: 0.80, blue: 0.65, alpha: 1.0)       // Lime Green (#B5CEA8)
+            let commentColor = UIColor(red: 0.41, green: 0.60, blue: 0.33, alpha: 1.0)      // Muted Green/Gray (#6A9955)
+            let funcColor = UIColor(red: 0.86, green: 0.86, blue: 0.66, alpha: 1.0)         // Soft Gold (#DCDCAA)
+
+            let attributed = NSMutableAttributedString(
+                string: text,
+                attributes: [
+                    .font: font,
+                    .foregroundColor: defaultColor
+                ]
+            )
+
+            let range = NSRange(location: 0, length: text.utf16.count)
+
+            // Regex 1: Keywords
+            let keywordsPattern = "\\b(class|struct|enum|func|var|let|if|else|guard|return|for|in|while|switch|case|break|continue|default|import|typealias|protocol|extension|self|Self|true|false|nil|try|catch|throw|throws|async|await|mutating|public|private|internal|fileprivate|static|override|init)\\b"
+            if let regex = try? NSRegularExpression(pattern: keywordsPattern) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        attributed.addAttribute(.foregroundColor, value: keywordColor, range: mRange)
+                        attributed.addAttribute(.font, value: boldFont, range: mRange)
+                    }
+                }
+            }
+
+            // Regex 2: Standard Types & User Class/Struct Types
+            let typesPattern = "\\b(Int|Double|Float|String|Bool|Character|Array|Dictionary|Set|Void|Any|Object|Solution|TestCase|URL|URLSession|JSONDecoder|Codable)\\b"
+            if let regex = try? NSRegularExpression(pattern: typesPattern) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        attributed.addAttribute(.foregroundColor, value: typeColor, range: mRange)
+                        attributed.addAttribute(.font, value: boldFont, range: mRange)
+                    }
+                }
+            }
+
+            // Regex 3: Function Declarations / Calls
+            let funcPattern = "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()"
+            if let regex = try? NSRegularExpression(pattern: funcPattern) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        let matchedStr = (text as NSString).substring(with: mRange)
+                        if !["if", "for", "while", "guard", "switch", "catch"].contains(matchedStr) {
+                            attributed.addAttribute(.foregroundColor, value: funcColor, range: mRange)
+                        }
+                    }
+                }
+            }
+
+            // Regex 4: Numbers
+            let numberPattern = "\\b\\d+(\\.\\d+)?\\b"
+            if let regex = try? NSRegularExpression(pattern: numberPattern) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        attributed.addAttribute(.foregroundColor, value: numberColor, range: mRange)
+                    }
+                }
+            }
+
+            // Regex 5: Strings
+            let stringPattern = "\".*?\""
+            if let regex = try? NSRegularExpression(pattern: stringPattern) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        attributed.addAttribute(.foregroundColor, value: stringColor, range: mRange)
+                    }
+                }
+            }
+
+            // Regex 6: Single-line & Multi-line Comments (Highest precedence)
+            let commentPattern = "//.*$|/\\*[\\s\\S]*?\\*/"
+            if let regex = try? NSRegularExpression(pattern: commentPattern, options: [.anchorsMatchLines]) {
+                regex.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
+                    if let mRange = match?.range {
+                        attributed.addAttribute(.foregroundColor, value: commentColor, range: mRange)
+                    }
+                }
+            }
+
+            textView.attributedText = attributed
+        }
+    }
+}
+#endif

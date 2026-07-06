@@ -201,9 +201,7 @@ public struct DSASolutionView: View {
                             .foregroundColor(Color(white: 0.45))
                         
                         ScrollView([.horizontal, .vertical]) {
-                            Text(question.solutionCode)
-                                .font(.system(size: 12, weight: .regular, design: .monospaced))
-                                .foregroundColor(Color(red: 0.88, green: 0.92, blue: 0.96))
+                            Text(SyntaxHighlightingEngine.highlight(code: question.solutionCode))
                                 .padding(12)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }

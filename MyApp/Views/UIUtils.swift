@@ -211,3 +211,71 @@ public struct DSARunButton: View {
         .keyboardShortcut("r", modifiers: [.command])
     }
 }
+
+// MARK: - Cross-Platform Syntax Highlighting Engine
+
+#if os(macOS)
+import AppKit
+public typealias PlatformColor = NSColor
+public typealias PlatformFont = NSFont
+#else
+import UIKit
+public typealias PlatformColor = UIColor
+public typealias PlatformFont = UIFont
+#endif
+
+public enum SyntaxHighlightingEngine {
+    public static func highlight(code: String) -> AttributedString {
+        var attributed = AttributedString(code)
+        let baseFont = PlatformFont.monospacedSystemFont(ofSize: 12, weight: .regular)
+        let baseColor = PlatformColor(red: 0.88, green: 0.92, blue: 0.96, alpha: 1.0)
+        
+        attributed.font = baseFont
+        attributed.foregroundColor = Color(baseColor)
+        
+        let nsString = code as NSString
+        let fullRange = NSRange(location: 0, length: nsString.length)
+        
+        // 1. Comments (Slate Muted Gray)
+        applyRegex(pattern: "//.*$|/\\*[\\s\\S]*?\\*/", options: [.anchorsMatchLines], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.50, green: 0.52, blue: 0.56, alpha: 1.0))
+        
+        // 2. String Literals (LeetCode Light Green #98C379)
+        applyRegex(pattern: "\".*?\"", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.60, green: 0.76, blue: 0.47, alpha: 1.0))
+        
+        // 3. Swift Keywords (LeetCode Magenta/Pink #D15A98)
+        let keywords = ["func", "let", "var", "class", "struct", "enum", "import", "return", "if", "else", "for", "in", "while", "guard", "switch", "case", "default", "try", "await", "async", "public", "private", "override", "mutating", "self", "super", "nil", "true", "false"]
+        let keywordPattern = "\\b(" + keywords.joined(separator: "|") + ")\\b"
+        applyRegex(pattern: keywordPattern, options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.82, green: 0.35, blue: 0.60, alpha: 1.0))
+        
+        // 4. Swift Standard Types (LeetCode Cyan #56B6C2)
+        let types = ["Int", "String", "Bool", "Double", "Float", "Character", "Array", "Dictionary", "Set", "ListNode", "Solution", "TestCase", "URLSession", "URL", "JSONDecoder", "Data", "Date", "Error"]
+        let typePattern = "\\b(" + types.joined(separator: "|") + ")\\b"
+        applyRegex(pattern: typePattern, options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.34, green: 0.71, blue: 0.76, alpha: 1.0))
+        
+        // 5. Numbers (LeetCode Orange/Gold #D19A66)
+        applyRegex(pattern: "\\b\\d+(\\.\\d+)?\\b", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.82, green: 0.60, blue: 0.40, alpha: 1.0))
+        
+        // 6. Swift Attributes (LeetCode Purple #C678DD)
+        applyRegex(pattern: "@[A-Za-z0-9_]+", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.78, green: 0.47, blue: 0.87, alpha: 1.0))
+        
+        return attributed
+    }
+    
+    private static func applyRegex(
+        pattern: String,
+        options: NSRegularExpression.Options,
+        code: String,
+        fullRange: NSRange,
+        attributed: inout AttributedString,
+        color: PlatformColor
+    ) {
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: options) else { return }
+        let matches = regex.matches(in: code, options: [], range: fullRange)
+        
+        for match in matches {
+            guard let swiftRange = Range(match.range, in: code),
+                  let attrRange = Range(swiftRange, in: attributed) else { continue }
+            attributed[attrRange].foregroundColor = Color(color)
+        }
+    }
+}
