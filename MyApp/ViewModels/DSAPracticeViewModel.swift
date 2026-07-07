@@ -14,57 +14,81 @@ public class DSAPracticeViewModel: ObservableObject {
     
     private let codeRunner: CodeRunnerProtocol
     public var onSuccess: (() -> Void)?
-    
+
+    // Guards against two async races: (1) loadQuestion() switching to a
+    // different question while a previous runCode() is still awaiting the
+    // subprocess/JS engine, whose stale result would otherwise land on the
+    // new question's screen; (2) two overlapping runCode() calls on the same
+    // question. Each runCode() mints its own token and only commits its
+    // result if it's still the current one when the await returns.
+    private var activeRunToken: UUID?
+
     public init(codeRunner: CodeRunnerProtocol? = nil) {
         self.codeRunner = codeRunner ?? CodeRunnerService()
     }
-    
+
     public func loadQuestion(_ question: Question, draft: String? = nil) {
+        activeRunToken = nil
+        self.isRunning = false
         self.currentQuestion = question
         let cleanDraft = draft?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let cleanSolution = question.solutionCode.trimmingCharacters(in: .whitespacesAndNewlines)
-        
+
         if cleanDraft.isEmpty || cleanDraft == cleanSolution {
             self.code = question.templateCode
         } else {
             self.code = draft ?? question.templateCode
         }
-        
+
         self.testcaseResults = []
+        self.selectedTestCaseIndex = 0
         self.consoleOutput = "Loaded \(question.title). Ready to edit."
         self.compilerError = nil
     }
-    
+
     public func resetCode() {
         guard let question = currentQuestion else { return }
         self.code = question.templateCode
         self.testcaseResults = []
+        self.selectedTestCaseIndex = 0
         self.consoleOutput = "Code reset to starter template."
         self.compilerError = nil
     }
     
-    public func insertSolutionToEditor() {
-        guard let question = currentQuestion else { return }
-        self.code = question.solutionCode
-        self.consoleOutput = "Official reference solution inserted into editor."
+    public func insertCodeToEditor(_ code: String) {
+        self.code = code
+        self.consoleOutput = "Reference solution inserted into editor."
     }
     
     public func runCode() async {
         guard let question = currentQuestion else { return }
+        guard !isRunning else { return }
+
+        let token = UUID()
+        activeRunToken = token
+        let snapshotCode = self.code
+
         self.isRunning = true
         self.consoleOutput = "Compiling and running Swift tests...\n"
         self.compilerError = nil
         self.testcaseResults = []
-        
+
         LoggerService.shared.log("Initiating code run for question: \(question.title)", level: .info, category: .codeRunner)
-        
-        let result = await codeRunner.runSwiftCode(code: code, appendHarness: question.testHarness ?? "")
-        
+
+        let result = await codeRunner.runSwiftCode(code: snapshotCode, appendHarness: question.testHarness ?? "")
+
+        guard activeRunToken == token else {
+            // Superseded by a question switch or a newer run — the on-screen
+            // state now belongs to something else, so don't touch it.
+            LoggerService.shared.log("Discarding stale run result for \(question.title)", level: .warning, category: .codeRunner)
+            return
+        }
+        activeRunToken = nil
         self.isRunning = false
         if result.exitCode == -2 {
             self.consoleOutput = "Native Swift execution not supported. Running in sandbox simulation mode...\n"
             LoggerService.shared.log("Native execution unavailable for \(question.title). Running JS sandbox...", level: .warning, category: .codeRunner)
-            self.runJSFallback()
+            self.runJSFallback(question: question, code: snapshotCode)
         } else if result.exitCode != 0 {
             self.compilerError = result.stderr.isEmpty ? result.stdout : result.stderr
             self.consoleOutput = "Compilation Failed.\n\n" + (self.compilerError ?? "")
@@ -81,9 +105,8 @@ public class DSAPracticeViewModel: ObservableObject {
             }
         }
     }
-    
-    private func runJSFallback() {
-        guard let question = currentQuestion else { return }
+
+    private func runJSFallback(question: Question, code: String) {
         let transpiled = codeRunner.transpileSwiftToJS(swift: code)
 
         let runnerScript: String

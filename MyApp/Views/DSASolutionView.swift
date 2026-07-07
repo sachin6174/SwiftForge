@@ -4,14 +4,19 @@ public struct DSASolutionView: View {
     let question: Question?
     let isFocused: Bool
     let onToggleFocus: (() -> Void)?
-    let onInsertToEditor: () -> Void
-    
+    let onInsertToEditor: (String) -> Void
+
     @State private var copiedToClipboard = false
     @State private var insertedToEditor = false
     @State private var isHoveringCopy = false
     @State private var isHoveringInsert = false
-    
-    public init(question: Question?, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, onInsertToEditor: @escaping () -> Void = {}) {
+
+    @State private var alternateCopiedToClipboard = false
+    @State private var alternateInsertedToEditor = false
+    @State private var isHoveringAlternateCopy = false
+    @State private var isHoveringAlternateInsert = false
+
+    public init(question: Question?, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, onInsertToEditor: @escaping (String) -> Void = { _ in }) {
         self.question = question
         self.isFocused = isFocused
         self.onToggleFocus = onToggleFocus
@@ -67,71 +72,24 @@ public struct DSASolutionView: View {
                     .padding(.bottom, 6)
                     
                     // ── Action Buttons ──
-                    HStack(spacing: 12) {
-                        // Copy Button
-                        Button(action: copySolution) {
-                            HStack(spacing: 6) {
-                                Image(systemName: copiedToClipboard ? "checkmark.circle.fill" : "doc.on.doc")
-                                    .font(.system(size: 11, weight: .bold))
-                                Text(copiedToClipboard ? "Copied!" : "Copy Code")
-                                    .font(.system(size: 11, weight: .bold))
-                            }
-                            .foregroundColor(copiedToClipboard ? .green : .white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(copiedToClipboard ? Color.green.opacity(0.12) : Color.white.opacity(0.04))
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(copiedToClipboard ? Color.green.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
-                            )
-                            .scaleEffect(isHoveringCopy ? 1.02 : 1.0)
-                        }
-                        .buttonStyle(PressableButtonStyle())
-                        .onHover { over in
-                            withAnimation(.easeOut(duration: 0.15)) { isHoveringCopy = over }
-                        }
-                        
-                        // Insert to Editor Button
-                        Button(action: insertToEditor) {
-                            HStack(spacing: 6) {
-                                Image(systemName: insertedToEditor ? "checkmark.circle.fill" : "arrow.right.to.line.compact")
-                                    .font(.system(size: 11, weight: .bold))
-                                Text(insertedToEditor ? "Inserted!" : "Insert to Editor")
-                                    .font(.system(size: 11, weight: .bold))
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.orange, Color.red],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                            )
-                            .shadow(color: Color.orange.opacity(isHoveringInsert ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
-                            .scaleEffect(isHoveringInsert ? 1.02 : 1.0)
-                        }
-                        .buttonStyle(PressableButtonStyle())
-                        .onHover { over in
-                            withAnimation(.easeOut(duration: 0.15)) { isHoveringInsert = over }
-                        }
-                    }
-                    
+                    actionButtons(
+                        code: question.solutionCode,
+                        copied: $copiedToClipboard,
+                        inserted: $insertedToEditor,
+                        hoveringCopy: $isHoveringCopy,
+                        hoveringInsert: $isHoveringInsert
+                    )
+
                     Divider()
                         .background(Color.white.opacity(0.08))
-                    
+
                     // ── Solution Code Block ──
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SWIFT REFERENCE CODE")
                             .font(.system(size: 9, weight: .black))
                             .foregroundColor(Color.white.opacity(0.35))
                             .tracking(0.5)
-                        
+
                         ScrollView([.horizontal, .vertical]) {
                             Text(SyntaxHighlightingEngine.highlight(code: question.solutionCode))
                                 .padding(14)
@@ -144,6 +102,42 @@ public struct DSASolutionView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(Color.white.opacity(0.06), lineWidth: 0.75)
                         )
+                    }
+
+                    // ── Alternate Solution Code Block (e.g. a follow-up
+                    // complexity target) — shown in its own box, separate
+                    // from the graded reference solution above. ──
+                    if let alternateCode = question.alternateSolutionCode {
+                        Divider()
+                            .background(Color.white.opacity(0.08))
+
+                        actionButtons(
+                            code: alternateCode,
+                            copied: $alternateCopiedToClipboard,
+                            inserted: $alternateInsertedToEditor,
+                            hoveringCopy: $isHoveringAlternateCopy,
+                            hoveringInsert: $isHoveringAlternateInsert
+                        )
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text((question.alternateSolutionTitle ?? "ALTERNATE SOLUTION").uppercased())
+                                .font(.system(size: 9, weight: .black))
+                                .foregroundColor(Color.white.opacity(0.35))
+                                .tracking(0.5)
+
+                            ScrollView([.horizontal, .vertical]) {
+                                Text(SyntaxHighlightingEngine.highlight(code: alternateCode))
+                                    .padding(14)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .textSelection(.enabled)
+                            }
+                            .background(Color(red: 0.04, green: 0.05, blue: 0.07))
+                            .cornerRadius(10)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(Color.white.opacity(0.06), lineWidth: 0.75)
+                            )
+                        }
                     }
                 } else {
                     VStack(spacing: 12) {
@@ -160,29 +154,87 @@ public struct DSASolutionView: View {
             }
             .padding(18)
         }
+        .id(question?.id ?? "empty")
         .background(Color(red: 0.08, green: 0.09, blue: 0.12))
     }
     
-    private func copySolution() {
-        guard let code = question?.solutionCode else { return }
+    @ViewBuilder
+    private func actionButtons(code: String, copied: Binding<Bool>, inserted: Binding<Bool>, hoveringCopy: Binding<Bool>, hoveringInsert: Binding<Bool>) -> some View {
+        HStack(spacing: 12) {
+            // Copy Button
+            Button(action: { copyCode(code, copied: copied) }) {
+                HStack(spacing: 6) {
+                    Image(systemName: copied.wrappedValue ? "checkmark.circle.fill" : "doc.on.doc")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(copied.wrappedValue ? "Copied!" : "Copy Code")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(copied.wrappedValue ? .green : .white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(copied.wrappedValue ? Color.green.opacity(0.12) : Color.white.opacity(0.04))
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(copied.wrappedValue ? Color.green.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
+                )
+                .scaleEffect(hoveringCopy.wrappedValue ? 1.02 : 1.0)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .onHover { over in
+                withAnimation(.easeOut(duration: 0.15)) { hoveringCopy.wrappedValue = over }
+            }
+
+            // Insert to Editor Button
+            Button(action: { insertCode(code, inserted: inserted) }) {
+                HStack(spacing: 6) {
+                    Image(systemName: inserted.wrappedValue ? "checkmark.circle.fill" : "arrow.right.to.line.compact")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(inserted.wrappedValue ? "Inserted!" : "Insert to Editor")
+                        .font(.system(size: 11, weight: .bold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.orange, Color.red],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .shadow(color: Color.orange.opacity(hoveringInsert.wrappedValue ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
+                .scaleEffect(hoveringInsert.wrappedValue ? 1.02 : 1.0)
+            }
+            .buttonStyle(PressableButtonStyle())
+            .onHover { over in
+                withAnimation(.easeOut(duration: 0.15)) { hoveringInsert.wrappedValue = over }
+            }
+        }
+    }
+
+    private func copyCode(_ code: String, copied: Binding<Bool>) {
         #if os(macOS)
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(code, forType: .string)
         #elseif os(iOS)
         UIPasteboard.general.string = code
         #endif
-        
-        withAnimation { copiedToClipboard = true }
+
+        withAnimation { copied.wrappedValue = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation { copiedToClipboard = false }
+            withAnimation { copied.wrappedValue = false }
         }
     }
-    
-    private func insertToEditor() {
-        onInsertToEditor()
-        withAnimation { insertedToEditor = true }
+
+    private func insertCode(_ code: String, inserted: Binding<Bool>) {
+        onInsertToEditor(code)
+        withAnimation { inserted.wrappedValue = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation { insertedToEditor = false }
+            withAnimation { inserted.wrappedValue = false }
         }
     }
 }

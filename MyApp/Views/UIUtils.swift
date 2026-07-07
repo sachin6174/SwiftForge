@@ -131,6 +131,7 @@ public struct SidebarButton: View {
                     .font(.system(size: 12, weight: isSelected ? .bold : .medium))
                     .foregroundColor(isSelected ? .white : Color.white.opacity(0.6))
                     .lineLimit(1)
+                    .help(title)
 
                 Spacer()
 
@@ -182,6 +183,7 @@ public struct SidebarButton: View {
                 .onChanged { _ in withAnimation(.easeOut(duration: 0.08)) { isPressed = true } }
                 .onEnded { _ in withAnimation(.easeOut(duration: 0.12)) { isPressed = false } }
         )
+        .accessibilityLabel("\(title)\(isSolved ? ", solved" : "")")
     }
 }
 

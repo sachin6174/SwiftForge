@@ -175,7 +175,15 @@ public struct ContentView: View {
         .onChange(of: dsaViewModel.code) { newCode in
             if let q = dsaViewModel.currentQuestion {
                 let currentDraft = appState.userActivity.draftCodes[q.id]
-                if currentDraft != newCode {
+                // Skip creating a brand-new "draft" that's just the untouched
+                // template — loadQuestion() sets `code` to the template on
+                // first load, which would otherwise fire this onChange and
+                // store a no-op draft for every question the user has ever
+                // merely opened, not actually edited. Still persist the
+                // template if an existing (different) draft is deliberately
+                // reverted back to it.
+                let isUntouchedFirstLoad = currentDraft == nil && newCode == q.templateCode
+                if currentDraft != newCode && !isUntouchedFirstLoad {
                     appState.updateDraft(questionId: q.id, code: newCode)
                 }
             }
@@ -191,7 +199,11 @@ public struct ContentView: View {
                     Image(systemName: "list.bullet")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(activeAccentColor)
+                        #if os(iOS)
+                        .padding(16)
+                        #else
                         .padding(8)
+                        #endif
                         .background(activeAccentColor.opacity(0.12))
                         .cornerRadius(8)
                         .overlay(
@@ -200,6 +212,7 @@ public struct ContentView: View {
                         )
                 }
                 .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel("Show question list")
             }
             
             // Header title / breadcrumb
@@ -465,8 +478,8 @@ public struct ContentView: View {
             question: dsaViewModel.currentQuestion,
             isFocused: false,
             onToggleFocus: nil,
-            onInsertToEditor: {
-                dsaViewModel.insertSolutionToEditor()
+            onInsertToEditor: { code in
+                dsaViewModel.insertCodeToEditor(code)
             }
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -532,6 +545,7 @@ public struct ContentView: View {
                     )
                 }
                 .buttonStyle(PressableButtonStyle())
+                .accessibilityLabel(focusMode == .infoFocused ? "Exit full screen" : "Full screen")
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -551,8 +565,8 @@ public struct ContentView: View {
                                 focusMode = (focusMode == .infoFocused) ? .split : .infoFocused
                             }
                         },
-                        onInsertToEditor: {
-                            dsaViewModel.insertSolutionToEditor()
+                        onInsertToEditor: { code in
+                            dsaViewModel.insertCodeToEditor(code)
                         }
                     )
                 case .testSuite:
@@ -764,6 +778,18 @@ struct SplitDragHandle: View {
                     #endif
                 }
         )
+        .accessibilityLabel("Resize panes")
+        .accessibilityAdjustableAction { direction in
+            let step: CGFloat = 24
+            switch direction {
+            case .increment:
+                leftPaneWidth = min(leftPaneWidth + step, maxLeft)
+            case .decrement:
+                leftPaneWidth = max(leftPaneWidth - step, minLeft)
+            @unknown default:
+                break
+            }
+        }
     }
 }
 

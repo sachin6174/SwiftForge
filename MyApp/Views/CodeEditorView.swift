@@ -10,9 +10,7 @@ public struct CodeEditorView: View {
     let fileName: String
     let isFocused: Bool
     let onToggleFocus: (() -> Void)?
-    #if os(macOS)
     @State private var scrollOffsetY: CGFloat = 0
-    #endif
 
     public init(code: Binding<String>, fileName: String, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil) {
         self._code = code
@@ -95,12 +93,12 @@ public struct CodeEditorView: View {
 
             // Syntax Highlighting Editor & Line Numbers Gutter
             HStack(alignment: .top, spacing: 0) {
-                #if os(macOS)
                 LineNumberGutterView(text: code, scrollOffsetY: scrollOffsetY)
+                #if os(macOS)
                 MacCodeEditor(text: $code, scrollOffsetY: $scrollOffsetY)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 #else
-                IOSCodeEditor(text: $code)
+                IOSCodeEditor(text: $code, scrollOffsetY: $scrollOffsetY)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 #endif
             }
@@ -110,7 +108,6 @@ public struct CodeEditorView: View {
     }
 }
 
-#if os(macOS)
 // MARK: - SwiftUI Line Number Gutter
 //
 // A previous AppKit NSRulerView-based gutter (attached via
@@ -119,13 +116,19 @@ public struct CodeEditorView: View {
 // drawRect-style drawing into the view tree left sibling SwiftUI views
 // (sidebar, header, description pane) permanently uncomposited, even after
 // forcing layer-backing on the ruler/scrollView/textView. Rendering line
-// numbers in plain SwiftUI instead, synced to AppKit's scroll position via
-// NSView.boundsDidChangeNotification, avoids that interop landmine entirely.
+// numbers in plain SwiftUI instead, synced to the platform scroll view's
+// position (NSView.boundsDidChangeNotification on macOS,
+// UIScrollViewDelegate on iOS), avoids that interop landmine entirely on
+// both platforms.
 struct LineNumberGutterView: View {
     let text: String
     let scrollOffsetY: CGFloat
 
+    #if os(macOS)
     private static let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+    #else
+    private static let font = UIFont.monospacedSystemFont(ofSize: 13, weight: .regular)
+    #endif
     private static let lineHeight: CGFloat = ceil(font.ascender - font.descender + font.leading)
     private static let topInset: CGFloat = 8
 
@@ -153,6 +156,7 @@ struct LineNumberGutterView: View {
     }
 }
 
+#if os(macOS)
 // MARK: - Mac NSTextView Representable with Syntax Highlighting & Line Numbers
 struct MacCodeEditor: NSViewRepresentable {
     @Binding var text: String
@@ -224,8 +228,24 @@ struct MacCodeEditor: NSViewRepresentable {
         if textView.string != text {
             let selectedRanges = textView.selectedRanges
             context.coordinator.applyHighlighting(to: textView, text: text)
-            textView.selectedRanges = selectedRanges
+            // `text` can be a different (often shorter) string than what the
+            // captured ranges were computed against — e.g. switching to a
+            // question with a shorter template while the cursor was near the
+            // end of a longer solution. Reapplying an out-of-bounds range
+            // throws NSRangeException, so clamp before reassigning.
+            let maxLength = (textView.string as NSString).length
+            textView.selectedRanges = Self.clampedSelectedRanges(selectedRanges, toLength: maxLength)
         }
+    }
+
+    private static func clampedSelectedRanges(_ ranges: [NSValue], toLength maxLength: Int) -> [NSValue] {
+        let clamped = ranges.map { value -> NSValue in
+            let r = value.rangeValue
+            let location = min(r.location, maxLength)
+            let length = min(r.length, maxLength - location)
+            return NSValue(range: NSRange(location: location, length: max(0, length)))
+        }
+        return clamped.isEmpty ? [NSValue(range: NSRange(location: 0, length: 0))] : clamped
     }
 
     class Coordinator: NSObject, NSTextViewDelegate {
@@ -361,6 +381,7 @@ struct MacCodeEditor: NSViewRepresentable {
 // MARK: - iOS UITextView Representable with Syntax Highlighting & Line Numbers
 struct IOSCodeEditor: UIViewRepresentable {
     @Binding var text: String
+    @Binding var scrollOffsetY: CGFloat
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -377,6 +398,10 @@ struct IOSCodeEditor: UIViewRepresentable {
         textView.smartQuotesType = .no
         textView.smartDashesType = .no
         textView.isScrollEnabled = true
+        // Match MacCodeEditor's NSSize(width: 8, height: 8) inset so the
+        // line-number gutter's fixed topInset lines up with the actual text
+        // baseline on both platforms.
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         textView.delegate = context.coordinator
 
         context.coordinator.applyHighlighting(to: textView, text: text)
@@ -387,7 +412,12 @@ struct IOSCodeEditor: UIViewRepresentable {
         if uiView.text != text {
             let selectedRange = uiView.selectedRange
             context.coordinator.applyHighlighting(to: uiView, text: text)
-            uiView.selectedRange = selectedRange
+            // Same out-of-bounds risk as the macOS side: `text` can be
+            // shorter than what `selectedRange` was computed against.
+            let maxLength = (uiView.text as NSString).length
+            let location = min(selectedRange.location, maxLength)
+            let length = min(selectedRange.length, maxLength - location)
+            uiView.selectedRange = NSRange(location: location, length: max(0, length))
         }
     }
 
@@ -397,6 +427,14 @@ struct IOSCodeEditor: UIViewRepresentable {
 
         init(_ parent: IOSCodeEditor) {
             self.parent = parent
+        }
+
+        // UITextViewDelegate inherits UIScrollViewDelegate, and UITextView
+        // IS its own scroll view, so this fires directly — no separate
+        // scroll view delegate wiring needed. Mirrors MacCodeEditor's
+        // boundsDidChange(_:) notification handler.
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            parent.scrollOffsetY = scrollView.contentOffset.y
         }
 
         func textViewDidChange(_ textView: UITextView) {

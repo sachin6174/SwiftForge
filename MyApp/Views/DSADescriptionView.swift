@@ -82,6 +82,7 @@ public struct DSADescriptionView: View {
                                         .font(.system(size: 11, weight: .bold, design: .monospaced))
                                         .foregroundColor(.cyan)
                                         .lineLimit(1)
+                                        .textSelection(.enabled)
                                 }
                                 
                                 Divider()

@@ -227,6 +227,7 @@ public struct SidebarView: View {
                             .foregroundColor(Color.white.opacity(0.4))
                     }
                     .buttonStyle(PressableButtonStyle())
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(.horizontal, 10)

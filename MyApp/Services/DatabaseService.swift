@@ -2361,6 +2361,197 @@ for (index, tc) in testCases.enumerated() {
 print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
 print("---DSA_TEST_RESULTS_END---")
 """
+            ),
+            Question(
+                id: "minimum_size_subarray_sum",
+                title: "209. Minimum Size Subarray Sum",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["Array", "Binary Search", "Sliding Window", "Prefix Sum"],
+                description: """
+Given an array of positive integers nums and a positive integer target, return the minimal length of a subarray whose sum is greater than or equal to target. If there is no such subarray, return 0 instead.
+
+Example 1:
+Input: target = 7, nums = [2,3,1,2,4,3]
+Output: 2
+Explanation: The subarray [4,3] has the minimal length under the problem constraint.
+
+Example 2:
+Input: target = 4, nums = [1,4,4]
+Output: 1
+
+Example 3:
+Input: target = 11, nums = [1,1,1,1,1,1,1,1]
+Output: 0
+
+Constraints:
+1 <= target <= 10^9
+1 <= nums.length <= 10^5
+1 <= nums[i] <= 10^4
+
+Follow up: If you have figured out the O(n) solution, try coding another solution of which the time complexity is O(n log(n)).
+""",
+                templateCode: """
+class Solution {
+    func minSubArrayLen(_ target: Int, _ nums: [Int]) -> Int {
+        // TODO: Write your solution here
+        return 0
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func minSubArrayLen(_ target: Int, _ nums: [Int]) -> Int {
+       var ans = Int.max
+       var sum = 0
+       var right = 0
+       var left = 0
+       while true {
+            if sum < target{
+                if right >= nums.count { break} // sum is shorter and i can not acquire as right reached end
+                sum += nums[right]
+                right += 1
+            }else{
+                // even if right reached end but still scope to exclude element to make window shorter
+                ans = min(ans,right-left)
+                sum -= nums[left]
+                left += 1
+            }
+       }
+       return ans == Int.max ? 0 : ans
+        /// make sre you never return Int.max  
+        ///else __Serializer__/__Serializer__.swift:93: Fatal error: Error when serializing long: 9223372036854775807 out of range [-(2^53-1), 2^53-1]
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let target: Int
+    let nums: [Int]
+    let expected: Int
+    let name: String
+}
+let testCases = [
+    TestCase(target: 7, nums: [2, 3, 1, 2, 4, 3], expected: 2, name: "Example 1 (target 7)"),
+    TestCase(target: 4, nums: [1, 4, 4], expected: 1, name: "Example 2 (target 4)"),
+    TestCase(target: 11, nums: [1, 1, 1, 1, 1, 1, 1, 1], expected: 0, name: "Example 3 (no valid subarray)"),
+    TestCase(target: 5, nums: [5], expected: 1, name: "Single Element Equal To Target"),
+    TestCase(target: 3, nums: [5], expected: 1, name: "Single Element Greater Than Target"),
+    TestCase(target: 10, nums: [5], expected: 0, name: "Single Element Less Than Target (Impossible)"),
+    TestCase(target: 1, nums: [1], expected: 1, name: "Minimum Constraint (target=1, nums=[1])"),
+    TestCase(target: 10000, nums: [10000], expected: 1, name: "Single Max Value Element Equal To Target"),
+    TestCase(target: 5000, nums: [10000], expected: 1, name: "Single Max Value Element Exceeds Target"),
+    TestCase(target: 6, nums: [1, 5], expected: 2, name: "Two Elements Both Needed"),
+    TestCase(target: 5, nums: [1, 5], expected: 1, name: "Two Elements Second Alone Suffices"),
+    TestCase(target: 2, nums: [1, 1], expected: 2, name: "Two Elements Sum Exactly Equals Target"),
+    TestCase(target: 15, nums: [1, 2, 3, 4, 5], expected: 5, name: "Whole Array Required (sum == target)"),
+    TestCase(target: 21, nums: [1, 2, 3, 4, 5, 6], expected: 6, name: "Whole Array Required (sum == target, 6 elems)"),
+    TestCase(target: 100, nums: [1, 2, 3], expected: 0, name: "Target Exceeds Total Sum (Impossible)"),
+    TestCase(target: 1000000000, nums: [1, 1, 1], expected: 0, name: "Extremely Large Target, Tiny Input (Impossible)"),
+    TestCase(target: 10, nums: [2, 2, 2, 2, 2], expected: 5, name: "All Same Value, Sum Exactly Matches"),
+    TestCase(target: 9, nums: [2, 2, 2, 2, 2], expected: 5, name: "All Same Value, Needs 5 (ceil division)"),
+    TestCase(target: 4, nums: [2, 2, 2, 2, 2], expected: 2, name: "All Same Value, Minimal Window Of 2"),
+    TestCase(target: 1, nums: [2, 2, 2, 2, 2], expected: 1, name: "All Same Value, Single Element Exceeds Target"),
+    TestCase(target: 5, nums: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], expected: 5, name: "All Ones, Needs Exactly 5"),
+    TestCase(target: 10, nums: [1, 1, 1, 1, 1], expected: 0, name: "All Ones, Insufficient (Impossible)"),
+    TestCase(target: 1, nums: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1], expected: 1, name: "All Ones, Minimal Window Of 1"),
+    TestCase(target: 50, nums: [100, 1, 1, 1], expected: 1, name: "Large Spike At Start Covers Target Alone"),
+    TestCase(target: 50, nums: [1, 1, 1, 100], expected: 1, name: "Large Spike At End Covers Target Alone"),
+    TestCase(target: 50, nums: [1, 1, 100, 1, 1], expected: 1, name: "Large Spike In Middle Covers Target Alone"),
+    TestCase(target: 52, nums: [50, 1, 1, 1, 1], expected: 3, name: "Just Above Spike, Needs Two Elements"),
+    TestCase(target: 20, nums: [1, 20, 1, 1, 20, 1], expected: 1, name: "Multiple Spikes, First Spike Alone Suffices"),
+    TestCase(target: 3, nums: [1, 1, 10, 1, 1, 10, 1, 1], expected: 1, name: "Multiple Spikes, Small Target Finds Tiny Window"),
+    TestCase(target: 8, nums: [1, 1, 1, 7, 1, 1, 1, 7, 1, 1, 1], expected: 2, name: "Minimal Window Strictly In The Middle"),
+    TestCase(target: 3, nums: [3, 1, 1, 1, 1, 1], expected: 1, name: "Minimal Window Starts At Index 0"),
+    TestCase(target: 3, nums: [1, 1, 1, 1, 1, 3], expected: 1, name: "Minimal Window Ends At Last Index"),
+    TestCase(target: 15, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], expected: 2, name: "Ascending Sequence, Mid-Size Target"),
+    TestCase(target: 10, nums: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], expected: 1, name: "Descending Sequence, First Element Suffices"),
+    TestCase(target: 15, nums: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1], expected: 2, name: "Descending Sequence, Two Elements Suffice"),
+    TestCase(target: 100, nums: [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89], expected: 2, name: "Fibonacci-Like Sequence"),
+    TestCase(target: 15, nums: [10, 1, 10, 1, 10, 1, 10], expected: 3, name: "Alternating High-Low Values"),
+    TestCase(target: 30000, nums: [10000, 10000, 10000, 10000], expected: 3, name: "Uniform Max Values, Exact Multiple Of Target"),
+    TestCase(target: 25000, nums: [10000, 10000, 10000, 10000], expected: 3, name: "Uniform Max Values, Needs 3 Not Divisible"),
+    TestCase(target: 9, nums: [3, 3, 3, 3, 3, 3], expected: 3, name: "Repeated Block Of Threes"),
+    TestCase(target: 19, nums: [9, 10, 1, 1, 1], expected: 2, name: "Two Large Adjacent Values Needed"),
+    TestCase(target: 10, nums: [1, 2, 3, 4, 5], expected: 3, name: "Ascending Stress Test (size 5, near-full window)"),
+    TestCase(target: 21, nums: [1, 2, 3, 4, 5, 6, 7], expected: 4, name: "Ascending Stress Test (size 7, near-full window)"),
+    TestCase(target: 45, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], expected: 6, name: "Ascending Stress Test (size 10, near-full window)"),
+    TestCase(target: 66, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], expected: 8, name: "Ascending Stress Test (size 12, near-full window)"),
+    TestCase(target: 105, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15], expected: 10, name: "Ascending Stress Test (size 15, near-full window)"),
+    TestCase(target: 153, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], expected: 13, name: "Ascending Stress Test (size 18, near-full window)"),
+    TestCase(target: 190, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], expected: 15, name: "Ascending Stress Test (size 20, near-full window)"),
+    TestCase(target: 253, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23], expected: 17, name: "Ascending Stress Test (size 23, near-full window)"),
+    TestCase(target: 300, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25], expected: 19, name: "Ascending Stress Test (size 25, near-full window)"),
+    TestCase(target: 378, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28], expected: 21, name: "Ascending Stress Test (size 28, near-full window)"),
+    TestCase(target: 435, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30], expected: 23, name: "Ascending Stress Test (size 30, near-full window)"),
+    TestCase(target: 528, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33], expected: 26, name: "Ascending Stress Test (size 33, near-full window)"),
+    TestCase(target: 595, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35], expected: 28, name: "Ascending Stress Test (size 35, near-full window)"),
+    TestCase(target: 703, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38], expected: 30, name: "Ascending Stress Test (size 38, near-full window)"),
+    TestCase(target: 780, nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], expected: 32, name: "Ascending Stress Test (size 40, near-full window)"),
+    TestCase(target: 16, nums: [3, 3, 3, 3, 3, 3], expected: 6, name: "Constant-Value Stress Test (size 6, value 3)"),
+    TestCase(target: 25, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 9, name: "Constant-Value Stress Test (size 9, value 3)"),
+    TestCase(target: 31, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 11, name: "Constant-Value Stress Test (size 11, value 3)"),
+    TestCase(target: 40, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 14, name: "Constant-Value Stress Test (size 14, value 3)"),
+    TestCase(target: 46, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 16, name: "Constant-Value Stress Test (size 16, value 3)"),
+    TestCase(target: 55, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 19, name: "Constant-Value Stress Test (size 19, value 3)"),
+    TestCase(target: 61, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 21, name: "Constant-Value Stress Test (size 21, value 3)"),
+    TestCase(target: 70, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 24, name: "Constant-Value Stress Test (size 24, value 3)"),
+    TestCase(target: 76, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 26, name: "Constant-Value Stress Test (size 26, value 3)"),
+    TestCase(target: 85, nums: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], expected: 29, name: "Constant-Value Stress Test (size 29, value 3)")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.minSubArrayLen(tc.target, tc.nums)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+""",
+                alternateSolutionTitle: "Follow-up: O(n log n) Binary Search Solution",
+                alternateSolutionCode: """
+class Solution {
+    // Follow-up: O(n log n) using prefix sums + binary search.
+    // nums are all positive, so prefix sums strictly increase — for each
+    // start index i, binary search the smallest end index whose prefix
+    // sum first reaches target, instead of sliding a second pointer.
+    func minSubArrayLenBinarySearch(_ target: Int, _ nums: [Int]) -> Int {
+        let n = nums.count
+        var prefix = [Int](repeating: 0, count: n + 1)
+        for i in 0..<n {
+            prefix[i + 1] = prefix[i] + nums[i]
+        }
+        var ans = Int.max
+        for i in 0..<n {
+            let toFind = target + prefix[i]
+            var lo = i + 1
+            var hi = n
+            while lo < hi {
+                let mid = (lo + hi) >> 1
+                if prefix[mid] >= toFind {
+                    hi = mid
+                } else {
+                    lo = mid + 1
+                }
+            }
+            if lo <= n && prefix[lo] >= toFind {
+                ans = min(ans, lo - i)
+            }
+        }
+        return ans == Int.max ? 0 : ans
+    }
+}
+"""
             )
         ]
     }

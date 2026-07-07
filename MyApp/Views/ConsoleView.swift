@@ -106,9 +106,11 @@ public struct ConsoleView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .onChange(of: output) { _ in
+                    isCleared = false
                     withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
                 .onChange(of: compilerError) { _ in
+                    isCleared = false
                     withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
                 }
             }
