@@ -92,7 +92,7 @@ public struct CodeEditorView: View {
             
             Divider()
                 .background(Color.white.opacity(0.06))
-            
+
             // Syntax Highlighting Editor & Line Numbers Gutter
             HStack(alignment: .top, spacing: 0) {
                 #if os(macOS)

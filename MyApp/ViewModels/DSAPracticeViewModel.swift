@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SwiftUI
 
 @MainActor
 public class DSAPracticeViewModel: ObservableObject {
@@ -84,9 +85,38 @@ public class DSAPracticeViewModel: ObservableObject {
     private func runJSFallback() {
         guard let question = currentQuestion else { return }
         let transpiled = codeRunner.transpileSwiftToJS(swift: code)
-        
+
         let runnerScript: String
         switch question.id {
+        // Questions added after "maximal_square" (lru_cache_design,
+        // max_vowels_substring, segregate_zeroes_ones, leftmost_column_one,
+        // group_anagrams, longest_substring_no_repeat, next_greater_element,
+        // todo_command_processor, online_store_inventory) intentionally have
+        // NO case below. CodeRunnerService.transpileSwiftToJS turns out to
+        // have a systemic, pre-existing bug (present for the original
+        // questions above too, not introduced by these): its class-body
+        // splitter looks for a literal `func`/`init` keyword to separate
+        // stored properties from methods, but an earlier pass has *already*
+        // renamed every `func` to `function` by the time that splitter runs.
+        // `\bfunc\b` never matches inside `function`, so for any class with
+        // exactly one method and no properties before it (i.e. almost every
+        // `class Solution { func x() {...} }` in this file), the splitter
+        // treats the *entire* method body as "properties" and strips every
+        // `let`/`var` from it outright — not converted, just deleted —
+        // leaving bare `name = value` assignments with no declarator, which
+        // throws in JS. Separately, `while` loops never get parentheses
+        // added (there's a dedicated regex for `if`, none for `while`), and
+        // the empty-dictionary literal `[:]` has no path to `{}` (only the
+        // explicit `[Type: Type]()` constructor-call form does). Any one of
+        // these breaks the JS sandbox outright. Rather than add cases that
+        // would either crash or (worse) silently mis-grade a correct
+        // submission, these questions fall through to `default`: on iOS / a
+        // sandboxed macOS build they run with no test assertions (the same
+        // degraded mode already documented below for any question missing a
+        // case), never a false PASS or FAIL. They all grade correctly today
+        // via the native `swift` subprocess path this project's entitlements
+        // actually use. Fixing the transpiler itself is real, separate work
+        // this project may want to schedule — not attempted here.
         case "two_sum":
             runnerScript = """
             \(transpiled)
@@ -329,7 +359,9 @@ public class DSAPracticeViewModel: ObservableObject {
             }
         }
         
-        self.testcaseResults = parsedResults
+        withAnimation(.smooth) {
+            self.testcaseResults = parsedResults
+        }
         if !parsedResults.isEmpty {
             self.selectedTestCaseIndex = 0
             let passCount = parsedResults.filter { $0.isPass }.count

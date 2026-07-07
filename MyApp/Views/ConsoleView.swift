@@ -61,7 +61,7 @@ public struct ConsoleView: View {
                                 .stroke(Color.white.opacity(0.08), lineWidth: 0.75)
                         )
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(PressableButtonStyle())
 
                     // Copy Button
                     CopyConsoleButton(textToCopy: compilerError ?? output)
@@ -157,6 +157,6 @@ struct CopyConsoleButton: View {
                     .stroke(isCopied ? Color.green.opacity(0.4) : Color.white.opacity(0.08), lineWidth: 0.75)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PressableButtonStyle())
     }
 }

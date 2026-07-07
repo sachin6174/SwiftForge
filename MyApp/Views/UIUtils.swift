@@ -29,6 +29,58 @@ extension View {
 
 // MARK: - Reusable UI Components
 
+/// Collapsible header for a topic section within the sidebar's question list
+/// (e.g. "Sliding Window", "Networking & APIs"). Tapping toggles `isExpanded`.
+public struct SidebarSectionHeader: View {
+    let title: String
+    let solvedCount: Int
+    let totalCount: Int
+    let accentColor: Color
+    @Binding var isExpanded: Bool
+
+    public init(title: String, solvedCount: Int, totalCount: Int, accentColor: Color, isExpanded: Binding<Bool>) {
+        self.title = title
+        self.solvedCount = solvedCount
+        self.totalCount = totalCount
+        self.accentColor = accentColor
+        self._isExpanded = isExpanded
+    }
+
+    public var body: some View {
+        Button(action: {
+            withAnimation(.smooth) {
+                isExpanded.toggle()
+            }
+        }) {
+            HStack(spacing: 6) {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundColor(isExpanded ? accentColor.opacity(0.7) : Color.white.opacity(0.3))
+                    .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                    .frame(width: 10)
+
+                Text(title.uppercased())
+                    .font(.system(size: 9, weight: .black))
+                    .foregroundColor(Color.white.opacity(0.45))
+                    .tracking(0.6)
+                    .lineLimit(1)
+                    .layoutPriority(1)
+
+                Spacer(minLength: 4)
+
+                Text("\(solvedCount)/\(totalCount)")
+                    .font(.system(size: 8.5, weight: .bold, design: .monospaced))
+                    .foregroundColor(solvedCount == totalCount ? Color.green.opacity(0.85) : Color.white.opacity(0.3))
+                    .pulseOnChange(solvedCount)
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 5)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableButtonStyle(scale: 0.97))
+    }
+}
+
 public struct SidebarButton: View {
     let title: String
     let icon: String

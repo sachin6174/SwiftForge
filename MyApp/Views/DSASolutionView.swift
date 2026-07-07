@@ -61,7 +61,7 @@ public struct DSASolutionView: View {
                                         .stroke(isFocused ? Color.orange.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
                                 )
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(PressableButtonStyle())
                         }
                     }
                     .padding(.bottom, 6)
@@ -87,7 +87,7 @@ public struct DSASolutionView: View {
                             )
                             .scaleEffect(isHoveringCopy ? 1.02 : 1.0)
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(PressableButtonStyle())
                         .onHover { over in
                             withAnimation(.easeOut(duration: 0.15)) { isHoveringCopy = over }
                         }
@@ -116,7 +116,7 @@ public struct DSASolutionView: View {
                             .shadow(color: Color.orange.opacity(isHoveringInsert ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
                             .scaleEffect(isHoveringInsert ? 1.02 : 1.0)
                         }
-                        .buttonStyle(PlainButtonStyle())
+                        .buttonStyle(PressableButtonStyle())
                         .onHover { over in
                             withAnimation(.easeOut(duration: 0.15)) { isHoveringInsert = over }
                         }

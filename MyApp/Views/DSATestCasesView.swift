@@ -67,6 +67,24 @@ public struct DSATestCasesView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
+                let allPassed = viewModel.testcaseResults.allSatisfy { $0.isPass }
+                if allPassed {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.green)
+                        Text("All \(viewModel.testcaseResults.count) test cases passed")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                            .foregroundColor(.green)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.green.opacity(0.1))
+                    .overlay(Rectangle().fill(Color.green.opacity(0.3)).frame(height: 0.75), alignment: .bottom)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
+
                 // Testcase buttons selector
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 8) {
@@ -95,12 +113,13 @@ public struct DSATestCasesView: View {
                                         .stroke(viewModel.selectedTestCaseIndex == result.index ? Color.orange.opacity(0.6) : Color.clear, lineWidth: 1)
                                 )
                             }
-                            .buttonStyle(PlainButtonStyle())
+                            .buttonStyle(PressableButtonStyle(scale: 0.94))
                         }
                     }
                     .padding(.horizontal, 14)
+                    .padding(.top, allPassed ? 10 : 0)
                 }
-                
+
                 Divider()
                     .background(Color.white.opacity(0.06))
                     .padding(.horizontal, 14)

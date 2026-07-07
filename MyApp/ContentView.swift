@@ -56,6 +56,7 @@ public struct ContentView: View {
     @State private var leftPaneWidth: CGFloat = 380
     /// Open Book Mode: solution on left, editor on right — simultaneously
     @State private var openBookMode: Bool = false
+    @State private var celebrationID: UUID? = nil
 
     enum DSAPaneTab {
         case description
@@ -140,6 +141,13 @@ public struct ContentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .overlay {
+            if let id = celebrationID {
+                SolvedCelebrationView(accentColor: activeAccentColor)
+                    .id(id)
+                    .transition(.opacity)
+            }
+        }
         .preferredColorScheme(.dark)
         #if os(macOS)
         .frame(minWidth: 980, minHeight: 660)
@@ -191,7 +199,7 @@ public struct ContentView: View {
                                 .stroke(activeAccentColor.opacity(0.3), lineWidth: 0.75)
                         )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
             }
             
             // Header title / breadcrumb
@@ -228,7 +236,7 @@ public struct ContentView: View {
                                 .stroke(activeAccentColor.opacity(0.3), lineWidth: 0.75)
                         )
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(PressableButtonStyle())
                 }
             }
 
@@ -274,7 +282,7 @@ public struct ContentView: View {
                     }
                 )
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(PressableButtonStyle())
             .keyboardShortcut("b", modifiers: [.command])
 
             // ── Stats Badges ──────────────────────────────────
@@ -303,6 +311,7 @@ public struct ContentView: View {
                                     .stroke(Color.orange.opacity(0.25), lineWidth: 0.75)
                             )
                     )
+                    .pulseOnChange(appState.userActivity.streak)
 
                     HStack(spacing: 5) {
                         Image(systemName: "checkmark.seal.fill")
@@ -323,6 +332,7 @@ public struct ContentView: View {
                                     .stroke(Color.green.opacity(0.25), lineWidth: 0.75)
                             )
                     )
+                    .pulseOnChange(appState.userActivity.solvedQuestionIds.count)
                 }
             }
         }
@@ -364,7 +374,7 @@ public struct ContentView: View {
                         }
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
             }
         }
         .padding(4)
@@ -521,7 +531,7 @@ public struct ContentView: View {
                             .stroke(focusMode == .infoFocused ? activeAccentColor.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 0.75)
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -593,7 +603,7 @@ public struct ContentView: View {
                             .stroke(Color.white.opacity(0.08), lineWidth: 0.75)
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
 
                 Button(action: {
                     withAnimation {
@@ -618,7 +628,7 @@ public struct ContentView: View {
                             .stroke(activeAccentColor.opacity(0.3), lineWidth: 0.75)
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
 
                 CopyCodeButton(code: dsaViewModel.code)
 
@@ -653,8 +663,23 @@ public struct ContentView: View {
     private func setupCallbacks() {
         dsaViewModel.onSuccess = {
             if let q = dsaViewModel.currentQuestion {
+                let alreadySolved = appState.userActivity.solvedQuestionIds.contains(q.id)
                 appState.markQuestionSolved(questionId: q.id)
+                if !alreadySolved {
+                    triggerCelebration()
+                }
             }
+        }
+    }
+
+    /// Shows the solved celebration for ~1.7s. Gated to first-time solves in
+    /// `setupCallbacks` so re-running an already-solved suite doesn't replay
+    /// it — repeating the same reward on every run would cheapen it.
+    private func triggerCelebration() {
+        let id = UUID()
+        celebrationID = id
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            if celebrationID == id { celebrationID = nil }
         }
     }
     
@@ -793,7 +818,7 @@ struct CustomSegmentedPicker<T: Hashable>: View {
                         }
                     )
                 }
-                .buttonStyle(PlainButtonStyle())
+                .buttonStyle(PressableButtonStyle())
             }
         }
         .padding(3)
@@ -842,6 +867,6 @@ struct CopyCodeButton: View {
                     .stroke(isCopied ? Color.green.opacity(0.4) : Color.white.opacity(0.08), lineWidth: 0.75)
             )
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(PressableButtonStyle())
     }
 }

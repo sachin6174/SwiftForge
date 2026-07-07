@@ -144,7 +144,7 @@ public struct DSADescriptionView: View {
                     // ── Interview Tips Section ──
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 8) {
-                            Image(systemName: "lightbulb.stars.fill")
+                            Image(systemName: "lightbulb.fill")
                                 .foregroundColor(.yellow)
                                 .font(.system(size: 14))
                                 .shadow(color: .yellow.opacity(0.5), radius: 4)

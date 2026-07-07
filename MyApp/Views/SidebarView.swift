@@ -7,6 +7,8 @@ public struct SidebarView: View {
     @State private var statusPulse = false
     @State private var searchText = ""
     @State private var isHoveringHeader = false
+    @State private var collapsedSections: Set<String> = []
+    @FocusState private var isSearchFocused: Bool
 
     public init(appState: AppState, onDSASelect: @escaping (Question) -> Void) {
         self.appState = appState
@@ -31,6 +33,62 @@ public struct SidebarView: View {
         return appState.swiftQuestions.filter {
             $0.title.localizedCaseInsensitiveContains(searchText) ||
             $0.topics.contains(where: { $0.localizedCaseInsensitiveContains(searchText) })
+        }
+    }
+
+    private func sectionKey(_ name: String, activeTab: String) -> String {
+        "\(activeTab)::\(name)"
+    }
+
+    @ViewBuilder
+    private func questionRow(_ question: Question, activeTab: String) -> some View {
+        let isSelected = activeTab == "dsa"
+            ? appState.selectedDSAQuestion?.id == question.id
+            : appState.selectedSwiftQuestion?.id == question.id
+        let isSolved = appState.userActivity.solvedQuestionIds.contains(question.id)
+        SidebarButton(
+            title: question.title,
+            icon: activeTab == "dsa"
+                ? (isSelected ? "chevron.right.circle.fill" : "chevron.right.circle")
+                : (isSelected ? "network" : "globe"),
+            isSelected: isSelected,
+            isSolved: isSolved,
+            activeTab: activeTab
+        ) {
+            if activeTab == "dsa" {
+                appState.selectedDSAQuestion = question
+            } else {
+                appState.selectedSwiftQuestion = question
+            }
+            onDSASelect(question)
+        }
+    }
+
+    @ViewBuilder
+    private func sectionBlock(_ section: QuestionSection, activeTab: String) -> some View {
+        let key = sectionKey(section.name, activeTab: activeTab)
+        let solvedInSection = section.questions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count
+        let isExpanded = !collapsedSections.contains(key)
+
+        VStack(alignment: .leading, spacing: 2) {
+            SidebarSectionHeader(
+                title: section.name,
+                solvedCount: solvedInSection,
+                totalCount: section.questions.count,
+                accentColor: activeTab == "swiftPractice" ? .blue : .orange,
+                isExpanded: Binding(
+                    get: { !collapsedSections.contains(key) },
+                    set: { expanded in
+                        if expanded { collapsedSections.remove(key) } else { collapsedSections.insert(key) }
+                    }
+                )
+            )
+
+            if isExpanded {
+                ForEach(section.questions) { question in
+                    questionRow(question, activeTab: activeTab)
+                }
+            }
         }
     }
 
@@ -160,20 +218,34 @@ public struct SidebarView: View {
                     .textFieldStyle(PlainTextFieldStyle())
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.white)
-                
+                    .focused($isSearchFocused)
+
                 if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
+                    Button(action: { withAnimation(.snappy) { searchText = "" } }) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 10))
                             .foregroundColor(Color.white.opacity(0.4))
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(PressableButtonStyle())
                 }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(Color.black.opacity(0.2))
             .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(
+                        (appState.activeTab == .swiftPractice ? Color.blue : Color.orange)
+                            .opacity(isSearchFocused ? 0.55 : 0),
+                        lineWidth: 1.25
+                    )
+            )
+            .shadow(
+                color: (appState.activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(isSearchFocused ? 0.25 : 0),
+                radius: 6
+            )
+            .animation(.smooth, value: isSearchFocused)
             .padding(.horizontal, 14)
             .padding(.bottom, 10)
 
@@ -210,12 +282,14 @@ public struct SidebarView: View {
                             )
                             .frame(width: geometry.size.width * percent, height: 4)
                             .shadow(color: (appState.activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(0.6), radius: 3)
+                            .animation(.smooth, value: percent)
                     }
                 }
                 .frame(height: 4)
                 .padding(.horizontal, 16)
             }
             .padding(.bottom, 16)
+            .pulseOnChange(solved)
 
             Rectangle()
                 .fill(Color.white.opacity(0.05))
@@ -241,21 +315,18 @@ public struct SidebarView: View {
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
 
-                            ForEach(filteredDSAQuestions) { question in
-                                let isSelected = appState.selectedDSAQuestion?.id == question.id
-                                let isSolved = appState.userActivity.solvedQuestionIds.contains(question.id)
-                                SidebarButton(
-                                    title: question.title,
-                                    icon: isSelected ? "chevron.right.circle.fill" : "chevron.right.circle",
-                                    isSelected: isSelected,
-                                    isSolved: isSolved,
-                                    activeTab: "dsa"
-                                ) {
-                                    appState.selectedDSAQuestion = question
-                                    onDSASelect(question)
+                            if searchText.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(QuestionSectionizer.grouped(filteredDSAQuestions, category: "dsa"), id: \.name) { section in
+                                        sectionBlock(section, activeTab: "dsa")
+                                    }
+                                }
+                            } else {
+                                ForEach(filteredDSAQuestions) { question in
+                                    questionRow(question, activeTab: "dsa")
                                 }
                             }
-                            
+
                             if filteredDSAQuestions.isEmpty {
                                 Text("No challenges found")
                                     .font(.system(size: 10, weight: .medium))
@@ -280,21 +351,18 @@ public struct SidebarView: View {
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
 
-                            ForEach(filteredSwiftQuestions) { question in
-                                let isSelected = appState.selectedSwiftQuestion?.id == question.id
-                                let isSolved = appState.userActivity.solvedQuestionIds.contains(question.id)
-                                SidebarButton(
-                                    title: question.title,
-                                    icon: isSelected ? "network" : "globe",
-                                    isSelected: isSelected,
-                                    isSolved: isSolved,
-                                    activeTab: "swiftPractice"
-                                ) {
-                                    appState.selectedSwiftQuestion = question
-                                    onDSASelect(question)
+                            if searchText.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(QuestionSectionizer.grouped(filteredSwiftQuestions, category: "swiftPractice"), id: \.name) { section in
+                                        sectionBlock(section, activeTab: "swiftPractice")
+                                    }
+                                }
+                            } else {
+                                ForEach(filteredSwiftQuestions) { question in
+                                    questionRow(question, activeTab: "swiftPractice")
                                 }
                             }
-                            
+
                             if filteredSwiftQuestions.isEmpty {
                                 Text("No challenges found")
                                     .font(.system(size: 10, weight: .medium))
