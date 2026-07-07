@@ -111,3 +111,7 @@ AuthKey_*.p8
 *.key
 *.mobileprovision
 *.provisionprofile
+
+# ── Screenshot Backups ──
+ios-ss/original/
+mac-ss/original/

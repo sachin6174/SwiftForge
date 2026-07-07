@@ -28,6 +28,32 @@ Whether you're preparing for senior iOS technical interviews, sharpening your al
 
 ---
 
+## 📸 Screenshots
+
+### 🖥️ macOS Studio Workspace
+Experience the fully integrated offline development environment with interactive visualizers, real-time local compiler outputs, and progress tracking:
+
+<p align="center">
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.16%20PM.png" width="49%" alt="macOS Studio Workspace - Two Sum Challenge" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.30%20PM.png" width="49%" alt="macOS Studio Workspace - Code Run Results" />
+</p>
+<p align="center">
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.40%20PM.png" width="49%" alt="macOS Studio Workspace - Swift Practice Tracker" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.49%20PM.png" width="49%" alt="macOS Studio Workspace - Analytics & Solved Metrics" />
+</p>
+
+### 📱 iOS Companion Interface
+Perfect for practice on the go, with fully responsive glassmorphic layouts optimized for iOS:
+
+<p align="center">
+  <img src="ios-ss/Screen%20Shot%202026-07-07%20at%2013.09.20%20PM.png" width="24%" alt="iOS Workspace - Dashboard" />
+  <img src="ios-ss/Screen%20Shot%202026-07-07%20at%2013.09.44%20PM.png" width="24%" alt="iOS Workspace - Code Editor" />
+  <img src="ios-ss/Screen%20Shot%202026-07-07%20at%2013.10.11%20PM.png" width="24%" alt="iOS Workspace - Run Suite Results" />
+  <img src="ios-ss/Screen%20Shot%202026-07-07%20at%2013.10.30%20PM.png" width="24%" alt="iOS Workspace - Daily Streak Tracker" />
+</p>
+
+---
+
 ## 🌟 Key Features
 
 ### 1. 🎯 Dual Practice Tracks
