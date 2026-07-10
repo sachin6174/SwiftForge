@@ -87,103 +87,172 @@ public struct SidebarButton: View {
     let isSelected: Bool
     let isSolved: Bool
     let activeTab: String
+    let previewText: String?
+    @Binding var isPreviewExpanded: Bool
     let action: () -> Void
 
     @State private var isPressed = false
     @State private var isHovered = false
 
-    public init(title: String, icon: String, isSelected: Bool, isSolved: Bool = false, activeTab: String = "dsa", action: @escaping () -> Void) {
+    public init(
+        title: String,
+        icon: String,
+        isSelected: Bool,
+        isSolved: Bool = false,
+        activeTab: String = "dsa",
+        previewText: String? = nil,
+        isPreviewExpanded: Binding<Bool> = .constant(false),
+        action: @escaping () -> Void
+    ) {
         self.title = title
         self.icon = icon
         self.isSelected = isSelected
         self.isSolved = isSolved
         self.activeTab = activeTab
+        self.previewText = previewText
+        self._isPreviewExpanded = isPreviewExpanded
         self.action = action
     }
 
-    private var accentGradient: LinearGradient {
-        if activeTab == "swiftPractice" {
-            return LinearGradient(colors: [Color(red: 0.1, green: 0.6, blue: 1.0), Color(red: 0.0, green: 0.85, blue: 0.9)], startPoint: .top, endPoint: .bottom)
-        } else {
-            return LinearGradient(colors: [Color.orange, Color.red], startPoint: .top, endPoint: .bottom)
+    /// Single source of truth for this row's accent color across every tab —
+    /// used both directly (accent bar, icon-off state) and to build
+    /// `accentGradient` below, so mcq/machineRound rows no longer silently
+    /// fall through to the DSA orange default the way they did before this
+    /// was centralized (there was no "mcq" or "machineRound" case anywhere
+    /// in this file; every ternary here only ever checked "swiftPractice").
+    private var accentSolidColor: Color {
+        switch activeTab {
+        case "swiftPractice": return .blue
+        case "mcq": return .purple
+        case "machineRound": return .mint
+        default: return .orange
         }
     }
 
+    private var accentSecondaryColor: Color {
+        switch activeTab {
+        case "swiftPractice": return .cyan
+        case "mcq": return .pink
+        case "machineRound": return .teal
+        default: return .red
+        }
+    }
+
+    private var accentGradient: LinearGradient {
+        LinearGradient(colors: [accentSolidColor, accentSecondaryColor], startPoint: .top, endPoint: .bottom)
+    }
+
     public var body: some View {
-        Button(action: action) {
-            HStack(spacing: 10) {
-                // Glowing left accent indicator
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(isSelected ? accentGradient : LinearGradient(colors: [.clear], startPoint: .top, endPoint: .bottom))
-                    .frame(width: 3, height: 18)
-                    .shadow(color: isSelected ? (activeTab == "swiftPractice" ? Color.blue : Color.orange).opacity(0.8) : Color.clear, radius: 4)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 2) {
+                Button(action: action) {
+                    HStack(spacing: 10) {
+                        // Glowing left accent indicator
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(isSelected ? accentGradient : LinearGradient(colors: [.clear], startPoint: .top, endPoint: .bottom))
+                            .frame(width: 3, height: 18)
+                            .shadow(color: isSelected ? accentSolidColor.opacity(0.8) : Color.clear, radius: 4)
 
-                Image(systemName: icon)
-                    .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
-                    .foregroundStyle(
-                        isSelected
-                            ? accentGradient
-                            : LinearGradient(colors: [Color.white.opacity(0.4)], startPoint: .top, endPoint: .bottom)
-                    )
-                    .frame(width: 16)
-
-                Text(title)
-                    .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-                    .foregroundColor(isSelected ? .white : Color.white.opacity(0.6))
-                    .lineLimit(1)
-                    .help(title)
-
-                Spacer()
-
-                if isSolved {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 6, height: 6)
-                        .shadow(color: Color.green.opacity(0.8), radius: 3)
-                        .padding(.trailing, 4)
-                }
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 8)
-            .background(
-                Group {
-                    if isSelected {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        (activeTab == "swiftPractice" ? Color.blue : Color.orange).opacity(0.15),
-                                        (activeTab == "swiftPractice" ? Color.cyan : Color.red).opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+                        Image(systemName: icon)
+                            .font(.system(size: 13, weight: isSelected ? .semibold : .regular))
+                            .foregroundStyle(
+                                isSelected
+                                    ? accentGradient
+                                    : LinearGradient(colors: [Color.white.opacity(0.4)], startPoint: .top, endPoint: .bottom)
                             )
-                            .overlay(
+                            .frame(width: 16)
+
+                        Text(title)
+                            .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+                            .foregroundColor(isSelected ? .white : Color.white.opacity(0.6))
+                            .lineLimit(1)
+                            .help(title)
+
+                        Spacer()
+
+                        if isSolved {
+                            Circle()
+                                .fill(Color.green)
+                                .frame(width: 6, height: 6)
+                                .shadow(color: Color.green.opacity(0.8), radius: 3)
+                                .padding(.trailing, 4)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 8)
+                    .background(
+                        Group {
+                            if isSelected {
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke((activeTab == "swiftPractice" ? Color.blue : Color.orange).opacity(0.25), lineWidth: 0.5)
-                            )
-                    } else {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.white.opacity(isHovered ? 0.04 : (isPressed ? 0.02 : 0.0)))
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                accentSolidColor.opacity(0.15),
+                                                accentSecondaryColor.opacity(0.05)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(accentSolidColor.opacity(0.25), lineWidth: 0.5)
+                                    )
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(isHovered ? 0.04 : (isPressed ? 0.02 : 0.0)))
+                            }
+                        }
+                    )
+                    .scaleEffect(isPressed ? 0.98 : 1.0)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .onHover { over in
+                    withAnimation(.easeOut(duration: 0.15)) {
+                        isHovered = over
                     }
                 }
-            )
-            .scaleEffect(isPressed ? 0.98 : 1.0)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(PlainButtonStyle())
-        .onHover { over in
-            withAnimation(.easeOut(duration: 0.15)) {
-                isHovered = over
+                .simultaneousGesture(
+                    DragGesture(minimumDistance: 0)
+                        .onChanged { _ in withAnimation(.easeOut(duration: 0.08)) { isPressed = true } }
+                        .onEnded { _ in withAnimation(.easeOut(duration: 0.12)) { isPressed = false } }
+                )
+                .accessibilityLabel("\(title)\(isSolved ? ", solved" : "")")
+
+                // Separate disclosure button (a sibling, not nested inside
+                // the row's own Button above) so tapping it toggles the
+                // inline preview WITHOUT also triggering `action` (opening
+                // the question) — a chevron nested inside another Button's
+                // label can't reliably receive its own distinct tap.
+                if previewText != nil {
+                    Button(action: {
+                        withAnimation(.smooth) { isPreviewExpanded.toggle() }
+                    }) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(Color.white.opacity(isPreviewExpanded ? 0.6 : 0.3))
+                            .rotationEffect(.degrees(isPreviewExpanded ? 90 : 0))
+                            .frame(width: 18, height: 18)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .accessibilityLabel(isPreviewExpanded ? "Hide preview" : "Show preview")
+                }
+            }
+
+            if isPreviewExpanded, let previewText, !previewText.isEmpty {
+                Text(previewText)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Color.white.opacity(0.5))
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.leading, 37)
+                    .padding(.trailing, 10)
+                    .padding(.top, 2)
+                    .padding(.bottom, 6)
             }
         }
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in withAnimation(.easeOut(duration: 0.08)) { isPressed = true } }
-                .onEnded { _ in withAnimation(.easeOut(duration: 0.12)) { isPressed = false } }
-        )
-        .accessibilityLabel("\(title)\(isSolved ? ", solved" : "")")
     }
 }
 

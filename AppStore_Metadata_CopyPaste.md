@@ -64,14 +64,14 @@ swift,dsa,leetcode,ios,developer,ide,algorithms,coding,interview,prep,swiftui,co
 
 ### Support URL
 ```text
-https://sachinserver.in/swiftforge/support
+https://github.com/sachin6174/SwiftForge/issues
 ```
 
 ---
 
 ### Marketing URL
 ```text
-https://sachinserver.in/swiftforge
+https://github.com/sachin6174/SwiftForge
 ```
 
 ---

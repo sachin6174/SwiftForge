@@ -1,0 +1,435 @@
+[
+  {
+    "id": "mcq_001",
+    "question": "In SwiftUI, what is the purpose of the `@EnvironmentObject` property wrapper?",
+    "options": [
+      "To define a function that returns a view",
+      "To create a mutable state for a value type",
+      "To handle asynchronous tasks",
+      "To provide shared data between different parts of the app using a shared instance of a class"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "SwiftUI",
+      "Property Wrappers"
+    ]
+  },
+  {
+    "id": "mcq_002",
+    "question": "In Swift, what is the Combine framework's `Just` publisher used for?",
+    "options": [
+      "To create a publisher that emits a value only after a specified time interval",
+      "To create a publisher that emits a single value and then finishes",
+      "To create a publisher that never emits any values",
+      "To create a publisher that emits a sequence of values"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "Combine"
+    ]
+  },
+  {
+    "id": "mcq_003",
+    "question": "What SwiftUI modifier can be used to apply a custom style to a button?",
+    "options": [
+      ".buttonStyle()",
+      ".style()",
+      ".customStyle()",
+      ".modifier()"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_004",
+    "question": "In Swift, which method can you use to decode JSON data into a custom type conforming to `Codable`?",
+    "options": [
+      "JSONDecoder().decode(_:from:)",
+      "JSONDecoder().encode(_:from:)",
+      "JSONEncoder().decode(_:from:)",
+      "JSONEncoder().encode(_:from:)"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Codable"
+    ]
+  },
+  {
+    "id": "mcq_005",
+    "question": "In SwiftUI, which view modifier can be used to apply an overlay to a view?",
+    "options": [
+      ".overlay()",
+      ".mask()",
+      ".background()",
+      ".border()"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_006",
+    "question": "In SwiftUI, how do you create a custom view modifier?",
+    "options": [
+      "By defining a class that conforms to the `ViewModifier` protocol",
+      "By defining a class that conforms to the `View` protocol",
+      "By defining a struct that conforms to the `View` protocol",
+      "By defining a struct that conforms to the `ViewModifier` protocol"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_007",
+    "question": "In Swift, which method of the `URLSession` class can be used to make an API request?",
+    "options": [
+      "streamTask(withHostName:port:)",
+      "uploadTask(with:from:completionHandler:)",
+      "dataTask(with:completionHandler:)",
+      "downloadTask(with:completionHandler:)"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "Networking"
+    ]
+  },
+  {
+    "id": "mcq_008",
+    "question": "In SwiftUI, how can you update a view based on the changes in a published property of an `ObservableObject`?",
+    "options": [
+      "By using the `@State` property wrapper",
+      "By using the `@EnvironmentObject` property wrapper",
+      "By using the `@ObservedObject` property wrapper",
+      "By using the `@Binding` property wrapper"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "SwiftUI",
+      "Property Wrappers"
+    ]
+  },
+  {
+    "id": "mcq_009",
+    "question": "In iOS development, which class can be used to store simple key-value pairs persistently?",
+    "options": [
+      "UserDefaults",
+      "Core Data",
+      "Keychain",
+      "FileManager"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "iOS Frameworks"
+    ]
+  },
+  {
+    "id": "mcq_010",
+    "question": "In SwiftUI, how can you create a custom binding?",
+    "options": [
+      "By using the `@Binding` property wrapper",
+      "By using the `State` initializer with a default value",
+      "By using the `Binding` initializer with `get` and `set` closures",
+      "By using the `Binding` initializer with a key path"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "SwiftUI",
+      "Property Wrappers"
+    ]
+  },
+  {
+    "id": "mcq_011",
+    "question": "In Swift, how can you create a custom operator?",
+    "options": [
+      "By defining a new operator using the `operator` keyword and implementing a corresponding class",
+      "By defining a new operator using the `infix`, `prefix`, or `postfix` keyword and implementing a corresponding protocol",
+      "By defining a new operator using the `operator` keyword and implementing a corresponding struct",
+      "By defining a new operator using the `infix`, `prefix`, or `postfix` keyword and implementing a corresponding function"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "Swift Language"
+    ]
+  },
+  {
+    "id": "mcq_012",
+    "question": "What is the purpose of the `sink` method in the Combine framework?",
+    "options": [
+      "To attach a publisher to a subscriber and receive values and completion events",
+      "To attach a subscriber to a publisher and receive values and completion events",
+      "To create a new publisher that emits a sequence of values",
+      "To emit a single value and then complete"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "Combine"
+    ]
+  },
+  {
+    "id": "mcq_013",
+    "question": "In SwiftUI, what is the purpose of the `NavigationView` and `NavigationLink` views?",
+    "options": [
+      "To create a navigation interface with a stack-based navigation structure",
+      "To create a grid layout for views",
+      "To create a modal presentation of a view",
+      "To create a tab-based navigation interface"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_014",
+    "question": "In Swift, how can you create a computed property?",
+    "options": [
+      "By using `get` and `set` closures without providing storage for the property",
+      "By using the `lazy` keyword",
+      "By using the `@Property` property wrapper",
+      "By using the `computed` keyword"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Swift Language"
+    ]
+  },
+  {
+    "id": "mcq_015",
+    "question": "In SwiftUI, what is the purpose of the `@GestureState` property wrapper?",
+    "options": [
+      "To manage the persistent state of a gesture",
+      "To manage the mutable state for a value type",
+      "To manage the shared data between different parts of the app",
+      "To manage the transient state of a gesture"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "SwiftUI",
+      "Property Wrappers"
+    ]
+  },
+  {
+    "id": "mcq_016",
+    "question": "In the Combine framework, how can you create a custom publisher?",
+    "options": [
+      "By defining a struct that conforms to the `Subscriber` protocol",
+      "By defining a class that conforms to the `Subscriber` protocol",
+      "By defining a class that conforms to the `Publisher` protocol",
+      "By defining a struct that conforms to the `Publisher` protocol"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "Combine"
+    ]
+  },
+  {
+    "id": "mcq_017",
+    "question": "In SwiftUI, how can you create a custom environment value?",
+    "options": [
+      "By defining a custom value conforming to the `EnvironmentValue` protocol and an extension on `EnvironmentValues`",
+      "By defining a custom value conforming to the `EnvironmentValue` protocol and an extension on `EnvironmentObject`",
+      "By defining a custom key conforming to the `EnvironmentKey` protocol and an extension on `EnvironmentValues`",
+      "By defining a custom key conforming to the `EnvironmentKey` protocol and an extension on `EnvironmentObject`"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_018",
+    "question": "In Swift, how can you restrict the usage of a generic type to types that conform to a specific protocol?",
+    "options": [
+      "By using a protocol composition",
+      "By using a typealias",
+      "By using a type constraint in the angle brackets",
+      "By using a conditional conformance"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "Swift Language",
+      "Generics"
+    ]
+  },
+  {
+    "id": "mcq_019",
+    "question": "In iOS development, what is the purpose of the `UIHostingController` class?",
+    "options": [
+      "To provide a SwiftUI-compatible container for hosting a UIKit view hierarchy",
+      "To provide a UIKit-compatible container for hosting a SwiftUI view hierarchy",
+      "To provide a SwiftUI-compatible container for hosting a UIView hierarchy",
+      "To provide a UIKit-compatible container for hosting a UIView hierarchy"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "UIKit",
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_020",
+    "question": "In SwiftUI, how can you handle view updates when the application receives a notification from the system?",
+    "options": [
+      "By using the `onAppear(perform:)` modifier and subscribing to the `NotificationCenter.Publisher`",
+      "By using the `onReceive(_:perform:)` modifier and subscribing to the `NotificationCenter.Publisher`",
+      "By using the `onReceive(_:perform:)` modifier and subscribing to the `NotificationCenter.Observer`",
+      "By using the `onAppear(perform:)` modifier and subscribing to the `NotificationCenter.Observer`"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "SwiftUI",
+      "Combine"
+    ]
+  },
+  {
+    "id": "mcq_021",
+    "question": "In Swift, how can you ensure that only a limited number of other classes subclasses a class?",
+    "options": [
+      "By defining the class as `open` and using a conditional conformance",
+      "By defining the class as `final`",
+      "By defining the class as `open` and creating a custom protocol with fileprivate initializers",
+      "By defining the class as `public` and using a protocol composition"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "Swift Language",
+      "Access Control"
+    ]
+  },
+  {
+    "id": "mcq_022",
+    "question": "How can you use SwiftUI's `ViewBuilder` to create a custom container view that accepts multiple child views?",
+    "options": [
+      "By creating a custom view with an initializer that has a closure with the `@Environment` attribute",
+      "By creating a custom view with an initializer that has a closure with the `@ViewBuilder` attribute",
+      "By creating a custom view with an initializer that has a closure with the `@Binding` attribute",
+      "By creating a custom view with an initializer that has a closure with the `@State` attribute"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_023",
+    "question": "In iOS development, what is the purpose of the `WKWebView` class?",
+    "options": [
+      "To display non-interactive web content inside an app using the Safari engine",
+      "To display non-interactive web content inside an app using the WebKit engine",
+      "To display interactive web content inside an app using the WebKit engine",
+      "To display interactive web content inside an app using the Safari engine"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "iOS Frameworks"
+    ]
+  },
+  {
+    "id": "mcq_024",
+    "question": "In Swift, how can you create a custom function builder?",
+    "options": [
+      "By defining a struct or class that conforms to the `_FunctionBuilder` protocol and provides the required builder properties",
+      "By defining a struct or class that conforms to the `FunctionBuilder` protocol and provides the required builder properties",
+      "By defining a struct or class that conforms to the `FunctionBuilder` protocol and provides the required builder methods",
+      "By defining a struct or class that conforms to the `_FunctionBuilder` protocol and provides the required builder methods"
+    ],
+    "correctAnswerIndex": 3,
+    "topics": [
+      "Swift Language",
+      "Result Builders"
+    ]
+  },
+  {
+    "id": "mcq_025",
+    "question": "In SwiftUI, how can you create a custom gesture recognizer?",
+    "options": [
+      "By defining a struct that conforms to the `GestureRecognizer` protocol and implements the `body` property",
+      "By defining a class that conforms to the `Gesture` protocol and implements the `body` property",
+      "By defining a struct that conforms to the `Gesture` protocol and implements the `body` property",
+      "By defining a class that conforms to the `GestureRecognizer` protocol and implements the `body` property"
+    ],
+    "correctAnswerIndex": 2,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_026",
+    "question": "In Swift, how can you implement a custom atomic property wrapper?",
+    "options": [
+      "By using a custom lock, such as `os_unfair_lock`, within the property wrapper to ensure thread safety",
+      "By using the `@Atomic` attribute on the property wrapper",
+      "By using the `DispatchQueue` class within the property wrapper",
+      "By using a `NotificationCenter` observer within the property wrapper"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Swift Language",
+      "Concurrency"
+    ]
+  },
+  {
+    "id": "mcq_027",
+    "question": "How can you use Swift's `Result` type in a custom asynchronous function to handle success and failure?",
+    "options": [
+      "By defining a completion handler with a `Result` type parameter and calling the completion handler with `.success()` or `.failure()`",
+      "By returning a `Result` type from the asynchronous function and handling the success or failure cases with an `if` statement",
+      "By returning a `Result` type from the asynchronous function and handling the success or failure cases with a `switch` statement",
+      "By defining a completion handler with a `Result` type parameter and calling the completion handler with `.resolve()` or `.reject()`"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Swift Language",
+      "Error Handling"
+    ]
+  },
+  {
+    "id": "mcq_028",
+    "question": "In SwiftUI, how can you create a custom view modifier that wraps a view with additional functionality?",
+    "options": [
+      "By defining a struct that conforms to the `View` protocol and implements the `body(content:)` method",
+      "By defining a struct that conforms to the `ViewModifier` protocol and implements the `body(content:)` method",
+      "By defining a class that conforms to the `ViewModifier` protocol and implements the `body(content:)` method",
+      "By defining a class that conforms to the `View` protocol and implements the `body(content:)` method"
+    ],
+    "correctAnswerIndex": 1,
+    "topics": [
+      "SwiftUI"
+    ]
+  },
+  {
+    "id": "mcq_029",
+    "question": "In Swift, what is the purpose of `associatedtype` in a protocol?",
+    "options": [
+      "To specify a placeholder type that is used as a type alias in a protocol",
+      "To specify a required type that must be implemented in a protocol",
+      "To specify a default type that is used as a type alias in a protocol",
+      "To specify a custom type that can be used as a type alias in a protocol"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Swift Language",
+      "Generics"
+    ]
+  },
+  {
+    "id": "mcq_030",
+    "question": "In iOS development, how can you use the `Core Data` framework with SwiftUI?",
+    "options": [
+      "By creating an instance of `NSPersistentContainer` and using the `@Environment(\\.managedObjectContext)` property wrapper",
+      "By creating an instance of `CoreDataStack` and using the `@Environment(\\.coreData)` property wrapper",
+      "By creating an instance of `NSPersistentContainer` and using the `@Environment(\\.coreData)` property wrapper",
+      "By creating an instance of `CoreDataStack` and using the `@Environment(\\.managedObjectContext)` property wrapper"
+    ],
+    "correctAnswerIndex": 0,
+    "topics": [
+      "Core Data",
+      "SwiftUI"
+    ]
+  }
+]

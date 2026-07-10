@@ -30,14 +30,28 @@ public enum QuestionSectionizer {
     ]
 
     private static let swiftOrder: [(section: String, keywords: Set<String>)] = [
+        ("Machine Coding Round", ["Machine Coding"]),
         ("Networking & APIs", ["URLSession", "Networking", "JSON", "HTTP POST"]),
         ("Concurrency & Memory", ["ARC", "Actors", "Concurrency", "Copy-On-Write", "COW", "Memory Management", "Memory Optimization", "Data Race Safety"]),
         ("Combine & Property Wrappers", ["Combine", "Publishers", "Property Wrappers"]),
         ("Data Structures & Parsing", [])
     ]
 
+    private static let machineRoundOrder: [(section: String, keywords: Set<String>)] = [
+        ("Concurrency & Persistence", ["Concurrency", "GCD"]),
+        ("Machine Round Challenges", [])
+    ]
+
+    private static func order(for category: String) -> [(section: String, keywords: Set<String>)] {
+        switch category {
+        case "dsa": return dsaOrder
+        case "machineRound": return machineRoundOrder
+        default: return swiftOrder
+        }
+    }
+
     public static func sectionName(for question: Question) -> String {
-        let order = question.category == "dsa" ? dsaOrder : swiftOrder
+        let order = order(for: question.category)
         let topics = Set(question.topics)
         for entry in order where !entry.keywords.isEmpty {
             if !entry.keywords.isDisjoint(with: topics) {
@@ -50,12 +64,12 @@ public enum QuestionSectionizer {
     /// Groups `questions` into sections, preserving the curated order above
     /// and dropping any section with no matching questions.
     public static func grouped(_ questions: [Question], category: String) -> [QuestionSection] {
-        let order = (category == "dsa" ? dsaOrder : swiftOrder).map { $0.section }
+        let sectionOrder = order(for: category).map { $0.section }
         var buckets: [String: [Question]] = [:]
         for q in questions {
             buckets[sectionName(for: q), default: []].append(q)
         }
-        return order.compactMap { name in
+        return sectionOrder.compactMap { name in
             guard let qs = buckets[name], !qs.isEmpty else { return nil }
             return QuestionSection(name: name, questions: qs)
         }

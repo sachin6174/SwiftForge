@@ -139,7 +139,7 @@ SwiftForge/
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/your-username/SwiftForge.git
+   git clone https://github.com/sachin6174/SwiftForge.git
    cd SwiftForge
    ```
 

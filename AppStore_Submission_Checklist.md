@@ -72,10 +72,10 @@ Boost your Swift and iOS engineering skills today with SwiftForge!
 
 | Field | URL / Location | Status |
 | :--- | :--- | :--- |
-| **Privacy Policy URL** | `https://sachinserver.in/swiftforge/privacy` | Document generated at [`PRIVACY_POLICY.md`](file:///Users/sachinkumar/Desktop/Untitled%20Project/PRIVACY_POLICY.md) |
-| **Terms of Use (EULA)** | `https://sachinserver.in/swiftforge/terms` | Document generated at [`TERMS_OF_SERVICE.md`](file:///Users/sachinkumar/Desktop/Untitled%20Project/TERMS_OF_SERVICE.md) |
-| **Support URL** | `https://sachinserver.in/swiftforge/support` | |
-| **Marketing URL** | `https://sachinserver.in/swiftforge` | |
+| **Privacy Policy URL** | `https://github.com/sachin6174/SwiftForge/blob/master/PRIVACY_POLICY.md` | Document at [`PRIVACY_POLICY.md`](file:///Users/sachinkumar/Desktop/SwiftForge/PRIVACY_POLICY.md) |
+| **Terms of Use (EULA)** | `https://github.com/sachin6174/SwiftForge/blob/master/TERMS_OF_SERVICE.md` | Document at [`TERMS_OF_SERVICE.md`](file:///Users/sachinkumar/Desktop/SwiftForge/TERMS_OF_SERVICE.md) |
+| **Support URL** | `https://github.com/sachin6174/SwiftForge/issues` | |
+| **Marketing URL** | `https://github.com/sachin6174/SwiftForge` | |
 
 ---
 

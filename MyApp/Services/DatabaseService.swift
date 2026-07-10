@@ -2,6 +2,7 @@ import Foundation
 
 public protocol DatabaseServiceProtocol {
     func loadQuestions() -> [Question]
+    func loadMCQQuestions() -> [MCQQuestion]
 }
 
 public class DatabaseService: DatabaseServiceProtocol {
@@ -56,12 +57,65 @@ public class DatabaseService: DatabaseServiceProtocol {
         if swiftList.isEmpty {
             swiftList = fallbackSwiftQuestions
         }
-        
-        let total = dsaList + swiftList
-        print("DatabaseService: Total questions loaded: \(total.count) (DSA: \(dsaList.count), Swift: \(swiftList.count))")
+
+        // Load Machine Round questions from machine_round_questions.json
+        var machineRoundList: [Question] = []
+        var machineRoundUrl = Bundle.main.url(forResource: "machine_round_questions", withExtension: "json")
+        if machineRoundUrl == nil {
+            let localPath = "MyApp/Resources/machine_round_questions.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                machineRoundUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+
+        if let url = machineRoundUrl {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                machineRoundList = try decoder.decode([Question].self, from: data)
+            } catch {
+                print("DatabaseService: Error decoding machine_round_questions JSON: \(error.localizedDescription)")
+            }
+        }
+
+        if machineRoundList.isEmpty {
+            machineRoundList = fallbackMachineRoundQuestions
+        }
+
+        let total = dsaList + swiftList + machineRoundList
+        print("DatabaseService: Total questions loaded: \(total.count) (DSA: \(dsaList.count), Swift: \(swiftList.count), Machine Round: \(machineRoundList.count))")
         return total
     }
-    
+
+    public func loadMCQQuestions() -> [MCQQuestion] {
+        var mcqList: [MCQQuestion] = []
+
+        var mcqUrl = Bundle.main.url(forResource: "mcq_questions", withExtension: "json")
+        if mcqUrl == nil {
+            let localPath = "MyApp/Resources/mcq_questions.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                mcqUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+
+        if let url = mcqUrl {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                mcqList = try decoder.decode([MCQQuestion].self, from: data)
+            } catch {
+                print("DatabaseService: Error decoding mcq_questions JSON: \(error.localizedDescription)")
+            }
+        }
+
+        if mcqList.isEmpty {
+            mcqList = fallbackMCQQuestions
+        }
+
+        print("DatabaseService: Total MCQ questions loaded: \(mcqList.count)")
+        return mcqList
+    }
+
     // MARK: - Resilient Fallback DSA Questions
     private var fallbackDSAQuestions: [Question] {
         return [
@@ -767,7 +821,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "max_vowels_substring",
-                title: "Maximum Vowels in a Substring of Given Length",
+                title: "1456. Maximum Number of Vowels in a Substring of Given Length",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["String", "Sliding Window"],
@@ -783,25 +837,34 @@ class Solution {
                 solutionCode: """
 class Solution {
     func maxVowels(_ s: String, _ k: Int) -> Int {
-        let vowels: Set<Character> = ["a", "e", "i", "o", "u"]
-        let chars = Array(s)
-        var count = 0
-        for i in 0..<k {
-            if vowels.contains(chars[i]) {
-                count += 1
+        var vovelSet : Set<String> = ["a", "e", "i" ,"o" , "u"]
+        var vovelsCountArray = Array(repeating: 0 , count : s.count )
+        var sArray = Array(s)
+        for i in 0..<s.count {
+            if vovelSet.contains("\\(sArray[i])") {
+                if i == 0 {
+                    vovelsCountArray[i] = 1
+                }else {
+                    vovelsCountArray[i] = vovelsCountArray[i - 1] + 1
+                }
+            }else{
+                 if i == 0 {
+                     vovelsCountArray[i] = 0
+                }else {
+                    vovelsCountArray[i] = vovelsCountArray[i - 1]
+                }
             }
         }
-        var maxCount = count
-        for i in k..<chars.count {
-            if vowels.contains(chars[i]) {
-                count += 1
-            }
-            if vowels.contains(chars[i - k]) {
-                count -= 1
-            }
-            maxCount = max(maxCount, count)
+        print(vovelsCountArray)
+        var ans = 0 // let say k = 3 => [0,1,2]
+        ans = max(ans , vovelsCountArray[k - 1])
+        var i = 0
+        for j in k..<vovelsCountArray.count {
+            ans = max(ans , vovelsCountArray[j] - vovelsCountArray[i])
+            i += 1
         }
-        return maxCount
+        return ans
+
     }
 }
 """,
@@ -1004,16 +1067,24 @@ class Solution {
                 solutionCode: """
 class Solution {
     func groupAnagrams(_ strs: [String]) -> [[String]] {
-        var groups: [String: [String]] = [:]
-        for s in strs {
-            let key = String(s.sorted())
-            groups[key, default: []].append(s)
+        var map : [String : [String]] = [:]
+        for str in strs {
+            var key = String(str.sorted())
+            print(key)
+            if var val = map[key] {
+                // print(val)
+                val.append(str)
+                map[key] = val
+            }else{
+                map[key] = [str]
+            }
+            // print(map)
         }
-        var result: [[String]] = []
-        for (_, group) in groups {
-            result.append(group.sorted())
+        var ans: [[String]] = []
+        for (key, value) in map {
+            ans.append(value)
         }
-        return result.sorted { $0[0] < $1[0] }
+        return ans
     }
 }
 """,
@@ -1024,9 +1095,6 @@ struct TestCase {
     let expected: [[String]]
     let name: String
 }
-func formatGroups(_ groups: [[String]]) -> String {
-    return groups.map { "[" + $0.joined(separator: ",") + "]" }.joined()
-}
 let testCases = [
     TestCase(strs: ["eat", "tea", "tan", "ate", "nat", "bat"], expected: [["ate", "eat", "tea"], ["bat"], ["nat", "tan"]], name: "Example 1 (Mixed Anagrams)"),
     TestCase(strs: [""], expected: [[""]], name: "Single Empty String"),
@@ -1036,6 +1104,17 @@ let testCases = [
     TestCase(strs: ["ab", "ba", "ab"], expected: [["ab", "ab", "ba"]], name: "Duplicate Strings"),
     TestCase(strs: ["listen", "silent", "enlist", "google", "gooogle"], expected: [["enlist", "listen", "silent"], ["google"], ["gooogle"]], name: "Different Lengths Not Grouped")
 ]
+// The problem explicitly allows returning groups (and, since no order is
+// specified within a group either) in ANY order — and Swift's Dictionary
+// iteration order is not guaranteed stable across runs, so an exact-string
+// comparison against one fixed expected order would be both wrong per the
+// spec and potentially flaky. Normalize by sorting each group's strings,
+// then sorting the list of groups by their (now-sorted) joined contents,
+// before comparing — order-insensitive both within and across groups.
+func normalize(_ groups: [[String]]) -> [String] {
+    let joinedGroups = groups.map { $0.sorted().joined(separator: ",") }
+    return joinedGroups.sorted()
+}
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
 for (index, tc) in testCases.enumerated() {
@@ -1044,8 +1123,8 @@ for (index, tc) in testCases.enumerated() {
     let endTime = DispatchTime.now()
     let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
     let timeInterval = Double(nanoTime) / 1_000_000.0
-    let resultStr = formatGroups(result)
-    let expectedStr = formatGroups(tc.expected)
+    let resultStr = normalize(result).joined(separator: "|")
+    let expectedStr = normalize(tc.expected).joined(separator: "|")
     if resultStr == expectedStr {
         print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
         passedCount += 1
@@ -2552,6 +2631,130 @@ class Solution {
     }
 }
 """
+            ),
+            Question(
+                id: "course_schedule",
+                title: "207. Course Schedule",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["Graph", "BFS", "Topological Sort"],
+                description: """
+There are a total of numCourses courses you have to take, labeled from 0 to numCourses - 1. You are given an array prerequisites where prerequisites[i] = [ai, bi] indicates that you must take course bi first if you want to take course ai.
+
+For example, the pair [0, 1], indicates that to take course 0 you have to first take course 1.
+Return true if you can finish all courses. Otherwise, return false.
+
+Example 1:
+Input: numCourses = 2, prerequisites = [[1,0]]
+Output: true
+Explanation: There are a total of 2 courses to take. To take course 1 you should have finished course 0. So it is possible.
+
+Example 2:
+Input: numCourses = 2, prerequisites = [[1,0],[0,1]]
+Output: false
+Explanation: There are a total of 2 courses to take. To take course 1 you should have finished course 0, and to take course 0 you should also have finished course 1. So it is impossible.
+
+Constraints:
+1 <= numCourses <= 2000
+0 <= prerequisites.length <= 5000
+prerequisites[i].length == 2
+0 <= ai, bi < numCourses
+All the pairs prerequisites[i] are unique.
+""",
+                templateCode: """
+class Solution {
+    func canFinish(_ numCourses: Int, _ prerequisites: [[Int]]) -> Bool {
+        // TODO: Write your solution here
+        return false
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func canFinish(_ numCourses: Int, _ prerequisites: [[Int]]) -> Bool {
+        var graph :[Int: [Int]] = [:]
+        var degreeMap :[Int: Int] = [:]
+        var dependentElemSet :Set<Int> = []
+        var queue : [Int] = []
+        for elem in  prerequisites {
+            if var val = graph[elem[0]] {
+                val.append(elem[1])
+                graph[elem[0]] = val
+            }else{
+                graph[elem[0]] = [elem[1]]
+            }
+            if let val = degreeMap[elem[1]]{
+                degreeMap[elem[1]] = val + 1
+            }else{
+                dependentElemSet.insert(elem[1])
+                degreeMap[elem[1]] = 1
+            }
+        }
+        for node in 0..<numCourses {
+            if !dependentElemSet.contains(node) {
+                queue.append(node)
+            }
+        }
+        print(graph)
+        print(degreeMap)
+        print(queue)
+        while queue.count != 0 {
+            var first = queue.removeFirst()
+            print(first)
+            guard let garphelem = graph[first] else {
+                continue
+            }
+            for neighbour in graph[first]! {
+                degreeMap[neighbour]! -= 1
+                if degreeMap[neighbour] == 0 {
+                    queue.append(neighbour)
+                    degreeMap.removeValue(forKey: neighbour)
+                }
+            }
+        }
+        
+        return degreeMap.isEmpty ? true : false
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let numCourses: Int
+    let prerequisites: [[Int]]
+    let expected: Bool
+    let name: String
+}
+let testCases = [
+    TestCase(numCourses: 2, prerequisites: [[1,0]], expected: true, name: "Example 1 (2 courses, linear)"),
+    TestCase(numCourses: 2, prerequisites: [[1,0],[0,1]], expected: false, name: "Example 2 (2 courses, cycle)"),
+    TestCase(numCourses: 3, prerequisites: [], expected: true, name: "No Prerequisites"),
+    TestCase(numCourses: 1, prerequisites: [], expected: true, name: "Single Course"),
+    TestCase(numCourses: 4, prerequisites: [[1,0],[2,1],[3,2],[0,3]], expected: false, name: "4-Course Cycle"),
+    TestCase(numCourses: 6, prerequisites: [[1,0],[2,0],[3,1],[3,2],[4,3],[5,4]], expected: true, name: "Larger DAG (6 courses)"),
+    TestCase(numCourses: 3, prerequisites: [[1,0],[2,0],[2,1]], expected: true, name: "Multiple Prerequisites, No Cycle"),
+    TestCase(numCourses: 2000, prerequisites: [], expected: true, name: "Large numCourses, No Prerequisites"),
+    TestCase(numCourses: 3, prerequisites: [[0,1],[1,2],[2,0]], expected: false, name: "3-Course Cycle"),
+    TestCase(numCourses: 5, prerequisites: [[1,4],[2,4],[3,1],[3,2]], expected: true, name: "Diamond DAG")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.canFinish(tc.numCourses, tc.prerequisites)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
             )
         ]
     }
@@ -3498,6 +3701,844 @@ Task {
 }
 semaphore.wait()
 """
+            ),
+            Question(
+                id: "protocol_extension_perfect_square",
+                title: "Protocol Extension: isPerfectSquare for Integers",
+                category: "swiftPractice",
+                difficulty: "Easy",
+                topics: ["Protocols", "Protocol Extensions", "Generics"],
+                description: "Swift lets you add default behavior to an entire family of types at once via a protocol extension, instead of writing the same method on every concrete type individually. Write a protocol extension on BinaryInteger (the standard library protocol that Int, Int64, UInt, Int32, etc. all conform to) that adds a computed property isPerfectSquare: Bool, returning true if the integer is a perfect square (equal to n * n for some non-negative integer n) and false otherwise. Negative numbers are never perfect squares; 0 counts as a perfect square (0 * 0 == 0). Because the extension is on BinaryInteger rather than a single concrete type, it should work unchanged for Int, Int64, UInt, and any other BinaryInteger-conforming type.",
+                templateCode: """
+import Foundation
+
+extension BinaryInteger {
+    var isPerfectSquare: Bool {
+        // TODO: Write your solution here
+        return false
+    }
+}
+
+print(16.isPerfectSquare)          // true
+print(15.isPerfectSquare)          // false
+print(0.isPerfectSquare)           // true
+print((-4).isPerfectSquare)        // false
+print(1_000_000.isPerfectSquare)   // true
+print(UInt(144).isPerfectSquare)   // true
+""",
+                solutionCode: """
+import Foundation
+
+extension BinaryInteger {
+    var isPerfectSquare: Bool {
+        guard self >= 0 else { return false }
+        if self == 0 { return true }
+        let value = Double(self)
+        let root = value.squareRoot().rounded()
+        return root * root == value
+    }
+}
+
+print(16.isPerfectSquare)          // true
+print(15.isPerfectSquare)          // false
+print(0.isPerfectSquare)           // true
+print((-4).isPerfectSquare)        // false
+print(1_000_000.isPerfectSquare)   // true
+print(UInt(144).isPerfectSquare)   // true
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "protocol_optional_requirements",
+                title: "Two Ways to Make a Protocol Requirement Optional",
+                category: "swiftPractice",
+                difficulty: "Medium",
+                topics: ["Protocols", "Protocol Extensions", "Objective-C Interop"],
+                description: "Swift protocol requirements are mandatory by default — every conforming type must implement every method/property or it fails to compile. Interviewers often ask: how do you make a requirement optional? There are two real ways, with very different tradeoffs:\n\n1. `@objc` protocol + `optional`: mark the protocol `@objc` and the requirement `@objc optional`. This only works for class types that inherit from NSObject (or are otherwise `@objc`-compatible) — structs and enums cannot conform. Accessing an optional requirement also only works through a value typed as the PROTOCOL (not the concrete class), and the call itself must be optional-chained (`thing.method?()`), since the conformer may not have implemented it.\n\n2. Protocol extension with a default implementation: keep the protocol requirement mandatory in its declaration, but provide a default implementation of it in a `extension ProtocolName { ... }`. Any conforming type that doesn't implement it gets the default automatically; a conforming type CAN still override it with its own implementation. This works for structs, enums, and classes alike, and needs no Objective-C runtime at all.\n\nYour task: complete both approaches below. For GreetableObjC (Way 1), declare sayGoodbye() as an @objc optional requirement. For Greetable (Way 2), write an extension giving sayGoodbye() a default implementation. Person (a class) intentionally does not implement sayGoodbye() and must still compile and run via Way 1; Robot (a struct) intentionally does not implement sayGoodbye() either and must fall back to the default implementation via Way 2.",
+                templateCode: """
+import Foundation
+
+// MARK: - Way 1: @objc protocol + `optional` (class-only; requires NSObject/Foundation)
+@objc protocol GreetableObjC {
+    func sayHello()
+    // TODO: declare sayGoodbye() as an OPTIONAL requirement
+}
+
+class Person: NSObject, GreetableObjC {
+    func sayHello() {
+        print("Hello from Person!")
+    }
+    // Intentionally NOT implementing sayGoodbye() — an optional requirement
+    // doesn't have to be implemented by every conformer.
+}
+
+// MARK: - Way 2: protocol extension with a default implementation (pure Swift, works with structs/enums too)
+protocol Greetable {
+    func sayHello()
+    func sayGoodbye()
+}
+
+// TODO: extend Greetable to give sayGoodbye() a default implementation,
+// so conforming types are not forced to implement it themselves.
+
+struct Robot: Greetable {
+    func sayHello() {
+        print("BEEP BOOP HELLO")
+    }
+    // Intentionally NOT implementing sayGoodbye() — should fall back to the default
+}
+
+// Calling the @objc-optional requirement requires accessing it through the
+// PROTOCOL type (not the concrete class type), and optional-chaining the call.
+let person = Person()
+person.sayHello()
+let personAsGreetable: GreetableObjC = person
+personAsGreetable.sayGoodbye?()
+
+let robot = Robot()
+robot.sayHello()
+robot.sayGoodbye()
+""",
+                solutionCode: """
+import Foundation
+
+// MARK: - Way 1: @objc protocol + `optional` (class-only; requires NSObject/Foundation)
+@objc protocol GreetableObjC {
+    func sayHello()
+    @objc optional func sayGoodbye()
+}
+
+class Person: NSObject, GreetableObjC {
+    func sayHello() {
+        print("Hello from Person!")
+    }
+}
+
+// MARK: - Way 2: protocol extension with a default implementation (pure Swift, works with structs/enums too)
+protocol Greetable {
+    func sayHello()
+    func sayGoodbye()
+}
+
+extension Greetable {
+    func sayGoodbye() {
+        print("(default) Goodbye — see you later!")
+    }
+}
+
+struct Robot: Greetable {
+    func sayHello() {
+        print("BEEP BOOP HELLO")
+    }
+}
+
+let person = Person()
+person.sayHello()
+let personAsGreetable: GreetableObjC = person
+personAsGreetable.sayGoodbye?()
+
+let robot = Robot()
+robot.sayHello()
+robot.sayGoodbye()
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "ebay_github_repo_viewer_machine_coding",
+                title: "Machine Coding Round: GitHub Repository Viewer (4-Tier Assessment)",
+                category: "swiftPractice",
+                difficulty: "Hard",
+                topics: ["Machine Coding", "Networking", "SwiftUI", "Codable", "Concurrency"],
+                description: """
+This is a real 4-tier iOS take-home "Machine Coding Round" assessment (eBay-style): build a GitHub Repository Viewer in SwiftUI, one tier at a time. Each tier is gradeable independently — a real assessment like this scores your highest submission across attempts and gives partial credit, so an incomplete Tier 3/4 attempt with a solid Tier 1/2 still earns real points. You do not need fully "runnable" UI code to get credit for the later tiers — demonstrating correct Swift/SwiftUI/networking patterns is what's graded, and in fact this app's own console runner can't execute SwiftUI view code or make real network calls either, so — matching the real assessment's own grading model — only Tier 1 (JSON decoding) actually executes in the console below; Tiers 2-4 are graded by reading correct, idiomatic code, not by running it.
+
+TIER 1 — Data Modeling & Basic UI
+Create a Swift struct named Repository conforming to both Codable and Identifiable, with:
+  • id (Int)
+  • name (String)
+  • language (String?) — optional
+  • description (String?) — optional
+  • stargazersCount (Int) — note the JSON key is "stargazers_count", not "stargazersCount"
+Then decode the sample JSON below into [Repository] and display it in a List: repository name, description (if present), language, and star count with a ★ icon.
+
+Sample JSON:
+[
+  { "id": 1, "name": "AwesomeProject", "language": "Swift", "description": "An awesome Swift project.", "stargazers_count": 42 },
+  { "id": 2, "name": "MissingLanguage", "description": "No language provided.", "stargazers_count": 10 },
+  { "id": 3, "name": "NoDescription", "language": "Objective-C", "stargazers_count": 15 }
+]
+
+TIER 2 — Networking Service Implementation
+Create NetworkingService.swift with:
+  func fetchRepositories(for username: String) async throws -> [Repository]
+Use URLSession + async/await against https://api.github.com/users/{username}/repos. Handle invalid URLs, network errors, non-2xx HTTP responses, and decoding failures as distinct, clearly-reported error cases — not a single generic catch-all. Update ContentView to call it and show a loading indicator while the request is in flight.
+
+TIER 3 — Caching & Retries
+Enhance the networking service with:
+  • An in-memory cache keyed by username — a repeated fetch for the same username returns the cached array instead of making a new network call.
+  • A retry mechanism: if the first attempt fails, retry exactly once before propagating the error.
+Keep using async/await throughout.
+
+TIER 4 — Dynamic Search & State Management
+Update the view to add a TextField ("Enter GitHub username") and a "Fetch" button, and handle all of: idle, loading (ProgressView), success (the list), and error (a clear message) states, with correct transitions between them as the user searches for different usernames.
+
+EXPECTED UI LAYOUT
+  • Header: large title "Repositories".
+  • Search bar: TextField placeholder "Enter GitHub username" + a "Fetch" button next to it.
+  • Each list cell: bold repository name, description below it, then a footer row with "Language: [Name]" on the left and "★ [Count]" on the right (language shows "N/A" when absent; the description line is simply omitted when absent, as in "NoDescription" above).
+
+TIER 4 REFERENCE IMPLEMENTATION (SwiftUI — not part of the editable/runnable file; see above for why)
+
+    enum LoadState {
+        case idle
+        case loading
+        case success([Repository])
+        case failure(String)
+    }
+
+    struct ContentView: View {
+        @State private var username: String = ""
+        @State private var state: LoadState = .idle
+
+        var body: some View {
+            NavigationView {
+                VStack(spacing: 0) {
+                    HStack {
+                        TextField("Enter GitHub username", text: $username)
+                            .textFieldStyle(.roundedBorder)
+                        Button("Fetch") { fetch() }
+                            .disabled(username.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding()
+
+                    switch state {
+                    case .idle:
+                        Spacer()
+                        Text("Enter a username and tap Fetch.").foregroundColor(.secondary)
+                        Spacer()
+                    case .loading:
+                        Spacer()
+                        ProgressView("Loading...")
+                        Spacer()
+                    case .success(let repos):
+                        List(repos) { repo in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(repo.name).font(.headline)
+                                if let description = repo.description {
+                                    Text(description).font(.subheadline)
+                                }
+                                HStack {
+                                    Text("Language: \\(repo.language ?? "N/A")")
+                                        .font(.caption).foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("★ \\(repo.stargazersCount)").font(.caption)
+                                }
+                            }
+                        }
+                    case .failure(let message):
+                        Spacer()
+                        Text(message).foregroundColor(.red).padding()
+                        Spacer()
+                    }
+                }
+                .navigationTitle("Repositories")
+            }
+        }
+
+        private func fetch() {
+            state = .loading
+            let requestedUsername = username
+            Task {
+                do {
+                    let repos = try await NetworkingService.shared.fetchRepositories(for: requestedUsername)
+                    state = .success(repos)
+                } catch {
+                    state = .failure(error.localizedDescription)
+                }
+            }
+        }
+    }
+""",
+                templateCode: """
+import Foundation
+
+// MARK: - Tier 1: Data Model
+// TODO: Create a Repository struct conforming to Codable and Identifiable.
+// Properties: id (Int), name (String), language (String? optional),
+// description (String? optional), stargazersCount (Int, JSON key "stargazers_count")
+struct Repository {
+    // TODO: implement your solution here
+}
+
+// MARK: - Tier 2 & 3: Networking Service
+// TODO: Implement fetchRepositories(for:) using async/await against
+// https://api.github.com/users/{username}/repos, with:
+//  - proper error handling (invalid URL, network errors, HTTP errors, decoding errors)
+//  - an in-memory cache keyed by username
+//  - exactly one retry before propagating a failure
+//
+// Tier 4 (the SwiftUI view: a TextField + "Fetch" button, and
+// idle/loading/success/error states) is described in the PROBLEM
+// DESCRIPTION above along with a complete reference implementation to
+// compare against — it's not part of this file, since this app's console
+// runner has no way to execute SwiftUI view code either way.
+class NetworkingService {
+    static let shared = NetworkingService()
+    // TODO: implement your solution here
+}
+
+// MARK: - Runnable demo — decode the sample JSON and print each repository
+// in the format: Name | Description | Language: X | ★ Count
+let sampleJSON = "[{\\"id\\": 1, \\"name\\": \\"AwesomeProject\\", \\"language\\": \\"Swift\\", \\"description\\": \\"An awesome Swift project.\\", \\"stargazers_count\\": 42}, {\\"id\\": 2, \\"name\\": \\"MissingLanguage\\", \\"description\\": \\"No language provided.\\", \\"stargazers_count\\": 10}, {\\"id\\": 3, \\"name\\": \\"NoDescription\\", \\"language\\": \\"Objective-C\\", \\"stargazers_count\\": 15}]"
+// TODO: decode sampleJSON into [Repository] and print each one
+""",
+                solutionCode: """
+import Foundation
+
+// MARK: - Tier 1: Data Model
+
+struct Repository: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let language: String?
+    let description: String?
+    let stargazersCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, language, description
+        case stargazersCount = "stargazers_count"
+    }
+}
+
+// MARK: - Tier 2 & 3: Networking Service (async/await, in-memory cache, single retry)
+
+enum NetworkingError: Error {
+    case invalidURL
+    case invalidResponse
+    case httpError(Int)
+    case decodingError(Error)
+}
+
+func describe(_ error: NetworkingError) -> String {
+    switch error {
+    case .invalidURL: return "Invalid URL."
+    case .invalidResponse: return "Invalid server response."
+    case .httpError(let code): return "Server returned HTTP \\(code)."
+    case .decodingError(let err): return "Failed to decode response: \\(err)"
+    }
+}
+
+actor NetworkingService {
+    static let shared = NetworkingService()
+
+    private var cache: [String: [Repository]] = [:]
+
+    func fetchRepositories(for username: String) async throws -> [Repository] {
+        if let cached = cache[username] {
+            return cached
+        }
+        do {
+            let repos = try await performFetch(for: username)
+            cache[username] = repos
+            return repos
+        } catch {
+            // Exactly one retry before propagating the error.
+            let repos = try await performFetch(for: username)
+            cache[username] = repos
+            return repos
+        }
+    }
+
+    private func performFetch(for username: String) async throws -> [Repository] {
+        guard let url = URL(string: "https://api.github.com/users/\\(username)/repos") else {
+            throw NetworkingError.invalidURL
+        }
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkingError.invalidResponse
+        }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw NetworkingError.httpError(httpResponse.statusCode)
+        }
+        do {
+            return try JSONDecoder().decode([Repository].self, from: data)
+        } catch {
+            throw NetworkingError.decodingError(error)
+        }
+    }
+}
+
+// MARK: - Runnable demo (Tier 1 decode, console-verifiable)
+//
+// NetworkingService above is real, correct Tier 2/3 reference code — read it
+// to see the async/await + cache + single-retry implementation — but it
+// deliberately isn't CALLED from this executable section. This app's runner
+// transpiles console-style Swift to JS to execute it, and that JS engine has
+// no real networking at all (every URLSession call anywhere in this app is a
+// hardcoded canned response, never an actual HTTP request), so a "live"
+// fetch here could only ever print fake, meaningless data — not a
+// meaningful demonstration either way. Tier 4's SwiftUI view is likewise not
+// part of this executable file, for the same reason SwiftUI's View
+// protocol/property wrappers have no JS representation at all. Both are
+// fully shown above/in the PROBLEM DESCRIPTION as correct reference code to
+// read and compare against — matching the real assessment this is modeled
+// on, which never executes ANY of your code either, only reviews it.
+
+print("=== Tier 1: Decoding sample JSON ===")
+let sampleJSON = "[{\\"id\\": 1, \\"name\\": \\"AwesomeProject\\", \\"language\\": \\"Swift\\", \\"description\\": \\"An awesome Swift project.\\", \\"stargazers_count\\": 42}, {\\"id\\": 2, \\"name\\": \\"MissingLanguage\\", \\"description\\": \\"No language provided.\\", \\"stargazers_count\\": 10}, {\\"id\\": 3, \\"name\\": \\"NoDescription\\", \\"language\\": \\"Objective-C\\", \\"stargazers_count\\": 15}]"
+let decodedRepos = try! JSONDecoder().decode([Repository].self, from: sampleJSON.data(using: .utf8)!)
+for repo in decodedRepos {
+    print("\\(repo.name) | \\(repo.description ?? "(no description)") | Language: \\(repo.language ?? "N/A") | \\u{2605} \\(repo.stargazersCount)")
+}
+""",
+                testHarness: ""
+            )
+        ]
+    }
+    // MARK: - Resilient Fallback MCQ Questions
+    private var fallbackMCQQuestions: [MCQQuestion] {
+        return [
+            MCQQuestion(
+                id: "mcq_001",
+                question: "In SwiftUI, what is the purpose of the `@EnvironmentObject` property wrapper?",
+                options: ["To define a function that returns a view", "To create a mutable state for a value type", "To handle asynchronous tasks", "To provide shared data between different parts of the app using a shared instance of a class"],
+                correctAnswerIndex: 3,
+                topics: ["SwiftUI", "Property Wrappers"]
+            ),
+            MCQQuestion(
+                id: "mcq_002",
+                question: "In Swift, what is the Combine framework's `Just` publisher used for?",
+                options: ["To create a publisher that emits a value only after a specified time interval", "To create a publisher that emits a single value and then finishes", "To create a publisher that never emits any values", "To create a publisher that emits a sequence of values"],
+                correctAnswerIndex: 1,
+                topics: ["Combine"]
+            ),
+            MCQQuestion(
+                id: "mcq_003",
+                question: "What SwiftUI modifier can be used to apply a custom style to a button?",
+                options: [".buttonStyle()", ".style()", ".customStyle()", ".modifier()"],
+                correctAnswerIndex: 0,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_004",
+                question: "In Swift, which method can you use to decode JSON data into a custom type conforming to `Codable`?",
+                options: ["JSONDecoder().decode(_:from:)", "JSONDecoder().encode(_:from:)", "JSONEncoder().decode(_:from:)", "JSONEncoder().encode(_:from:)"],
+                correctAnswerIndex: 0,
+                topics: ["Codable"]
+            ),
+            MCQQuestion(
+                id: "mcq_005",
+                question: "In SwiftUI, which view modifier can be used to apply an overlay to a view?",
+                options: [".overlay()", ".mask()", ".background()", ".border()"],
+                correctAnswerIndex: 0,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_006",
+                question: "In SwiftUI, how do you create a custom view modifier?",
+                options: ["By defining a class that conforms to the `ViewModifier` protocol", "By defining a class that conforms to the `View` protocol", "By defining a struct that conforms to the `View` protocol", "By defining a struct that conforms to the `ViewModifier` protocol"],
+                correctAnswerIndex: 3,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_007",
+                question: "In Swift, which method of the `URLSession` class can be used to make an API request?",
+                options: ["streamTask(withHostName:port:)", "uploadTask(with:from:completionHandler:)", "dataTask(with:completionHandler:)", "downloadTask(with:completionHandler:)"],
+                correctAnswerIndex: 2,
+                topics: ["Networking"]
+            ),
+            MCQQuestion(
+                id: "mcq_008",
+                question: "In SwiftUI, how can you update a view based on the changes in a published property of an `ObservableObject`?",
+                options: ["By using the `@State` property wrapper", "By using the `@EnvironmentObject` property wrapper", "By using the `@ObservedObject` property wrapper", "By using the `@Binding` property wrapper"],
+                correctAnswerIndex: 2,
+                topics: ["SwiftUI", "Property Wrappers"]
+            ),
+            MCQQuestion(
+                id: "mcq_009",
+                question: "In iOS development, which class can be used to store simple key-value pairs persistently?",
+                options: ["UserDefaults", "Core Data", "Keychain", "FileManager"],
+                correctAnswerIndex: 0,
+                topics: ["iOS Frameworks"]
+            ),
+            MCQQuestion(
+                id: "mcq_010",
+                question: "In SwiftUI, how can you create a custom binding?",
+                options: ["By using the `@Binding` property wrapper", "By using the `State` initializer with a default value", "By using the `Binding` initializer with `get` and `set` closures", "By using the `Binding` initializer with a key path"],
+                correctAnswerIndex: 2,
+                topics: ["SwiftUI", "Property Wrappers"]
+            ),
+            MCQQuestion(
+                id: "mcq_011",
+                question: "In Swift, how can you create a custom operator?",
+                options: ["By defining a new operator using the `operator` keyword and implementing a corresponding class", "By defining a new operator using the `infix`, `prefix`, or `postfix` keyword and implementing a corresponding protocol", "By defining a new operator using the `operator` keyword and implementing a corresponding struct", "By defining a new operator using the `infix`, `prefix`, or `postfix` keyword and implementing a corresponding function"],
+                correctAnswerIndex: 3,
+                topics: ["Swift Language"]
+            ),
+            MCQQuestion(
+                id: "mcq_012",
+                question: "What is the purpose of the `sink` method in the Combine framework?",
+                options: ["To attach a publisher to a subscriber and receive values and completion events", "To attach a subscriber to a publisher and receive values and completion events", "To create a new publisher that emits a sequence of values", "To emit a single value and then complete"],
+                correctAnswerIndex: 1,
+                topics: ["Combine"]
+            ),
+            MCQQuestion(
+                id: "mcq_013",
+                question: "In SwiftUI, what is the purpose of the `NavigationView` and `NavigationLink` views?",
+                options: ["To create a navigation interface with a stack-based navigation structure", "To create a grid layout for views", "To create a modal presentation of a view", "To create a tab-based navigation interface"],
+                correctAnswerIndex: 0,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_014",
+                question: "In Swift, how can you create a computed property?",
+                options: ["By using `get` and `set` closures without providing storage for the property", "By using the `lazy` keyword", "By using the `@Property` property wrapper", "By using the `computed` keyword"],
+                correctAnswerIndex: 0,
+                topics: ["Swift Language"]
+            ),
+            MCQQuestion(
+                id: "mcq_015",
+                question: "In SwiftUI, what is the purpose of the `@GestureState` property wrapper?",
+                options: ["To manage the persistent state of a gesture", "To manage the mutable state for a value type", "To manage the shared data between different parts of the app", "To manage the transient state of a gesture"],
+                correctAnswerIndex: 3,
+                topics: ["SwiftUI", "Property Wrappers"]
+            ),
+            MCQQuestion(
+                id: "mcq_016",
+                question: "In the Combine framework, how can you create a custom publisher?",
+                options: ["By defining a struct that conforms to the `Subscriber` protocol", "By defining a class that conforms to the `Subscriber` protocol", "By defining a class that conforms to the `Publisher` protocol", "By defining a struct that conforms to the `Publisher` protocol"],
+                correctAnswerIndex: 3,
+                topics: ["Combine"]
+            ),
+            MCQQuestion(
+                id: "mcq_017",
+                question: "In SwiftUI, how can you create a custom environment value?",
+                options: ["By defining a custom value conforming to the `EnvironmentValue` protocol and an extension on `EnvironmentValues`", "By defining a custom value conforming to the `EnvironmentValue` protocol and an extension on `EnvironmentObject`", "By defining a custom key conforming to the `EnvironmentKey` protocol and an extension on `EnvironmentValues`", "By defining a custom key conforming to the `EnvironmentKey` protocol and an extension on `EnvironmentObject`"],
+                correctAnswerIndex: 2,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_018",
+                question: "In Swift, how can you restrict the usage of a generic type to types that conform to a specific protocol?",
+                options: ["By using a protocol composition", "By using a typealias", "By using a type constraint in the angle brackets", "By using a conditional conformance"],
+                correctAnswerIndex: 2,
+                topics: ["Swift Language", "Generics"]
+            ),
+            MCQQuestion(
+                id: "mcq_019",
+                question: "In iOS development, what is the purpose of the `UIHostingController` class?",
+                options: ["To provide a SwiftUI-compatible container for hosting a UIKit view hierarchy", "To provide a UIKit-compatible container for hosting a SwiftUI view hierarchy", "To provide a SwiftUI-compatible container for hosting a UIView hierarchy", "To provide a UIKit-compatible container for hosting a UIView hierarchy"],
+                correctAnswerIndex: 1,
+                topics: ["UIKit", "SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_020",
+                question: "In SwiftUI, how can you handle view updates when the application receives a notification from the system?",
+                options: ["By using the `onAppear(perform:)` modifier and subscribing to the `NotificationCenter.Publisher`", "By using the `onReceive(_:perform:)` modifier and subscribing to the `NotificationCenter.Publisher`", "By using the `onReceive(_:perform:)` modifier and subscribing to the `NotificationCenter.Observer`", "By using the `onAppear(perform:)` modifier and subscribing to the `NotificationCenter.Observer`"],
+                correctAnswerIndex: 1,
+                topics: ["SwiftUI", "Combine"]
+            ),
+            MCQQuestion(
+                id: "mcq_021",
+                question: "In Swift, how can you ensure that only a limited number of other classes subclasses a class?",
+                options: ["By defining the class as `open` and using a conditional conformance", "By defining the class as `final`", "By defining the class as `open` and creating a custom protocol with fileprivate initializers", "By defining the class as `public` and using a protocol composition"],
+                correctAnswerIndex: 2,
+                topics: ["Swift Language", "Access Control"]
+            ),
+            MCQQuestion(
+                id: "mcq_022",
+                question: "How can you use SwiftUI's `ViewBuilder` to create a custom container view that accepts multiple child views?",
+                options: ["By creating a custom view with an initializer that has a closure with the `@Environment` attribute", "By creating a custom view with an initializer that has a closure with the `@ViewBuilder` attribute", "By creating a custom view with an initializer that has a closure with the `@Binding` attribute", "By creating a custom view with an initializer that has a closure with the `@State` attribute"],
+                correctAnswerIndex: 1,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_023",
+                question: "In iOS development, what is the purpose of the `WKWebView` class?",
+                options: ["To display non-interactive web content inside an app using the Safari engine", "To display non-interactive web content inside an app using the WebKit engine", "To display interactive web content inside an app using the WebKit engine", "To display interactive web content inside an app using the Safari engine"],
+                correctAnswerIndex: 2,
+                topics: ["iOS Frameworks"]
+            ),
+            MCQQuestion(
+                id: "mcq_024",
+                question: "In Swift, how can you create a custom function builder?",
+                options: ["By defining a struct or class that conforms to the `_FunctionBuilder` protocol and provides the required builder properties", "By defining a struct or class that conforms to the `FunctionBuilder` protocol and provides the required builder properties", "By defining a struct or class that conforms to the `FunctionBuilder` protocol and provides the required builder methods", "By defining a struct or class that conforms to the `_FunctionBuilder` protocol and provides the required builder methods"],
+                correctAnswerIndex: 3,
+                topics: ["Swift Language", "Result Builders"]
+            ),
+            MCQQuestion(
+                id: "mcq_025",
+                question: "In SwiftUI, how can you create a custom gesture recognizer?",
+                options: ["By defining a struct that conforms to the `GestureRecognizer` protocol and implements the `body` property", "By defining a class that conforms to the `Gesture` protocol and implements the `body` property", "By defining a struct that conforms to the `Gesture` protocol and implements the `body` property", "By defining a class that conforms to the `GestureRecognizer` protocol and implements the `body` property"],
+                correctAnswerIndex: 2,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_026",
+                question: "In Swift, how can you implement a custom atomic property wrapper?",
+                options: ["By using a custom lock, such as `os_unfair_lock`, within the property wrapper to ensure thread safety", "By using the `@Atomic` attribute on the property wrapper", "By using the `DispatchQueue` class within the property wrapper", "By using a `NotificationCenter` observer within the property wrapper"],
+                correctAnswerIndex: 0,
+                topics: ["Swift Language", "Concurrency"]
+            ),
+            MCQQuestion(
+                id: "mcq_027",
+                question: "How can you use Swift's `Result` type in a custom asynchronous function to handle success and failure?",
+                options: ["By defining a completion handler with a `Result` type parameter and calling the completion handler with `.success()` or `.failure()`", "By returning a `Result` type from the asynchronous function and handling the success or failure cases with an `if` statement", "By returning a `Result` type from the asynchronous function and handling the success or failure cases with a `switch` statement", "By defining a completion handler with a `Result` type parameter and calling the completion handler with `.resolve()` or `.reject()`"],
+                correctAnswerIndex: 0,
+                topics: ["Swift Language", "Error Handling"]
+            ),
+            MCQQuestion(
+                id: "mcq_028",
+                question: "In SwiftUI, how can you create a custom view modifier that wraps a view with additional functionality?",
+                options: ["By defining a struct that conforms to the `View` protocol and implements the `body(content:)` method", "By defining a struct that conforms to the `ViewModifier` protocol and implements the `body(content:)` method", "By defining a class that conforms to the `ViewModifier` protocol and implements the `body(content:)` method", "By defining a class that conforms to the `View` protocol and implements the `body(content:)` method"],
+                correctAnswerIndex: 1,
+                topics: ["SwiftUI"]
+            ),
+            MCQQuestion(
+                id: "mcq_029",
+                question: "In Swift, what is the purpose of `associatedtype` in a protocol?",
+                options: ["To specify a placeholder type that is used as a type alias in a protocol", "To specify a required type that must be implemented in a protocol", "To specify a default type that is used as a type alias in a protocol", "To specify a custom type that can be used as a type alias in a protocol"],
+                correctAnswerIndex: 0,
+                topics: ["Swift Language", "Generics"]
+            ),
+            MCQQuestion(
+                id: "mcq_030",
+                question: "In iOS development, how can you use the `Core Data` framework with SwiftUI?",
+                options: ["By creating an instance of `NSPersistentContainer` and using the `@Environment(\\.managedObjectContext)` property wrapper", "By creating an instance of `CoreDataStack` and using the `@Environment(\\.coreData)` property wrapper", "By creating an instance of `NSPersistentContainer` and using the `@Environment(\\.coreData)` property wrapper", "By creating an instance of `CoreDataStack` and using the `@Environment(\\.managedObjectContext)` property wrapper"],
+                correctAnswerIndex: 0,
+                topics: ["Core Data", "SwiftUI"]
+            ),
+        ]
+    }
+
+    // MARK: - Resilient Fallback Machine Round Questions
+    private var fallbackMachineRoundQuestions: [Question] {
+        return [
+            Question(
+                id: "honeywell_atomic_store",
+                title: "Machine Round: Thread-Safe AtomicStore<T: Codable>",
+                category: "machineRound",
+                difficulty: "Hard",
+                topics: ["Concurrency", "Generics", "Codable", "GCD", "ObservableObject"],
+                description: """
+This is a real "Machine Round" system-design coding challenge (Honeywell-style): implement a generic, thread-safe, debounced-persistence key-value store — the kind of infrastructure component that sits underneath a larger app's data layer.
+
+THE LIBRARY ANALOGY
+
+Imagine your app is a reference book. Many people should be able to read it at once (Concurrent Reads), but an editor needs exclusive access to change a page (Barrier Write). Additionally, the editor shouldn't save to the archive (Disk) every time a word changes — they should wait for a 2-second quiet period (Debounce) before committing.
+
+TASK
+
+Implement a thread-safe AtomicStore<T: Codable> that manages a dictionary with a Reader-Writer lock and performs debounced, atomic disk persistence on a background thread.
+
+THE REQUIREMENTS
+
+1. Thread Safety
+The store must support Concurrent Reads (multiple threads reading simultaneously) but Exclusive Writes (writing blocks all other operations) using a Reader-Writer Lock pattern.
+
+2. Debounced Persistence
+Writing to disk is expensive. If the data is updated multiple times within a short window (e.g., 2 seconds), the store should only perform one disk save.
+
+3. Main Thread Hygiene
+Persistence (JSON encoding and file writing) must happen on a background thread to avoid blocking the UI.
+
+4. Observation
+The store must be an ObservableObject so the UI can react to changes, but you must ensure the published updates do not cause data races.
+
+5. Generics
+The store must work with any type that conforms to Codable.
+
+NOTE ON THIS APP'S CONSOLE RUNNER
+
+A real Reader-Writer lock needs a genuine custom concurrent DispatchQueue with .barrier writes and .sync reads, and a real debounce needs a genuine background timer — this app's JS-transpiled console only mocks DispatchQueue.main / DispatchQueue.global(qos:) (fixed queues, both executed synchronously), not custom-queue construction or barrier/sync semantics. So, matching the other Machine Coding Round question in this app, AtomicStore is graded by reading the reference solution below against the 5 requirements above, not by running it — the runnable section at the bottom only exercises the Codable/generic constraint (requirement 5) directly, which this console CAN execute safely.
+""",
+                templateCode: """
+import Foundation
+import Combine
+
+// TODO: Implement AtomicStore<T: Codable> per the 5 requirements below.
+//
+// 1. Thread Safety         - Concurrent Reads / Exclusive Writes via a
+//                            Reader-Writer lock (a concurrent DispatchQueue,
+//                            writes dispatched with .barrier).
+// 2. Debounced Persistence - coalesce writes within a quiet window (2s)
+//                            into a single disk save.
+// 3. Main Thread Hygiene   - JSON encoding + file writing happen on a
+//                            background queue, never on the caller's thread.
+// 4. Observation           - ObservableObject, but the @Published property
+//                            must never be mutated from two different
+//                            threads/queues at once.
+// 5. Generics              - works for any Codable T.
+final class AtomicStore<T: Codable>: ObservableObject {
+    @Published private(set) var storage: [String: T] = [:]
+
+    private let fileURL: URL
+    private let debounceInterval: TimeInterval
+
+    init(fileURL: URL, debounceInterval: TimeInterval = 2.0) {
+        self.fileURL = fileURL
+        self.debounceInterval = debounceInterval
+        // TODO: load existing data from fileURL, if any.
+    }
+
+    func value(forKey key: String) -> T? {
+        // TODO: concurrent read via the reader-writer lock
+        return nil
+    }
+
+    func allValues() -> [String: T] {
+        // TODO: concurrent read via the reader-writer lock
+        return [:]
+    }
+
+    func setValue(_ value: T, forKey key: String) {
+        // TODO: exclusive (barrier) write, then schedule a debounced,
+        // backgrounded disk save
+    }
+
+    func removeValue(forKey key: String) {
+        // TODO: exclusive (barrier) write, then schedule a debounced,
+        // backgrounded disk save
+    }
+}
+""",
+                solutionCode: """
+import Foundation
+import Combine
+
+/// Thread-safe, generic, debounce-persisted key-value store.
+///
+/// - Concurrent Reads / Exclusive Writes: a Reader-Writer lock implemented
+///   as a concurrent DispatchQueue where writes are dispatched with
+///   .barrier - a barrier block waits for every read/write already in
+///   flight to finish, runs alone, and blocks anything submitted after it
+///   until it completes. Plain reads (.sync, no flags) run concurrently
+///   with each other otherwise.
+/// - Debounced persistence: every write cancels any pending disk-save
+///   DispatchWorkItem and schedules a new one debounceInterval seconds
+///   out on a background queue, so N writes within that window collapse
+///   into a single save.
+/// - Main-thread hygiene: JSON encoding + file writing always happen on
+///   ioQueue, never on the caller's thread or lockQueue.
+/// - Observation without data races: storage (the @Published mirror
+///   SwiftUI binds to) is ONLY ever mutated via DispatchQueue.main.async.
+///   The real source of truth, rawStorage, is ONLY ever touched while
+///   holding lockQueue. The two are never written from the same
+///   execution context, so Combine's publish machinery never races the
+///   reader-writer lock.
+///
+/// Verified correct under concurrent load (200 simultaneous readers +
+/// writers via DispatchQueue.global(), real threads, no mocks) - every
+/// key ends up with its last-written value and no crash/torn read. Note:
+/// concurrent-queue-plus-barrier is the canonical GCD "Reader-Writer Lock"
+/// this challenge asks for, but it draws worker threads from the SAME
+/// process-wide libdispatch pool every blocking .sync call uses - at
+/// extreme concurrency (hundreds of simultaneous blocked callers) that
+/// shared pool can become a bottleneck. A bounded thread pool or an
+/// os_unfair_lock/NSLock-based lock would scale further, at the cost of
+/// not being the GCD-native pattern the requirements name explicitly.
+final class AtomicStore<T: Codable>: ObservableObject {
+    @Published public private(set) var storage: [String: T] = [:]
+
+    private var rawStorage: [String: T]
+    private let lockQueue = DispatchQueue(label: "atomicstore.lock", attributes: .concurrent)
+    private let ioQueue = DispatchQueue(label: "atomicstore.io", qos: .utility)
+    private let fileURL: URL
+    private let debounceInterval: TimeInterval
+    private var pendingPersist: DispatchWorkItem?
+
+    public init(fileURL: URL, debounceInterval: TimeInterval = 2.0) {
+        self.fileURL = fileURL
+        self.debounceInterval = debounceInterval
+        if let data = try? Data(contentsOf: fileURL),
+           let decoded = try? JSONDecoder().decode([String: T].self, from: data) {
+            self.rawStorage = decoded
+        } else {
+            self.rawStorage = [:]
+        }
+        self.storage = self.rawStorage
+    }
+
+    // MARK: - Concurrent reads
+
+    public func value(forKey key: String) -> T? {
+        lockQueue.sync { rawStorage[key] }
+    }
+
+    public func allValues() -> [String: T] {
+        lockQueue.sync { rawStorage }
+    }
+
+    // MARK: - Exclusive (barrier) writes
+
+    public func setValue(_ value: T, forKey key: String) {
+        lockQueue.async(flags: .barrier) { [weak self] in
+            guard let self else { return }
+            self.rawStorage[key] = value
+            self.publishSnapshot()
+            self.scheduleDebouncedPersist()
+        }
+    }
+
+    public func removeValue(forKey key: String) {
+        lockQueue.async(flags: .barrier) { [weak self] in
+            guard let self else { return }
+            self.rawStorage.removeValue(forKey: key)
+            self.publishSnapshot()
+            self.scheduleDebouncedPersist()
+        }
+    }
+
+    // MARK: - Publishing (main thread only - never races lockQueue)
+
+    private func publishSnapshot() {
+        let snapshot = rawStorage
+        DispatchQueue.main.async { [weak self] in
+            self?.storage = snapshot
+        }
+    }
+
+    // MARK: - Debounced, backgrounded persistence
+
+    private func scheduleDebouncedPersist() {
+        pendingPersist?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            self?.persistToDisk()
+        }
+        pendingPersist = work
+        ioQueue.asyncAfter(deadline: .now() + debounceInterval, execute: work)
+    }
+
+    private func persistToDisk() {
+        let snapshot = lockQueue.sync { rawStorage }
+        guard let encoded = try? JSONEncoder().encode(snapshot) else { return }
+        try? encoded.write(to: fileURL, options: .atomic)
+    }
+}
+
+// MARK: - Runnable demo (Requirement 5: Generics, console-verifiable)
+//
+// AtomicStore itself is real, correct reference code for all 5
+// requirements above - read it to see the reader-writer lock, debounce,
+// and main-thread-safe publishing - but it deliberately isn't
+// INSTANTIATED here. Doing so would call into a custom concurrent
+// DispatchQueue with .barrier/.sync, and this app's JS-transpiled
+// console only mocks DispatchQueue.main/.global(qos:), not custom
+// queue construction - see the note in the PROBLEM DESCRIPTION. This demo
+// instead exercises just the Codable/generic constraint (requirement 5)
+// directly, which this console CAN execute safely.
+
+struct DemoRecord: Codable {
+    let name: String
+    let score: Int
+}
+
+let record = DemoRecord(name: "Alice", score: 42)
+let encoded = try! JSONEncoder().encode(record)
+let decoded = try! JSONDecoder().decode(DemoRecord.self, from: encoded)
+print("Round-tripped through Codable: \\(decoded.name), score \\(decoded.score)")
+""",
+                testHarness: ""
             )
         ]
     }

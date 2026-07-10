@@ -54,6 +54,7 @@ public struct ContentView: View {
     @State private var dsaPaneTab: DSAPaneTab = .description
     @State private var mobileTab: MobileWorkspaceTab = .editor
     @State private var leftPaneWidth: CGFloat = 380
+    @State private var sidebarWidth: CGFloat = 210
     /// Open Book Mode: solution on left, editor on right — simultaneously
     @State private var openBookMode: Bool = false
     @State private var celebrationID: UUID? = nil
@@ -73,17 +74,36 @@ public struct ContentView: View {
     }
     
     private var activeAccentColor: Color {
-        appState.activeTab == .swiftPractice ? .blue : .orange
+        switch appState.activeTab {
+        case .swiftPractice: return .blue
+        case .mcq: return .purple
+        case .machineRound: return .mint
+        case .dsa: return .orange
+        }
     }
-    
+
     private var activeAccentGradient: LinearGradient {
-        if appState.activeTab == .swiftPractice {
+        switch appState.activeTab {
+        case .swiftPractice:
             return LinearGradient(colors: [Color(red: 0.1, green: 0.6, blue: 1.0), Color(red: 0.0, green: 0.85, blue: 0.9)], startPoint: .leading, endPoint: .trailing)
-        } else {
+        case .mcq:
+            return LinearGradient(colors: [Color.purple, Color.pink], startPoint: .leading, endPoint: .trailing)
+        case .machineRound:
+            return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
+        case .dsa:
             return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
         }
     }
-    
+
+    private var headerIconName: String {
+        switch appState.activeTab {
+        case .swiftPractice: return "network"
+        case .mcq: return "questionmark.circle.fill"
+        case .machineRound: return "gearshape.fill"
+        case .dsa: return "square.grid.3x3.fill"
+        }
+    }
+
     public init() {}
     
     public var body: some View {
@@ -92,15 +112,20 @@ public struct ContentView: View {
                 // ── iOS Compact Mobile Layout ────────────────────────
                 VStack(spacing: 0) {
                     topHeader
-                    
+
                     Divider().background(Color.white.opacity(0.06))
-                    
-                    mobileSegmentedTabBar
-                    
-                    Divider().background(Color.white.opacity(0.06))
-                    
-                    mobileWorkspace
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                    if appState.activeTab == .mcq {
+                        MCQPracticeView(appState: appState)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        mobileSegmentedTabBar
+
+                        Divider().background(Color.white.opacity(0.06))
+
+                        mobileWorkspace
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
                 .sheet(isPresented: $isSidebarPresented) {
                     SidebarView(
@@ -124,18 +149,27 @@ public struct ContentView: View {
                             }
                         }
                     )
-                    
-                    Divider()
-                        .background(Color.white.opacity(0.08))
-                    
+                    .frame(width: sidebarWidth)
+
+                    SplitDragHandle(leftPaneWidth: $sidebarWidth,
+                                    minLeft: 160,
+                                    maxLeft: 400,
+                                    activeTab: appState.activeTab,
+                                    collapsible: true)
+
                     VStack(spacing: 0) {
                         topHeader
-                        
+
                         Divider()
                             .background(Color.white.opacity(0.06))
-                        
-                        dsaWorkspace
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+                        if appState.activeTab == .mcq {
+                            MCQPracticeView(appState: appState)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            dsaWorkspace
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -155,22 +189,18 @@ public struct ContentView: View {
         .onAppear {
             setupCallbacks()
             loadInitialQuestions()
-            #if os(macOS)
-            // Safety net: force a full window redraw shortly after first appearance.
-            // The embedded AppKit code editor can leave the window's very first
-            // SwiftUI frame partially undrawn (see MacCodeEditor.makeNSView); this
-            // guarantees a complete repaint even if that race is hit some other way.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                if let window = NSApp.keyWindow ?? NSApp.windows.first {
-                    window.contentView?.needsLayout = true
-                    window.contentView?.needsDisplay = true
-                    window.displayIfNeeded()
-                }
-            }
-            #endif
+            forceMacWindowRedrawAfterLayoutSettles()
         }
         .onChange(of: appState.activeTab) { _ in
             loadInitialQuestions()
+        }
+        .onChange(of: dsaViewModel.currentQuestion?.id) { _ in
+            // Same partial-redraw glitch as the onAppear safety net below, but
+            // also reproducible when switching questions/tabs post-launch: the
+            // leftPane's tab picker row can render as blank background for one
+            // frame (leaving a gap above the Description/Solution/Test Suite
+            // bar) until something forces a full repaint.
+            forceMacWindowRedrawAfterLayoutSettles()
         }
         .onChange(of: dsaViewModel.code) { newCode in
             if let q = dsaViewModel.currentQuestion {
@@ -189,7 +219,27 @@ public struct ContentView: View {
             }
         }
     }
-    
+
+    #if os(macOS)
+    // Safety net: force a full window redraw shortly after a layout change.
+    // The embedded AppKit code editor can leave part of the SwiftUI view tree
+    // partially undrawn (see MacCodeEditor.makeNSView) — most visibly as a
+    // blank gap where the Description/Solution/Test Suite tab bar should sit,
+    // immediately below the top header, right after switching questions or
+    // tabs. This guarantees a complete repaint even if that race is hit.
+    private func forceMacWindowRedrawAfterLayoutSettles() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            if let window = NSApp.keyWindow ?? NSApp.windows.first {
+                window.contentView?.needsLayout = true
+                window.contentView?.needsDisplay = true
+                window.displayIfNeeded()
+            }
+        }
+    }
+    #else
+    private func forceMacWindowRedrawAfterLayoutSettles() {}
+    #endif
+
     // MARK: - Top Header Bar
     private var topHeader: some View {
         HStack(spacing: 8) {
@@ -217,15 +267,15 @@ public struct ContentView: View {
             
             // Header title / breadcrumb
             HStack(spacing: 6) {
-                Image(systemName: appState.activeTab == .swiftPractice ? "network" : "square.grid.3x3.fill")
+                Image(systemName: headerIconName)
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(activeAccentGradient)
-                
+
                 Text(appState.activeTab.rawValue)
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-                
-                if let question = dsaViewModel.currentQuestion {
+
+                if appState.activeTab != .mcq, let question = dsaViewModel.currentQuestion {
                     Text("/")
                         .font(.system(size: 12))
                         .foregroundColor(Color.white.opacity(0.3))
@@ -256,47 +306,51 @@ public struct ContentView: View {
             Spacer()
 
             // ── Open Book Mode Toggle Button ──────────────────
-            Button(action: {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                    openBookMode.toggle()
-                    if openBookMode { focusMode = .split }
-                }
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: openBookMode ? "book.fill" : "book")
-                        .font(.system(size: 11, weight: .bold))
-                    Text(openBookMode ? "Close Book" : "Open Book")
-                        .font(.system(size: 11, weight: .bold, design: .rounded))
-                }
-                .foregroundStyle(
-                    openBookMode
-                        ? LinearGradient(colors: [Color.cyan, Color.blue], startPoint: .leading, endPoint: .trailing)
-                        : LinearGradient(colors: [Color.white.opacity(0.6), Color.white.opacity(0.4)], startPoint: .leading, endPoint: .trailing)
-                )
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Group {
-                        if openBookMode {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.blue.opacity(0.15))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.blue.opacity(0.4), lineWidth: 0.75)
-                                )
-                        } else {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.white.opacity(0.04))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 0.75)
-                                )
-                        }
+            // Meaningless on the MCQ tab (no solution/editor panes exist
+            // there to split) — hidden rather than left as a dead control.
+            if appState.activeTab != .mcq {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        openBookMode.toggle()
+                        if openBookMode { focusMode = .split }
                     }
-                )
+                }) {
+                    HStack(spacing: 6) {
+                        Image(systemName: openBookMode ? "book.fill" : "book")
+                            .font(.system(size: 11, weight: .bold))
+                        Text(openBookMode ? "Close Book" : "Open Book")
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .foregroundStyle(
+                        openBookMode
+                            ? LinearGradient(colors: [Color.cyan, Color.blue], startPoint: .leading, endPoint: .trailing)
+                            : LinearGradient(colors: [Color.white.opacity(0.6), Color.white.opacity(0.4)], startPoint: .leading, endPoint: .trailing)
+                    )
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Group {
+                            if openBookMode {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.blue.opacity(0.15))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.blue.opacity(0.4), lineWidth: 0.75)
+                                    )
+                            } else {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(Color.white.opacity(0.04))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 0.75)
+                                    )
+                            }
+                        }
+                    )
+                }
+                .buttonStyle(PressableButtonStyle())
+                .keyboardShortcut("b", modifiers: [.command])
             }
-            .buttonStyle(PressableButtonStyle())
-            .keyboardShortcut("b", modifiers: [.command])
 
             // ── Stats Badges ──────────────────────────────────
             if !isCompact {
@@ -330,10 +384,16 @@ public struct ContentView: View {
                         Image(systemName: "checkmark.seal.fill")
                             .foregroundColor(.green)
                             .font(.system(size: 11))
-                        let solved = appState.userActivity.solvedQuestionIds.count
-                        Text("\(solved)/\(appState.questions.count) solved")
-                            .font(.system(size: 11, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
+                        if appState.activeTab == .mcq {
+                            Text("\(appState.mcqCorrectCount)/\(appState.mcqQuestions.count) correct")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        } else {
+                            let solved = appState.userActivity.solvedQuestionIds.count
+                            Text("\(solved)/\(appState.questions.count) solved")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                        }
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5.5)
@@ -345,7 +405,7 @@ public struct ContentView: View {
                                     .stroke(Color.green.opacity(0.25), lineWidth: 0.75)
                             )
                     )
-                    .pulseOnChange(appState.userActivity.solvedQuestionIds.count)
+                    .pulseOnChange(appState.activeTab == .mcq ? appState.mcqCorrectCount : appState.userActivity.solvedQuestionIds.count)
                 }
             }
         }
@@ -418,7 +478,7 @@ public struct ContentView: View {
                         DSATestCasesView(viewModel: dsaViewModel)
                             .padding(12)
                         Divider().background(Color.white.opacity(0.08))
-                        ConsoleView(output: dsaViewModel.consoleOutput, compilerError: dsaViewModel.compilerError)
+                        ConsoleView(output: dsaViewModel.consoleOutput, compilerError: dsaViewModel.compilerError, isRunning: dsaViewModel.isRunning)
                             .frame(height: 200)
                     }
                 }
@@ -668,7 +728,8 @@ public struct ContentView: View {
 
             ConsoleView(
                 output: dsaViewModel.consoleOutput,
-                compilerError: dsaViewModel.compilerError
+                compilerError: dsaViewModel.compilerError,
+                isRunning: dsaViewModel.isRunning
             )
             .frame(height: 180)
         }
@@ -698,8 +759,16 @@ public struct ContentView: View {
     }
     
     private func loadInitialQuestions() {
-        let initialQuestion = (appState.activeTab == .swiftPractice ? appState.selectedSwiftQuestion : appState.selectedDSAQuestion) ?? appState.selectedDSAQuestion
-        if let question = initialQuestion {
+        // MCQ tab has no code editor/runner — MCQPracticeView reads
+        // appState.selectedMCQQuestion directly, nothing for dsaViewModel to load.
+        guard appState.activeTab != .mcq else { return }
+        let initialQuestion: Question?
+        switch appState.activeTab {
+        case .swiftPractice: initialQuestion = appState.selectedSwiftQuestion
+        case .machineRound: initialQuestion = appState.selectedMachineRoundQuestion
+        case .dsa, .mcq: initialQuestion = appState.selectedDSAQuestion
+        }
+        if let question = initialQuestion ?? appState.selectedDSAQuestion {
             dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
         }
     }
@@ -711,9 +780,28 @@ struct SplitDragHandle: View {
     let minLeft: CGFloat
     let maxLeft: CGFloat
     let activeTab: PracticeTab
+    /// When true, dragging past a dead zone near `minLeft` (half of it)
+    /// snaps the pane fully shut (width 0) instead of stopping at `minLeft`
+    /// — dragging back out past that same dead zone pops it back open to
+    /// `minLeft`. Off by default so the other two panes this same handle
+    /// already drives (the Description/Editor split, and Open Book mode)
+    /// keep their existing "never fully hide" behavior; only the sidebar
+    /// opts in.
+    var collapsible: Bool = false
 
     @State private var isHovering = false
     @State private var isDragging = false
+    // Captured once per gesture (at its first .onChanged) rather than
+    // re-derived from `leftPaneWidth` on every callback — `translation` is
+    // ALWAYS cumulative from the gesture's start, so recomputing
+    // `leftPaneWidth + translation` against a `leftPaneWidth` that this same
+    // closure already overwrote on the previous callback double-counts
+    // every earlier increment, making the pane grow/shrink faster than the
+    // actual pointer movement (compounding with every callback in one
+    // continuous drag). Anchoring to a single start-of-gesture snapshot
+    // makes the resulting width a pure function of total pointer movement,
+    // exactly matching the pointer.
+    @State private var dragStartWidth: CGFloat?
 
     var body: some View {
         ZStack {
@@ -764,15 +852,21 @@ struct SplitDragHandle: View {
                 .onChanged { value in
                     if !isDragging {
                         isDragging = true
+                        dragStartWidth = leftPaneWidth
                         #if os(macOS)
                         NSCursor.resizeLeftRight.push()
                         #endif
                     }
-                    let proposed = leftPaneWidth + value.translation.width
-                    leftPaneWidth = min(max(proposed, minLeft), maxLeft)
+                    let proposed = (dragStartWidth ?? leftPaneWidth) + value.translation.width
+                    if collapsible && proposed < minLeft / 2 {
+                        leftPaneWidth = 0
+                    } else {
+                        leftPaneWidth = min(max(proposed, minLeft), maxLeft)
+                    }
                 }
                 .onEnded { _ in
                     isDragging = false
+                    dragStartWidth = nil
                     #if os(macOS)
                     NSCursor.pop()
                     #endif

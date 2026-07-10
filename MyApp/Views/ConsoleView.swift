@@ -3,11 +3,13 @@ import SwiftUI
 public struct ConsoleView: View {
     let output: String
     let compilerError: String?
+    let isRunning: Bool
     @State private var isCleared = false
 
-    public init(output: String, compilerError: String?) {
+    public init(output: String, compilerError: String?, isRunning: Bool = false) {
         self.output = output
         self.compilerError = compilerError
+        self.isRunning = isRunning
     }
 
     public var body: some View {
@@ -112,6 +114,21 @@ public struct ConsoleView: View {
                 .onChange(of: compilerError) { _ in
                     isCleared = false
                     withAnimation { proxy.scrollTo("bottom", anchor: .bottom) }
+                }
+                .onChange(of: isRunning) { running in
+                    // Re-running the SAME question's SAME code reliably
+                    // reproduces the exact same output/error text as last
+                    // time — `onChange(of: output)`/`onChange(of:
+                    // compilerError)` above never fire in that case (the
+                    // value didn't change), so a console the user had
+                    // cleared stayed stuck showing "[Logs cleared]" even
+                    // though a brand new run had just completed. Un-hiding
+                    // as soon as a run STARTS (rather than waiting for
+                    // output to differ) fixes this regardless of whether
+                    // the new output happens to match the old.
+                    if running {
+                        isCleared = false
+                    }
                 }
             }
             .background(Color(red: 0.05, green: 0.06, blue: 0.08))

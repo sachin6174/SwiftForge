@@ -52,4 +52,4 @@ We may update our Privacy Policy periodically. Any updates will be published wit
 If you have any questions or feedback regarding this Privacy Policy, please contact us:
 
 - **Email**: letslearngpt@gmail.com
-- **Repository**: [https://github.com/your-username/SwiftForge](https://github.com/your-username/SwiftForge)
+- **Repository**: [https://github.com/sachin6174/SwiftForge](https://github.com/sachin6174/SwiftForge)

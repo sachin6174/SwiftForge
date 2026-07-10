@@ -8,6 +8,7 @@ public struct SidebarView: View {
     @State private var searchText = ""
     @State private var isHoveringHeader = false
     @State private var collapsedSections: Set<String> = []
+    @State private var expandedQuestionPreviews: Set<String> = []
     @FocusState private var isSearchFocused: Bool
 
     public init(appState: AppState, onDSASelect: @escaping (Question) -> Void) {
@@ -36,31 +37,176 @@ public struct SidebarView: View {
         }
     }
 
+    private var filteredMCQQuestions: [MCQQuestion] {
+        if searchText.isEmpty {
+            return appState.mcqQuestions
+        }
+        return appState.mcqQuestions.filter {
+            $0.question.localizedCaseInsensitiveContains(searchText) ||
+            $0.topics.contains(where: { $0.localizedCaseInsensitiveContains(searchText) })
+        }
+    }
+
+    private var filteredMachineRoundQuestions: [Question] {
+        if searchText.isEmpty {
+            return appState.machineRoundQuestions
+        }
+        return appState.machineRoundQuestions.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            $0.topics.contains(where: { $0.localizedCaseInsensitiveContains(searchText) })
+        }
+    }
+
     private func sectionKey(_ name: String, activeTab: String) -> String {
         "\(activeTab)::\(name)"
     }
 
+    private var modePickerIconName: String {
+        switch appState.activeTab {
+        case .swiftPractice: return "network"
+        case .mcq: return "questionmark.circle.fill"
+        case .machineRound: return "gearshape.fill"
+        case .dsa: return "square.grid.3x3.fill"
+        }
+    }
+
+    private var modePickerGradient: LinearGradient {
+        switch appState.activeTab {
+        case .swiftPractice:
+            return LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
+        case .mcq:
+            return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
+        case .machineRound:
+            return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
+        case .dsa:
+            return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+
+    private var modePickerStrokeColors: [Color] {
+        switch appState.activeTab {
+        case .swiftPractice: return [Color.blue.opacity(0.4), Color.blue.opacity(0.1)]
+        case .mcq: return [Color.purple.opacity(0.4), Color.purple.opacity(0.1)]
+        case .machineRound: return [Color.mint.opacity(0.4), Color.mint.opacity(0.1)]
+        case .dsa: return [Color.orange.opacity(0.4), Color.orange.opacity(0.1)]
+        }
+    }
+
+    /// Not computed inline in `body` — a plain (non-View-returning) `switch`
+    /// statement inside a `@ViewBuilder` gets transformed by the result
+    /// builder like every other statement there, which requires each branch
+    /// to produce a `View` (`buildEither`); since these branches only assign
+    /// plain values, that fails with "type '()' cannot conform to 'View'".
+    /// A regular function call sidesteps the builder entirely.
+    private func progressStats() -> (total: Int, solved: Int, label: String) {
+        switch appState.activeTab {
+        case .dsa:
+            let total = appState.dsaQuestions.count
+            let solved = appState.dsaQuestions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count
+            return (total, solved, "Solved Progress")
+        case .swiftPractice:
+            let total = appState.swiftQuestions.count
+            let solved = appState.swiftQuestions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count
+            return (total, solved, "Solved Progress")
+        case .machineRound:
+            let total = appState.machineRoundQuestions.count
+            let solved = appState.machineRoundQuestions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count
+            return (total, solved, "Solved Progress")
+        case .mcq:
+            return (appState.mcqQuestions.count, appState.mcqCorrectCount, "Correct Progress")
+        }
+    }
+
+    private var activeAccentColor: Color {
+        switch appState.activeTab {
+        case .swiftPractice: return .blue
+        case .mcq: return .purple
+        case .machineRound: return .mint
+        case .dsa: return .orange
+        }
+    }
+
+    private var activeAccentGradient: LinearGradient {
+        switch appState.activeTab {
+        case .swiftPractice: return LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
+        case .mcq: return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
+        case .machineRound: return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
+        case .dsa: return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+
+    /// Not called inline in `questionRow`'s `@ViewBuilder` body for the same
+    /// reason `progressStats()` isn't — see that function's doc comment.
+    private func isQuestionSelected(_ question: Question, activeTab: String) -> Bool {
+        switch activeTab {
+        case "dsa": return appState.selectedDSAQuestion?.id == question.id
+        case "machineRound": return appState.selectedMachineRoundQuestion?.id == question.id
+        default: return appState.selectedSwiftQuestion?.id == question.id
+        }
+    }
+
+    private func questionRowIcon(activeTab: String, isSelected: Bool) -> String {
+        switch activeTab {
+        case "dsa": return isSelected ? "chevron.right.circle.fill" : "chevron.right.circle"
+        case "machineRound": return isSelected ? "gearshape.fill" : "gearshape"
+        default: return isSelected ? "network" : "globe"
+        }
+    }
+
+    private func selectQuestion(_ question: Question, activeTab: String) {
+        switch activeTab {
+        case "dsa": appState.selectedDSAQuestion = question
+        case "machineRound": appState.selectedMachineRoundQuestion = question
+        default: appState.selectedSwiftQuestion = question
+        }
+        onDSASelect(question)
+    }
+
     @ViewBuilder
     private func questionRow(_ question: Question, activeTab: String) -> some View {
-        let isSelected = activeTab == "dsa"
-            ? appState.selectedDSAQuestion?.id == question.id
-            : appState.selectedSwiftQuestion?.id == question.id
+        let isSelected = isQuestionSelected(question, activeTab: activeTab)
         let isSolved = appState.userActivity.solvedQuestionIds.contains(question.id)
         SidebarButton(
             title: question.title,
-            icon: activeTab == "dsa"
-                ? (isSelected ? "chevron.right.circle.fill" : "chevron.right.circle")
-                : (isSelected ? "network" : "globe"),
+            icon: questionRowIcon(activeTab: activeTab, isSelected: isSelected),
             isSelected: isSelected,
             isSolved: isSolved,
-            activeTab: activeTab
+            activeTab: activeTab,
+            previewText: question.description,
+            isPreviewExpanded: Binding(
+                get: { expandedQuestionPreviews.contains(question.id) },
+                set: { expanded in
+                    if expanded { expandedQuestionPreviews.insert(question.id) } else { expandedQuestionPreviews.remove(question.id) }
+                }
+            )
         ) {
-            if activeTab == "dsa" {
-                appState.selectedDSAQuestion = question
-            } else {
-                appState.selectedSwiftQuestion = question
-            }
-            onDSASelect(question)
+            selectQuestion(question, activeTab: activeTab)
+        }
+    }
+
+    @ViewBuilder
+    private func mcqRow(_ question: MCQQuestion) -> some View {
+        let isSelected = appState.selectedMCQQuestion?.id == question.id
+        // Green dot only for a CORRECTLY answered question, not merely
+        // attempted — matches the "mastery" meaning of the green dot on the
+        // DSA/Swift rows (isSolved), rather than "touched at all".
+        let isCorrect = appState.userActivity.mcqCorrectIds.contains(question.id)
+        SidebarButton(
+            title: question.question,
+            icon: isSelected ? "questionmark.circle.fill" : "questionmark.circle",
+            isSelected: isSelected,
+            isSolved: isCorrect,
+            activeTab: "mcq"
+        ) {
+            appState.selectedMCQQuestion = question
+        }
+    }
+
+    private func sectionAccentColor(for activeTab: String) -> Color {
+        switch activeTab {
+        case "swiftPractice": return .blue
+        case "machineRound": return .mint
+        default: return .orange
         }
     }
 
@@ -75,7 +221,7 @@ public struct SidebarView: View {
                 title: section.name,
                 solvedCount: solvedInSection,
                 totalCount: section.questions.count,
-                accentColor: activeTab == "swiftPractice" ? .blue : .orange,
+                accentColor: sectionAccentColor(for: activeTab),
                 isExpanded: Binding(
                     get: { !collapsedSections.contains(key) },
                     set: { expanded in
@@ -164,22 +310,37 @@ public struct SidebarView: View {
                 }) {
                     Label("Swift Practice", systemImage: "network")
                 }
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.activeTab = .mcq
+                    }
+                }) {
+                    Label("MCQ Practice", systemImage: "questionmark.circle.fill")
+                }
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.activeTab = .machineRound
+                        if let question = appState.selectedMachineRoundQuestion {
+                            onDSASelect(question)
+                        }
+                    }
+                }) {
+                    Label("Machine Round", systemImage: "gearshape.fill")
+                }
             } label: {
                 HStack(spacing: 8) {
-                    Image(systemName: appState.activeTab == .swiftPractice ? "network" : "square.grid.3x3.fill")
+                    Image(systemName: modePickerIconName)
                         .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(
-                            appState.activeTab == .swiftPractice
-                                ? LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
-                                : LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-                        )
-                    
+                        .foregroundStyle(modePickerGradient)
+
                     Text(appState.activeTab.rawValue)
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 8, weight: .black))
                         .foregroundColor(Color.white.opacity(0.4))
@@ -193,9 +354,7 @@ public struct SidebarView: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(
                                     LinearGradient(
-                                        colors: appState.activeTab == .swiftPractice
-                                            ? [Color.blue.opacity(0.4), Color.blue.opacity(0.1)]
-                                            : [Color.orange.opacity(0.4), Color.orange.opacity(0.1)],
+                                        colors: modePickerStrokeColors,
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     ),
@@ -237,13 +396,12 @@ public struct SidebarView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(
-                        (appState.activeTab == .swiftPractice ? Color.blue : Color.orange)
-                            .opacity(isSearchFocused ? 0.55 : 0),
+                        activeAccentColor.opacity(isSearchFocused ? 0.55 : 0),
                         lineWidth: 1.25
                     )
             )
             .shadow(
-                color: (appState.activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(isSearchFocused ? 0.25 : 0),
+                color: activeAccentColor.opacity(isSearchFocused ? 0.25 : 0),
                 radius: 6
             )
             .animation(.smooth, value: isSearchFocused)
@@ -251,21 +409,21 @@ public struct SidebarView: View {
             .padding(.bottom, 10)
 
             // ── Progress Stats Panel ─────────────────────────────
-            let total = appState.activeTab == .dsa ? appState.dsaQuestions.count : appState.swiftQuestions.count
-            let solved = appState.activeTab == .dsa 
-                ? appState.dsaQuestions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count 
-                : appState.swiftQuestions.filter { appState.userActivity.solvedQuestionIds.contains($0.id) }.count
+            let stats = progressStats()
+            let total = stats.total
+            let solved = stats.solved
+            let progressLabel = stats.label
             let percent = total > 0 ? CGFloat(solved) / CGFloat(total) : 0.0
 
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text("Solved Progress")
+                    Text(progressLabel)
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(Color.white.opacity(0.4))
                     Spacer()
                     Text("\(solved)/\(total) (\(Int(percent * 100))%)")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
-                        .foregroundColor(appState.activeTab == .swiftPractice ? .cyan : .orange)
+                        .foregroundColor(activeAccentColor)
                 }
                 .padding(.horizontal, 16)
 
@@ -274,15 +432,11 @@ public struct SidebarView: View {
                         RoundedRectangle(cornerRadius: 3)
                             .fill(Color.white.opacity(0.06))
                             .frame(height: 4)
-                        
+
                         RoundedRectangle(cornerRadius: 3)
-                            .fill(
-                                appState.activeTab == .swiftPractice
-                                    ? LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
-                                    : LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-                            )
+                            .fill(activeAccentGradient)
                             .frame(width: geometry.size.width * percent, height: 4)
-                            .shadow(color: (appState.activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(0.6), radius: 3)
+                            .shadow(color: activeAccentColor.opacity(0.6), radius: 3)
                             .animation(.smooth, value: percent)
                     }
                 }
@@ -300,7 +454,35 @@ public struct SidebarView: View {
             // ── Question List (Filtered by Active Tab) ───
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
-                    if appState.activeTab == .dsa {
+                    if appState.activeTab == .mcq {
+                        // ── MCQ Practice Section ──
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(LinearGradient(colors: [.purple, .pink], startPoint: .top, endPoint: .bottom))
+                                    .frame(width: 5, height: 5)
+                                    .shadow(color: .purple.opacity(0.6), radius: 3)
+                                Text("MCQ TRIVIA")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundColor(Color.white.opacity(0.3))
+                                    .tracking(1.0)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 6)
+
+                            ForEach(filteredMCQQuestions) { question in
+                                mcqRow(question)
+                            }
+
+                            if filteredMCQQuestions.isEmpty {
+                                Text("No questions found")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 14)
+                                    .padding(.top, 8)
+                            }
+                        }
+                    } else if appState.activeTab == .dsa {
                         // ── DSA Section ──
                         VStack(alignment: .leading, spacing: 4) {
                             HStack(spacing: 6) {
@@ -329,6 +511,42 @@ public struct SidebarView: View {
                             }
 
                             if filteredDSAQuestions.isEmpty {
+                                Text("No challenges found")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 14)
+                                    .padding(.top, 8)
+                            }
+                        }
+                    } else if appState.activeTab == .machineRound {
+                        // ── Machine Round Section ──
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(LinearGradient(colors: [.mint, .teal], startPoint: .top, endPoint: .bottom))
+                                    .frame(width: 5, height: 5)
+                                    .shadow(color: .mint.opacity(0.6), radius: 3)
+                                Text("MACHINE ROUND")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundColor(Color.white.opacity(0.3))
+                                    .tracking(1.0)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 6)
+
+                            if searchText.isEmpty {
+                                VStack(alignment: .leading, spacing: 10) {
+                                    ForEach(QuestionSectionizer.grouped(filteredMachineRoundQuestions, category: "machineRound"), id: \.name) { section in
+                                        sectionBlock(section, activeTab: "machineRound")
+                                    }
+                                }
+                            } else {
+                                ForEach(filteredMachineRoundQuestions) { question in
+                                    questionRow(question, activeTab: "machineRound")
+                                }
+                            }
+
+                            if filteredMachineRoundQuestions.isEmpty {
                                 Text("No challenges found")
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(.gray)
@@ -413,12 +631,9 @@ public struct SidebarView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 16)
         }
-        #if os(macOS)
-        .frame(width: 210)
-        .frame(maxHeight: .infinity)
-        #else
+        // Width is applied by the caller (a draggable, resizable sidebar on
+        // macOS/iPad via SplitDragHandle; fills available width on iOS).
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        #endif
         .background(
             ZStack {
                 Color(red: 0.05, green: 0.06, blue: 0.09)

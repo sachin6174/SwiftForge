@@ -137,19 +137,31 @@ struct LineNumberGutterView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(1...max(1, lineCount), id: \.self) { i in
-                Text("\(i)")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(Color.white.opacity(0.4))
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .frame(height: Self.lineHeight)
+        // GeometryReader defers entirely to whatever height its parent
+        // proposes (unlike a plain VStack, which reports its own summed
+        // content height and refuses to shrink below it since none of its
+        // Text rows are compressible). Without this, a long file's full
+        // lineCount * lineHeight became this gutter's reported ideal size,
+        // which forced the whole editor row (and everything below it in
+        // rightPane) to grow past the window's bottom edge instead of
+        // scrolling — .clipped() only hides the visual overflow, it never
+        // shrinks the layout size that caused it.
+        GeometryReader { proxy in
+            VStack(spacing: 0) {
+                ForEach(1...max(1, lineCount), id: \.self) { i in
+                    Text("\(i)")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(Color.white.opacity(0.4))
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                        .frame(height: Self.lineHeight)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
+            .padding(.top, Self.topInset)
+            .padding(.trailing, 6)
+            .offset(y: -scrollOffsetY)
+            .frame(width: proxy.size.width, alignment: .top)
         }
-        .padding(.top, Self.topInset)
-        .padding(.trailing, 6)
-        .offset(y: -scrollOffsetY)
         .frame(width: 40)
         .background(Color(red: 0.05, green: 0.05, blue: 0.07))
         .clipped()
