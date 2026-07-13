@@ -78,6 +78,7 @@ public struct ContentView: View {
         case .swiftPractice: return .blue
         case .mcq: return .purple
         case .machineRound: return .mint
+        case .qa: return .yellow
         case .dsa: return .orange
         }
     }
@@ -90,6 +91,8 @@ public struct ContentView: View {
             return LinearGradient(colors: [Color.purple, Color.pink], startPoint: .leading, endPoint: .trailing)
         case .machineRound:
             return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
+        case .qa:
+            return LinearGradient(colors: [Color.yellow, Color.indigo], startPoint: .leading, endPoint: .trailing)
         case .dsa:
             return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
         }
@@ -100,7 +103,25 @@ public struct ContentView: View {
         case .swiftPractice: return "network"
         case .mcq: return "questionmark.circle.fill"
         case .machineRound: return "gearshape.fill"
+        case .qa: return "books.vertical.fill"
         case .dsa: return "square.grid.3x3.fill"
+        }
+    }
+
+    /// MCQ and Q&A are both pure reading/quiz formats with no code editor,
+    /// solution pane, or test runner behind them — everything gated on
+    /// `.mcq` alone before Q&A existed (Open Book toggle, breadcrumb,
+    /// dsaViewModel loading) applies identically to `.qa`.
+    private var hasNoCodeWorkspace: Bool {
+        appState.activeTab == .mcq || appState.activeTab == .qa
+    }
+
+    @ViewBuilder
+    private var readingTabView: some View {
+        if appState.activeTab == .qa {
+            QAPracticeView(appState: appState)
+        } else {
+            MCQPracticeView(appState: appState)
         }
     }
 
@@ -115,8 +136,8 @@ public struct ContentView: View {
 
                     Divider().background(Color.white.opacity(0.06))
 
-                    if appState.activeTab == .mcq {
-                        MCQPracticeView(appState: appState)
+                    if hasNoCodeWorkspace {
+                        readingTabView
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         mobileSegmentedTabBar
@@ -163,8 +184,8 @@ public struct ContentView: View {
                         Divider()
                             .background(Color.white.opacity(0.06))
 
-                        if appState.activeTab == .mcq {
-                            MCQPracticeView(appState: appState)
+                        if hasNoCodeWorkspace {
+                            readingTabView
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                         } else {
                             dsaWorkspace
@@ -275,7 +296,7 @@ public struct ContentView: View {
                     .font(.system(size: 13, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
 
-                if appState.activeTab != .mcq, let question = dsaViewModel.currentQuestion {
+                if !hasNoCodeWorkspace, let question = dsaViewModel.currentQuestion {
                     Text("/")
                         .font(.system(size: 12))
                         .foregroundColor(Color.white.opacity(0.3))
@@ -306,9 +327,10 @@ public struct ContentView: View {
             Spacer()
 
             // ── Open Book Mode Toggle Button ──────────────────
-            // Meaningless on the MCQ tab (no solution/editor panes exist
-            // there to split) — hidden rather than left as a dead control.
-            if appState.activeTab != .mcq {
+            // Meaningless on the MCQ/Q&A tabs (no solution/editor panes
+            // exist there to split) — hidden rather than left as a dead
+            // control.
+            if !hasNoCodeWorkspace {
                 Button(action: {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                         openBookMode.toggle()
@@ -388,6 +410,10 @@ public struct ContentView: View {
                             Text("\(appState.mcqCorrectCount)/\(appState.mcqQuestions.count) correct")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                        } else if appState.activeTab == .qa {
+                            Text("\(appState.qaViewedCount)/\(appState.qaItems.count) read")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
                         } else {
                             let solved = appState.userActivity.solvedQuestionIds.count
                             Text("\(solved)/\(appState.questions.count) solved")
@@ -405,7 +431,11 @@ public struct ContentView: View {
                                     .stroke(Color.green.opacity(0.25), lineWidth: 0.75)
                             )
                     )
-                    .pulseOnChange(appState.activeTab == .mcq ? appState.mcqCorrectCount : appState.userActivity.solvedQuestionIds.count)
+                    .pulseOnChange(
+                        appState.activeTab == .mcq ? appState.mcqCorrectCount :
+                        appState.activeTab == .qa ? appState.qaViewedCount :
+                        appState.userActivity.solvedQuestionIds.count
+                    )
                 }
             }
         }
@@ -759,14 +789,15 @@ public struct ContentView: View {
     }
     
     private func loadInitialQuestions() {
-        // MCQ tab has no code editor/runner — MCQPracticeView reads
-        // appState.selectedMCQQuestion directly, nothing for dsaViewModel to load.
-        guard appState.activeTab != .mcq else { return }
+        // MCQ/Q&A tabs have no code editor/runner — MCQPracticeView and
+        // QAPracticeView read their own selected item directly, nothing for
+        // dsaViewModel to load.
+        guard !hasNoCodeWorkspace else { return }
         let initialQuestion: Question?
         switch appState.activeTab {
         case .swiftPractice: initialQuestion = appState.selectedSwiftQuestion
         case .machineRound: initialQuestion = appState.selectedMachineRoundQuestion
-        case .dsa, .mcq: initialQuestion = appState.selectedDSAQuestion
+        case .dsa, .mcq, .qa: initialQuestion = appState.selectedDSAQuestion
         }
         if let question = initialQuestion ?? appState.selectedDSAQuestion {
             dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
@@ -775,6 +806,22 @@ public struct ContentView: View {
 }
 
 // MARK: - Draggable Split Handle
+/// Shared per-tab accent color for chrome that lives outside ContentView's
+/// own `activeAccentColor` (the drag handle and pane picker below are
+/// separate top-level structs, not methods on ContentView) — previously a
+/// bare `activeTab == .swiftPractice ? .blue : .orange` ternary, which
+/// defaulted BOTH `.mcq` and `.machineRound` to the DSA orange with no
+/// dedicated case for either.
+func practiceTabAccentColor(_ tab: PracticeTab) -> Color {
+    switch tab {
+    case .swiftPractice: return .blue
+    case .mcq: return .purple
+    case .machineRound: return .mint
+    case .qa: return .yellow
+    case .dsa: return .orange
+    }
+}
+
 struct SplitDragHandle: View {
     @Binding var leftPaneWidth: CGFloat
     let minLeft: CGFloat
@@ -813,7 +860,7 @@ struct SplitDragHandle: View {
             Rectangle()
                 .fill(
                     isDragging
-                        ? (activeTab == .swiftPractice ? Color.blue : Color.orange)
+                        ? practiceTabAccentColor(activeTab)
                         : isHovering
                             ? Color.white.opacity(0.4)
                             : Color.white.opacity(0.12)
@@ -826,8 +873,8 @@ struct SplitDragHandle: View {
                 ForEach(0..<4, id: \.self) { _ in
                     Circle()
                         .fill(
-                            isDragging 
-                                ? (activeTab == .swiftPractice ? Color.blue : Color.orange) 
+                            isDragging
+                                ? practiceTabAccentColor(activeTab)
                                 : (isHovering ? Color.white.opacity(0.7) : Color.white.opacity(0.25))
                         )
                         .frame(width: 3, height: 3)
@@ -895,12 +942,28 @@ struct CustomSegmentedPicker<T: Hashable>: View {
     let activeTab: PracticeTab
 
     private var pickerGradient: LinearGradient {
-        if activeTab == .swiftPractice {
+        switch activeTab {
+        case .swiftPractice:
             return LinearGradient(
                 colors: [Color.blue.opacity(0.85), Color.cyan.opacity(0.75)],
                 startPoint: .leading, endPoint: .trailing
             )
-        } else {
+        case .machineRound:
+            return LinearGradient(
+                colors: [Color.mint.opacity(0.85), Color.teal.opacity(0.75)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .mcq:
+            return LinearGradient(
+                colors: [Color.purple.opacity(0.85), Color.pink.opacity(0.75)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .qa:
+            return LinearGradient(
+                colors: [Color.yellow.opacity(0.85), Color.indigo.opacity(0.75)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .dsa:
             return LinearGradient(
                 colors: [Color.orange.opacity(0.85), Color.red.opacity(0.75)],
                 startPoint: .leading, endPoint: .trailing
@@ -931,7 +994,7 @@ struct CustomSegmentedPicker<T: Hashable>: View {
                             if isSelected {
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(pickerGradient)
-                                    .shadow(color: (activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(0.3), radius: 4, x: 0, y: 1)
+                                    .shadow(color: practiceTabAccentColor(activeTab).opacity(0.3), radius: 4, x: 0, y: 1)
                             } else {
                                 Color.clear
                             }

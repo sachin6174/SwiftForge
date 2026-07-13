@@ -16,6 +16,29 @@ public struct DSASolutionView: View {
     @State private var isHoveringAlternateCopy = false
     @State private var isHoveringAlternateInsert = false
 
+    /// "Insert to Editor" previously always used the DSA orange/red
+    /// gradient regardless of which tab the question belongs to — a visibly
+    /// wrong brand color when viewing a Swift Practice or Machine Round
+    /// solution (blue/mint elsewhere in those tabs, orange only here).
+    private var accentGradient: LinearGradient {
+        switch question?.category {
+        case "swiftPractice":
+            return LinearGradient(colors: [Color(red: 0.1, green: 0.6, blue: 1.0), Color(red: 0.0, green: 0.85, blue: 0.9)], startPoint: .leading, endPoint: .trailing)
+        case "machineRound":
+            return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
+        default:
+            return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
+        }
+    }
+
+    private var accentShadowColor: Color {
+        switch question?.category {
+        case "swiftPractice": return .blue
+        case "machineRound": return .mint
+        default: return .orange
+        }
+    }
+
     public init(question: Question?, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, onInsertToEditor: @escaping (String) -> Void = { _ in }) {
         self.question = question
         self.isFocused = isFocused
@@ -198,15 +221,9 @@ public struct DSASolutionView: View {
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.orange, Color.red],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(accentGradient)
                 )
-                .shadow(color: Color.orange.opacity(hoveringInsert.wrappedValue ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
+                .shadow(color: accentShadowColor.opacity(hoveringInsert.wrappedValue ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
                 .scaleEffect(hoveringInsert.wrappedValue ? 1.02 : 1.0)
             }
             .buttonStyle(PressableButtonStyle())

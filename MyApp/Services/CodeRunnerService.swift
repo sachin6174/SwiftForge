@@ -530,6 +530,48 @@ public class CodeRunnerService: CodeRunnerProtocol {
         return nil
     }
 
+    /// Quote-aware, linear-scan match for a parenthesized argument list —
+    /// mirrors `findMatchingBrace` above, but for `(`/`)`. `startIndex` must
+    /// point AT the opening `(`. Needed because a regex-based args capture
+    /// like `[^)]*` (or even a "smarter" alternation of `"..."` vs `[^)]`)
+    /// either truncates at the first `)` inside a quoted argument (e.g. a
+    /// test-case name literally describing its own params in parens, `"Case
+    /// (n=5)"`), or — when made "smart" about strings via an ambiguous
+    /// alternation — invites catastrophic regex backtracking across a large
+    /// transpiled file (confirmed: an alternation-based fix here made a full
+    /// 24-question regression run hang for 10+ minutes instead of seconds).
+    /// A manual character scan has neither failure mode and is linear time.
+    private func findMatchingParen(text: String, startIndex: String.Index) -> String.Index? {
+        var parenCount = 0
+        var idx = startIndex
+        var inString = false
+        while idx < text.endIndex {
+            let char = text[idx]
+            if inString {
+                if char == "\\" {
+                    idx = text.index(idx, offsetBy: 1, limitedBy: text.endIndex) ?? text.endIndex
+                    if idx < text.endIndex { idx = text.index(after: idx) }
+                    continue
+                }
+                if char == "\"" { inString = false }
+                idx = text.index(after: idx)
+                continue
+            }
+            if char == "\"" {
+                inString = true
+            } else if char == "(" {
+                parenCount += 1
+            } else if char == ")" {
+                parenCount -= 1
+                if parenCount == 0 {
+                    return idx
+                }
+            }
+            idx = text.index(after: idx)
+        }
+        return nil
+    }
+
     private func transpileClassBlocks(text: String, processBodyFn: (String) -> String) -> String {
         var result = text
         let pattern = "\\b(?:class|actor|struct)\\s+\\w+"
@@ -788,6 +830,17 @@ public class CodeRunnerService: CodeRunnerProtocol {
         let chars = Array(text)
         var depth = 0
         var inString = false
+        // A ternary's `cond ? a : b` also puts a colon at depth 0, which is
+        // otherwise indistinguishable from a dict literal's `key: value`
+        // colon (e.g. `[matrix.count, matrix.isEmpty ? 0 : matrix[0].count]`
+        // was misdetected as a dict and emitted as invalid JS `{...}`).
+        // Ternary `?` is always surrounded by whitespace on both sides in
+        // real Swift source, unlike optional chaining (`x?.y`, no space
+        // before `.`), nil-coalescing (`x ?? y`, no space between `?`s), or
+        // an optional type marker (`Int?`, no space before `?`) - so a
+        // whitespace-delimited `?` reserves the next depth-0 colon for
+        // itself instead of letting it count as a real dict colon.
+        var pendingTernaryColons = 0
         var i = 0
         while i < chars.count {
             let c = chars[i]
@@ -801,8 +854,18 @@ public class CodeRunnerService: CodeRunnerProtocol {
             case "\"": inString = true
             case "(", "[", "{": depth += 1
             case ")", "]", "}": depth -= 1
+            case "?":
+                if depth == 0, i > 0, chars[i - 1] == " ", i + 1 < chars.count, chars[i + 1] == " " {
+                    pendingTernaryColons += 1
+                }
             case ":":
-                if depth == 0 { return true }
+                if depth == 0 {
+                    if pendingTernaryColons > 0 {
+                        pendingTernaryColons -= 1
+                    } else {
+                        return true
+                    }
+                }
             default: break
             }
             i += 1
@@ -1273,7 +1336,24 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // (...) {`, etc., which are always lowercase — unlike pattern 1
         // below this needs no dot prefix to disambiguate from those
         // keywords, since none of them start with a capital letter.
-        let pattern0 = "(?<![\\w.])([A-Z]\\w*)\\s*\\(([^)]*)\\)\\s*\\{"
+        // The args list is located with `findMatchingParen` (a linear,
+        // quote-aware scan — see its doc comment) rather than captured by
+        // regex. A bare `[^)]*` args-capture stops at the FIRST `)` it sees,
+        // including one that's just text INSIDE a quoted argument (e.g.
+        // `TestCase(name: "Random Case (cap=7)") { ... }`, a test-case name
+        // that happens to describe its own parameters in parens) — that
+        // truncated match then fails to find `)\s*{` right after (the text
+        // ends mid-string instead), so the WHOLE trailing closure silently
+        // fails to convert for any such call, left as literal Swift closure
+        // syntax, a hard JS SyntaxError at runtime. A regex "fix" attempting
+        // to make the args-capture string-literal-aware via an alternation
+        // (`"..."` vs `[^)]`, both repeated) was tried and reverted: the
+        // ambiguity between the two alternatives (either can match ordinary
+        // characters) invites catastrophic backtracking once the match
+        // ultimately fails at a given start position (e.g. any ordinary
+        // function call with no trailing `{`), which is common enough in a
+        // large transpiled file to hang a full regression run for minutes.
+        let pattern0 = "(?<![\\w.])([A-Z]\\w*)\\s*\\("
         if let regex0 = try? NSRegularExpression(pattern: pattern0, options: []) {
             var pos0 = result.startIndex
             while pos0 < result.endIndex {
@@ -1285,14 +1365,31 @@ public class CodeRunnerService: CodeRunnerProtocol {
 
                 let nsResult = result as NSString
                 let typeName = nsResult.substring(with: match.range(at: 1))
-                let args = nsResult.substring(with: match.range(at: 2))
+                // matchRange ends right after the opening '(' (pattern ends in `\(`).
+                let openParenIdx = result.index(before: matchRange.upperBound)
 
-                if args.contains("function") {
-                    pos0 = result.index(matchRange.lowerBound, offsetBy: match.range.length)
+                guard let closeParenIdx = findMatchingParen(text: result, startIndex: openParenIdx) else {
+                    pos0 = result.index(after: openParenIdx)
                     continue
                 }
 
-                guard let openBraceIdx = result[matchRange.lowerBound...].firstIndex(of: "{") else {
+                // Only a trailing-closure call if `{` immediately follows
+                // the closing `)` (skipping whitespace) — otherwise this is
+                // just an ordinary call/initializer with no closure at all.
+                var afterParen = result.index(after: closeParenIdx)
+                while afterParen < result.endIndex, result[afterParen] == " " || result[afterParen] == "\n" || result[afterParen] == "\t" {
+                    afterParen = result.index(after: afterParen)
+                }
+                guard afterParen < result.endIndex, result[afterParen] == "{" else {
+                    pos0 = result.index(after: openParenIdx)
+                    continue
+                }
+                let openBraceIdx = afterParen
+
+                let argsStart = result.index(after: openParenIdx)
+                let args = String(result[argsStart..<closeParenIdx])
+
+                if args.contains("function") {
                     pos0 = result.index(matchRange.lowerBound, offsetBy: match.range.length)
                     continue
                 }
@@ -1504,6 +1601,229 @@ public class CodeRunnerService: CodeRunnerProtocol {
     /// reference it). Operates on plain Swift source text, before any other
     /// transpilation — brace-matching alone is enough since braces mean the
     /// same thing in both languages at this stage.
+    /// Finds the next WHOLE-WORD occurrence of `word` in `text` (not
+    /// preceded or followed by another identifier character, so searching
+    /// for "func" doesn't match inside "myFuncName"), starting at `from`.
+    /// String.Index-based throughout (never NSRange/UTF-16 offsets), so it
+    /// stays correct regardless of what characters appear earlier in the
+    /// string — unlike mixing NSRegularExpression match offsets directly
+    /// into String.Index arithmetic, which silently desyncs whenever the
+    /// text contains any character outside the Basic Multilingual Plane.
+    private func firstWholeWordRange(of word: String, in text: String, from: String.Index? = nil) -> Range<String.Index>? {
+        var searchStart = from ?? text.startIndex
+        while searchStart < text.endIndex, let found = text.range(of: word, range: searchStart..<text.endIndex) {
+            let precededOK: Bool
+            if found.lowerBound == text.startIndex {
+                precededOK = true
+            } else {
+                let before = text[text.index(before: found.lowerBound)]
+                precededOK = !(before.isLetter || before.isNumber || before == "_")
+            }
+            let followedOK: Bool
+            if found.upperBound == text.endIndex {
+                followedOK = true
+            } else {
+                let after = text[found.upperBound]
+                followedOK = !(after.isLetter || after.isNumber || after == "_")
+            }
+            if precededOK && followedOK {
+                return found
+            }
+            searchStart = text.index(after: found.lowerBound)
+        }
+        return nil
+    }
+
+    /// Extracts every TOP-LEVEL `func name(...) { ... }` definition (full
+    /// verbatim text, signature through matching close brace) from `body`,
+    /// via `findMatchingBrace` so a closure literal or nested control-flow
+    /// block inside one method is never mistaken for a sibling method.
+    private func extractTopLevelFuncs(from body: String) -> [String] {
+        var results: [String] = []
+        var searchFrom = body.startIndex
+        while let range = firstWholeWordRange(of: "func", in: body, from: searchFrom) {
+            guard let openBraceIdx = body[range.upperBound...].firstIndex(of: "{") else {
+                break
+            }
+            guard let closeBraceIdx = findMatchingBrace(text: body, startIndex: openBraceIdx) else {
+                break
+            }
+            results.append(String(body[range.lowerBound...closeBraceIdx]))
+            searchFrom = body.index(after: closeBraceIdx)
+        }
+        return results
+    }
+
+    /// Extracts the method name from a `func name(...) { ... }` text span.
+    private func firstFuncName(in funcText: String) -> String? {
+        guard let range = firstWholeWordRange(of: "func", in: funcText) else { return nil }
+        var idx = range.upperBound
+        while idx < funcText.endIndex, funcText[idx] == " " { idx = funcText.index(after: idx) }
+        var nameEnd = idx
+        while nameEnd < funcText.endIndex, funcText[nameEnd].isLetter || funcText[nameEnd].isNumber || funcText[nameEnd] == "_" {
+            nameEnd = funcText.index(after: nameEnd)
+        }
+        guard nameEnd > idx else { return nil }
+        return String(funcText[idx..<nameEnd])
+    }
+
+    /// Erases every `protocol Name { ... }` declaration entirely — a
+    /// protocol has no runtime representation in JS's duck-typed world at
+    /// all (nothing enforces conformance there), so the requirement list
+    /// itself (bare method signatures, `{ get }`/`{ get set }` property
+    /// requirements, `@objc optional` members, ...) can simply be deleted
+    /// regardless of its exact contents. Previously the bare `protocol`
+    /// keyword was left completely untouched (not a JS keyword at all —
+    /// "Unexpected identifier" as soon as the JS engine hit it), so ANY
+    /// question using a protocol declaration failed outright, including one
+    /// already-shipped question that was silently broken this way.
+    ///
+    /// Then redistributes default method implementations: an
+    /// `extension SomeProtocol { func x() { ... } }` supplying a default
+    /// implementation for one of that protocol's requirements — the
+    /// standard protocol-oriented-programming pattern — has nothing to
+    /// merge into once the protocol itself is erased (unlike an extension
+    /// of a real type, which this transpiler already merges into that
+    /// type's own class declaration elsewhere in the pipeline). Instead,
+    /// each default method is copied into every `class`/`struct`/`actor`
+    /// declared later in the same file whose conformance list mentions that
+    /// protocol AND that doesn't already implement the method itself — so
+    /// a conforming type that overrides the default keeps its own
+    /// implementation, and one that doesn't gets the shared one for free,
+    /// exactly matching Swift's own resolution order for this pattern.
+    ///
+    /// Must run BEFORE the generic protocol-conformance-list cleanup later
+    /// in this pipeline (which strips a type's `: SomeProtocol` list
+    /// entirely) — this pass still needs that list intact to know which
+    /// types conform to which protocol.
+    private func transpileProtocolDefaultImplementations(_ text: String) -> String {
+        var result = text
+        var protocolNames: Set<String> = []
+
+        while let range = firstWholeWordRange(of: "protocol", in: result) {
+            var idx = range.upperBound
+            while idx < result.endIndex, result[idx] == " " { idx = result.index(after: idx) }
+            var nameEnd = idx
+            while nameEnd < result.endIndex, result[nameEnd].isLetter || result[nameEnd].isNumber || result[nameEnd] == "_" {
+                nameEnd = result.index(after: nameEnd)
+            }
+            guard nameEnd > idx,
+                  let openBraceIdx = result[nameEnd...].firstIndex(of: "{"),
+                  let closeBraceIdx = findMatchingBrace(text: result, startIndex: openBraceIdx) else {
+                break
+            }
+            let name = String(result[idx..<nameEnd])
+
+            // Also swallow a leading `@objc ` attribute immediately before
+            // `protocol`, if present, so it doesn't linger as dangling text.
+            // `limitedBy:` avoids crashing when `deleteStart` is too close
+            // to the start of the string to fit `objcPrefix` before it.
+            var deleteStart = range.lowerBound
+            let objcPrefix = "@objc "
+            if let candidateStart = result.index(deleteStart, offsetBy: -objcPrefix.count, limitedBy: result.startIndex),
+               result[candidateStart..<deleteStart] == objcPrefix {
+                deleteStart = candidateStart
+            }
+
+            protocolNames.insert(name)
+            result.removeSubrange(deleteStart...closeBraceIdx)
+        }
+
+        guard !protocolNames.isEmpty else { return result }
+
+        var defaultMethods: [String: [String]] = [:]   // protocol name -> ["func x() { ... }", ...]
+        var searchFrom = result.startIndex
+        while let range = firstWholeWordRange(of: "extension", in: result, from: searchFrom) {
+            var idx = range.upperBound
+            while idx < result.endIndex, result[idx] == " " { idx = result.index(after: idx) }
+            var nameEnd = idx
+            while nameEnd < result.endIndex, result[nameEnd].isLetter || result[nameEnd].isNumber || result[nameEnd] == "_" {
+                nameEnd = result.index(after: nameEnd)
+            }
+            guard nameEnd > idx, let openBraceIdx = result[nameEnd...].firstIndex(of: "{") else {
+                searchFrom = result.index(after: range.lowerBound)
+                continue
+            }
+            guard let closeBraceIdx = findMatchingBrace(text: result, startIndex: openBraceIdx) else {
+                break
+            }
+            let name = String(result[idx..<nameEnd])
+
+            guard protocolNames.contains(name) else {
+                searchFrom = result.index(after: closeBraceIdx)
+                continue
+            }
+
+            let body = String(result[result.index(after: openBraceIdx)..<closeBraceIdx])
+            defaultMethods[name, default: []].append(contentsOf: extractTopLevelFuncs(from: body))
+
+            result.removeSubrange(range.lowerBound...closeBraceIdx)
+            searchFrom = range.lowerBound
+        }
+
+        guard !defaultMethods.isEmpty else { return result }
+
+        for keyword in ["class", "struct", "actor"] {
+            searchFrom = result.startIndex
+            while let range = firstWholeWordRange(of: keyword, in: result, from: searchFrom) {
+                var idx = range.upperBound
+                while idx < result.endIndex, result[idx] == " " { idx = result.index(after: idx) }
+                var nameEnd = idx
+                while nameEnd < result.endIndex, result[nameEnd].isLetter || result[nameEnd].isNumber || result[nameEnd] == "_" {
+                    nameEnd = result.index(after: nameEnd)
+                }
+                guard nameEnd > idx else {
+                    searchFrom = result.index(after: range.lowerBound)
+                    continue
+                }
+
+                var afterName = nameEnd
+                while afterName < result.endIndex, result[afterName] == " " { afterName = result.index(after: afterName) }
+
+                guard afterName < result.endIndex, result[afterName] == ":" else {
+                    searchFrom = nameEnd
+                    continue
+                }
+
+                let listStart = result.index(after: afterName)
+                guard let openBraceIdx = result[listStart...].firstIndex(of: "{") else {
+                    searchFrom = nameEnd
+                    continue
+                }
+                guard let closeBraceIdx = findMatchingBrace(text: result, startIndex: openBraceIdx) else {
+                    break
+                }
+
+                let conformanceListRaw = String(result[listStart..<openBraceIdx])
+                let conformances = conformanceListRaw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+                let existingBody = String(result[result.index(after: openBraceIdx)..<closeBraceIdx])
+                var toInject: [String] = []
+                for conformance in conformances {
+                    guard let methods = defaultMethods[conformance] else { continue }
+                    for methodText in methods {
+                        guard let methodName = firstFuncName(in: methodText) else { continue }
+                        let alreadyImplemented = existingBody.range(of: "func \(methodName)(") != nil
+                            || existingBody.range(of: "func \(methodName) (") != nil
+                        if !alreadyImplemented {
+                            toInject.append(methodText)
+                        }
+                    }
+                }
+
+                if !toInject.isEmpty {
+                    let injection = "\n" + toInject.joined(separator: "\n") + "\n"
+                    result.insert(contentsOf: injection, at: closeBraceIdx)
+                    searchFrom = result.index(closeBraceIdx, offsetBy: injection.count)
+                } else {
+                    searchFrom = result.index(after: closeBraceIdx)
+                }
+            }
+        }
+
+        return result
+    }
+
     private func hoistNestedTypeDeclarations(_ text: String) -> String {
         guard let declRegex = try? NSRegularExpression(pattern: "\\b(?:private\\s+|public\\s+|internal\\s+|fileprivate\\s+)?(class|struct|actor)\\s+(\\w+)", options: []) else {
             return text
@@ -1867,6 +2187,42 @@ public class CodeRunnerService: CodeRunnerProtocol {
         return result
     }
 
+    /// Swift's `String.append(_:)` (append a Character/String) and
+    /// `Array.append(_:)` (append an element) are different methods
+    /// sharing the same name — the blanket `.append(x) -> .push(x)` rule
+    /// later in the pipeline is correct for arrays but produces a hard
+    /// runtime TypeError for a string (`"".push is not a function` — JS
+    /// strings are immutable, with no `.push` method at all; confirmed via
+    /// a `var current = ""; ...; current.append(char)` loop building up a
+    /// word character-by-character, an extremely ordinary string-parsing
+    /// idiom). The transpiler has no general type inference, but a
+    /// string-typed `let`/`var` reveals itself either via an explicit
+    /// `: String` annotation or — far more common in practice — a
+    /// string-literal initializer (`var current = ""`); scanning for
+    /// either BEFORE the blanket rule runs lets us rewrite just those
+    /// names' `.append(x)` calls to `+= x` (string concatenation) ahead of
+    /// it, the same "detect the specific typed names first" strategy
+    /// `rewriteDictionaryCountAccess` above already uses for
+    /// `.count`/`.isEmpty`. Like that function, this is a global (not
+    /// scope-aware) name scan, so a name reused for a String in one scope
+    /// and an Array in another would be misclassified — an accepted,
+    /// pre-existing limitation shared with the dictionary case, not a new
+    /// one introduced here.
+    private func rewriteStringAppendCalls(_ text: String) -> String {
+        guard let typeRegex = try? NSRegularExpression(pattern: "\\b(?:let|var)\\s+(\\w+)\\s*(?::\\s*String\\s*)?=\\s*\"", options: []) else { return text }
+        let ns = text as NSString
+        let matches = typeRegex.matches(in: text, options: [], range: NSRange(location: 0, length: ns.length))
+        let stringNames = Set(matches.map { ns.substring(with: $0.range(at: 1)) })
+        guard !stringNames.isEmpty else { return text }
+        var result = text
+        for name in stringNames {
+            let escapedName = NSRegularExpression.escapedPattern(for: name)
+            let pattern = "\\b(\(escapedName))\\.append\\(([^)]+)\\)"
+            result = replaceRegex(in: result, pattern: pattern, template: "$1 += $2")
+        }
+        return result
+    }
+
     /// Converts a Swift `enum NAME { case a; case b(Int); ... }` (no raw
     /// values, only optional associated values — the only shape this
     /// codebase's questions currently use) into a JS class exposing one
@@ -1919,8 +2275,23 @@ public class CodeRunnerService: CodeRunnerProtocol {
             result.replaceSubrange(matchRange, with: replacement)
 
             for caseName in caseNames {
-                let pattern = "(?<![\\w)\\].])\\.(\(NSRegularExpression.escapedPattern(for: caseName)))\\b\\s*\\("
-                result = replaceRegex(in: result, pattern: pattern, template: "\(enumName).$1(")
+                let escapedCase = NSRegularExpression.escapedPattern(for: caseName)
+                let patternWithParens = "(?<![\\w)\\].])\\.(\(escapedCase))\\b\\s*\\("
+                result = replaceRegex(in: result, pattern: patternWithParens, template: "\(enumName).$1(")
+
+                // A case with NO associated values is referenced in Swift
+                // with NO parens at all (`.size`, not `.size()`) — but the
+                // JS side represents EVERY case, payload or not, as a
+                // static factory FUNCTION that must be CALLED to produce
+                // the `{__case, values}` tagged object the switch-matching
+                // logic below uniformly expects. The with-parens pattern
+                // above only fires when Swift source already has `(`, so a
+                // bare `.size` was previously left completely unmatched —
+                // rewritten to just `Op.size` (a reference to the function
+                // itself, never invoked) it would still be wrong; this adds
+                // the call parens Swift's own source never needed.
+                let patternNoParens = "(?<![\\w)\\].])\\.(\(escapedCase))\\b(?!\\s*\\()"
+                result = replaceRegex(in: result, pattern: patternNoParens, template: "\(enumName).$1()")
             }
         }
         return result
@@ -2417,6 +2788,30 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // other `.count` gets.
         js = rewriteDictionaryCountAccess(js)
 
+        // Erase `protocol Name { ... }` declarations and redistribute any
+        // `extension Name { ... }` default method implementations onto
+        // conforming types — see transpileProtocolDefaultImplementations
+        // for why. Must run before the generic protocol-conformance-list
+        // cleanup further below (step 1 in this pipeline), which strips the
+        // `: SomeProtocol` conformance list this pass still needs intact to
+        // know which types conform to which protocol, and before nested
+        // type hoisting, so an injected default method is already sitting
+        // in a conforming type's body by the time that runs.
+        js = transpileProtocolDefaultImplementations(js)
+
+        // Swift's optional-call syntax on a possibly-absent method
+        // (`someObject.method?()`, e.g. calling an `@objc optional`
+        // protocol requirement that a conforming type didn't implement) has
+        // no direct JS equivalent as written — `?(` is not valid JS at all.
+        // JS's own optional-chaining CALL syntax is `?.(`, not `?(` — the
+        // dot is mandatory even when calling, unlike Swift's `?()`. A
+        // literal `?()` substring (a `?` directly followed by `(` with zero
+        // whitespace between them) doesn't occur in any other legitimate
+        // Swift construct — a ternary's `?` always has whitespace around it
+        // (`cond ? a : b`), and an optional TYPE marker (`Int?`) is always
+        // followed by whitespace/`)`/`,`/newline, never directly by `(`.
+        js = replaceRegex(in: js, pattern: "\\?\\(", template: "?.(")
+
         // Hoist nested type declarations (e.g. a `private class Node {...}`
         // declared inside `class LRUCache {...}`, the standard Swift pattern
         // for a linked-list-node helper type used only by one containing
@@ -2597,26 +2992,25 @@ public class CodeRunnerService: CodeRunnerProtocol {
         js = replaceRegex(in: js, pattern: "\\bactor\\s+", template: "class ")
         js = replaceRegex(in: js, pattern: "\\bstruct\\s+", template: "class ")
 
-        // Clean return types in function signatures BEFORE class blocks and
-        // methods are processed. Allows an optional `async` between the
-        // closing paren and `->` (`) async -> Bool {`) and preserves it in
-        // the output — without this, `\)\s*->` requires `->` immediately
-        // after `)` (only whitespace in between), so `async` sitting there
-        // instead made the WHOLE regex fail to match at all, silently
-        // leaving `-> Bool` (and any other return type) un-stripped for
-        // every async function/method signature.
-        //
-        // Also allows an optional `throws`/`rethrows` between `async` and
-        // `->` (`) async throws -> [Repository] {`) — a throwing async
-        // function/method is at least as common as a plain async one, but
-        // was entirely unhandled: the regex still required `->` right after
-        // `async` (only whitespace in between), so `async throws -> ...`
-        // fell through untouched just like plain `async -> ...` did before
-        // this fix, left as `) async throws -> [Repository] {` — a hard
-        // `SyntaxError` once this becomes a JS method (`async` immediately
-        // followed by another identifier where JS expects the method's own
-        // `(` parameter list).
-        js = replaceRegex(in: js, pattern: "\\)\\s*(async)?\\s*(?:throws|rethrows)?\\s*->\\s*[^{]+", template: ") $1 ")
+        // Return-type/throws/async stripping ("Clean return types in
+        // function signatures BEFORE class blocks and methods are
+        // processed") used to be one blanket regex here — `\)\s*(async)?
+        // \s*(?:throws|rethrows)?\s*->\s*[^{]+`, matching from the FIRST
+        // `)` anywhere in the file through to the next `{` — which
+        // silently assumed that `)` was always a function's own OUTER
+        // closing paren. For `func f(x: @escaping (Int) -> Void) { ... }`,
+        // the closure-typed parameter's own `)` (right after `Int`) is
+        // ALSO immediately followed by `->`, so the regex matched THAT one
+        // instead — consuming through to the function's real closing paren
+        // as if it were part of the "return type" text and deleting it,
+        // corrupting the signature (`func f(x: @escaping (Int)  {`, an
+        // outer paren short) for every function with an escaping-closure
+        // parameter. Preserving `async` (needed for JS's own async-function
+        // marker; a later pass repositions it before `function`) while
+        // fixing this requires knowing the TRUE closing paren — which is
+        // exactly what the func/init loops below already compute via
+        // `findMatchingParen` — so this is now folded into them instead of
+        // being a separate, paren-depth-blind pass.
 
         // Clean function parameters (func name(...) or init(...))
         // Preserves Swift default parameter values (`cost: Int = 1`) as JS
@@ -2629,8 +3023,14 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // false) — discovered via a test harness calling `allowRequest(...)`
         // without its optional `cost:` argument, relying on the Swift
         // default, and getting a permanent `false` from every call.
+        // `components(separatedBy: ",")` split on EVERY comma, including one
+        // nested inside a closure-typed parameter's own parameter list
+        // (`completion: @escaping (Data?, Error?) -> Void)` has a comma
+        // between `Data?` and `Error?` that has nothing to do with the
+        // OUTER parameter list) — `splitTopLevelCommas` only splits on
+        // commas at depth 0, leaving a closure type's internal comma alone.
         let cleanParamsFn: (String) -> String = { paramsStr in
-            let params = paramsStr.components(separatedBy: ",")
+            let params = self.splitTopLevelCommas(paramsStr)
             var cleaned: [String] = []
             for p in params {
                 let trimmed = p.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2654,46 +3054,79 @@ public class CodeRunnerService: CodeRunnerProtocol {
             return cleaned.joined(separator: ", ")
         }
 
-        if let funcRegex = try? NSRegularExpression(pattern: "\\bfunc\\s+(\\w+)\\s*\\(([^)]*)\\)", options: []) {
-            var mutableJs = js
-            var offset = 0
-            let matches = funcRegex.matches(in: js, options: [], range: NSRange(js.startIndex..., in: js))
-            for match in matches {
-                guard let nameRange = Range(match.range(at: 1), in: js),
-                      let paramsRange = Range(match.range(at: 2), in: js) else { continue }
-                
-                let funcName = String(js[nameRange])
-                let paramsStr = String(js[paramsRange])
-                let cleanedParams = cleanParamsFn(paramsStr)
-                
-                let replacement = "function \(funcName)(\(cleanedParams))"
-                let adjustedRange = NSRange(location: match.range.location + offset, length: match.range.length)
-                if let targetRange = Range(adjustedRange, in: mutableJs) {
-                    mutableJs.replaceSubrange(targetRange, with: replacement)
-                    offset += replacement.count - match.range.length
+        // Both loops below match only up through the opening `(` (never
+        // `[^)]*`, which — like the params-capture bug this replaced —
+        // stops at the FIRST `)` it sees, truncating early whenever a
+        // closure-typed parameter's own type contains a `)` of its own),
+        // then use `findMatchingParen` to locate the TRUE closing paren
+        // regardless of any nested parens in between.
+        if let funcRegex = try? NSRegularExpression(pattern: "\\bfunc\\s+(\\w+)\\s*\\(", options: []) {
+            var searchStart = js.startIndex
+            while searchStart < js.endIndex {
+                let remainingRange = NSRange(searchStart..., in: js)
+                guard let match = funcRegex.firstMatch(in: js, options: [], range: remainingRange),
+                      let nameRange = Range(match.range(at: 1), in: js),
+                      let matchRange = Range(match.range, in: js) else {
+                    break
                 }
+                let funcName = String(js[nameRange])
+                // matchRange ends right after the opening '(' (pattern ends in `\(`).
+                let openParenIdx = js.index(before: matchRange.upperBound)
+                guard let closeParenIdx = findMatchingParen(text: js, startIndex: openParenIdx) else {
+                    searchStart = js.index(after: openParenIdx)
+                    continue
+                }
+
+                let paramsStr = String(js[js.index(after: openParenIdx)..<closeParenIdx])
+                let cleanedParams = cleanParamsFn(paramsStr)
+
+                // Consume everything between the TRUE closing paren and the
+                // method's body-opening `{` (async/throws/rethrows/return
+                // type, in that order per Swift's own grammar), preserving
+                // only `async` if present — matches the intermediate shape
+                // (`function name(params) async `) the later async-
+                // repositioning pass expects, without the paren-depth blind
+                // spot the old separate regex pass had.
+                let afterParenIdx = js.index(after: closeParenIdx)
+                let bodyBraceIdx = js[afterParenIdx...].firstIndex(of: "{") ?? afterParenIdx
+                let annotation = String(js[afterParenIdx..<bodyBraceIdx])
+                let hasAsync = annotation.range(of: "\\basync\\b", options: .regularExpression) != nil
+
+                let replacement = "function \(funcName)(\(cleanedParams))" + (hasAsync ? " async " : " ")
+                js.replaceSubrange(matchRange.lowerBound..<bodyBraceIdx, with: replacement)
+                searchStart = js.index(matchRange.lowerBound, offsetBy: replacement.count)
             }
-            js = mutableJs
         }
 
-        if let initRegex = try? NSRegularExpression(pattern: "\\binit\\s*\\(([^)]*)\\)", options: []) {
-            var mutableJs = js
-            var offset = 0
-            let matches = initRegex.matches(in: js, options: [], range: NSRange(js.startIndex..., in: js))
-            for match in matches {
-                guard let paramsRange = Range(match.range(at: 1), in: js) else { continue }
-                
-                let paramsStr = String(js[paramsRange])
-                let cleanedParams = cleanParamsFn(paramsStr)
-                
-                let replacement = "constructor(\(cleanedParams))"
-                let adjustedRange = NSRange(location: match.range.location + offset, length: match.range.length)
-                if let targetRange = Range(adjustedRange, in: mutableJs) {
-                    mutableJs.replaceSubrange(targetRange, with: replacement)
-                    offset += replacement.count - match.range.length
+        if let initRegex = try? NSRegularExpression(pattern: "\\binit\\s*\\(", options: []) {
+            var searchStart = js.startIndex
+            while searchStart < js.endIndex {
+                let remainingRange = NSRange(searchStart..., in: js)
+                guard let match = initRegex.firstMatch(in: js, options: [], range: remainingRange),
+                      let matchRange = Range(match.range, in: js) else {
+                    break
                 }
+                let openParenIdx = js.index(before: matchRange.upperBound)
+                guard let closeParenIdx = findMatchingParen(text: js, startIndex: openParenIdx) else {
+                    searchStart = js.index(after: openParenIdx)
+                    continue
+                }
+
+                let paramsStr = String(js[js.index(after: openParenIdx)..<closeParenIdx])
+                let cleanedParams = cleanParamsFn(paramsStr)
+
+                // Same reasoning as the func loop above — an init can have
+                // `async`/`throws` (but never a return type) after its
+                // parens: `init() async throws { ... }`.
+                let afterParenIdx = js.index(after: closeParenIdx)
+                let bodyBraceIdx = js[afterParenIdx...].firstIndex(of: "{") ?? afterParenIdx
+                let annotation = String(js[afterParenIdx..<bodyBraceIdx])
+                let hasAsync = annotation.range(of: "\\basync\\b", options: .regularExpression) != nil
+
+                let replacement = "constructor(\(cleanedParams))" + (hasAsync ? " async " : " ")
+                js.replaceSubrange(matchRange.lowerBound..<bodyBraceIdx, with: replacement)
+                searchStart = js.index(matchRange.lowerBound, offsetBy: replacement.count)
             }
-            js = mutableJs
         }
 
         // Clean class properties and methods using brace parser
@@ -2722,8 +3155,23 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // primitives always stringify to identical text too.
         js = replaceRegex(in: js, pattern: "\\b(\\w+)\\s*==\\s*(tc\\.\\w+)\\b", template: "JSON.stringify($1) === JSON.stringify($2)")
 
-        // String format
-        js = replaceRegex(in: js, pattern: "String\\s*\\(\\s*format\\s*:\\s*\"%\\.\\d+f\"\\s*,\\s*([^)]+)\\)", template: "$1")
+        // String(format: "%.Nf", expr) — every existing question only ever
+        // used this for cosmetic display text (a `Time: \(...)ms` interpolation
+        // whose formatting doesn't affect pass/fail), so discarding the format
+        // and keeping the bare expression was invisible. But the format IS
+        // observable the moment a question's own return value or comparison
+        // depends on the padded string (e.g. `execute() -> String { return
+        // String(format: "%.2f", total) }` compared against a hardcoded
+        // "14.50") — a bare number there fails a strict JS `===` against that
+        // string outright. Real fixed-point formatting via `.toFixed(N)`,
+        // matching Swift's %.Nf rounding for the non-negative values every
+        // current question's numeric formatting is used for.
+        // NOTE: the `([^)]+)` capture still can't see past a nested call's own
+        // closing paren (`String(format: "%.2f", getTotalPrice())` mis-captures
+        // at the first `)`), the same known limitation as every other
+        // single-level-paren regex in this file — callers should assign the
+        // expression to a local first if it isn't already argument-free.
+        js = replaceRegex(in: js, pattern: "String\\s*\\(\\s*format\\s*:\\s*\"%\\.(\\d+)f\"\\s*,\\s*([^)]+)\\)", template: "Number($2).toFixed($1)")
 
         // Strip property wrapper UserDefault class definition
         let userDefaultClassPattern = "class\\s+UserDefault\\s*\\{[^{}]*(?:\\{[^{}]*(?:\\{[^{}]*\\}[^{}]*)*\\}[^{}]*)*\\}"
@@ -2898,8 +3346,25 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // the upper bound unmatched entirely (`\w+` doesn't include `.`),
         // so the whole loop fell through unconverted into later passes that
         // mangled it into nonsense like `for (...).length(function() {...`.
-        js = replaceRegex(in: js, pattern: "for\\s+(\\w+)\\s+in\\s+([\\w.]+)\\s*\\.\\.\\.\\s*([\\w.]+)", template: "for (var $1 = $2; $1 <= $3; $1++)")
-        js = replaceRegex(in: js, pattern: "for\\s+(\\w+)\\s+in\\s+([\\w.]+)\\s*\\.\\.<\\s*([\\w.]+)", template: "for (var $1 = $2; $1 < $3; $1++)")
+        // Also allow `[`/`]` — a bound naming a MATRIX row/column count
+        // (`matrix[0].count`, very common in any 2D-array question) has
+        // exactly the same failure mode: `[` isn't in `[\w.]+` either, so
+        // `for j in 0..<matrix[0].count {` previously left `[0].count {`
+        // dangling right after the emitted `for(...)`, which a later pass
+        // then misread as a subscript-plus-trailing-closure call.
+        // Bounds also allow a PARENTHESIZED arithmetic expression
+        // (`(newArray.count - 1)`, `(chars.count / 2)`) — not just a bare
+        // dotted/subscript path. Previously `(`/`)`/arithmetic operators
+        // weren't in the allowed set at all, so `for j in 1..<(arr.count -
+        // 1) {` left the ENTIRE range expression unmatched (fell through
+        // to the generic `for x in collection {` catch-all further below,
+        // which just wraps the raw, still-Swift-syntax `1..<(arr.count -
+        // 1)` text in a JS `for...of` — a hard SyntaxError, since `..<`
+        // means nothing to JS). `{` is deliberately NOT in this set, so
+        // the match still correctly stops at the loop body's opening
+        // brace exactly as before, even though whitespace is now allowed.
+        js = replaceRegex(in: js, pattern: "for\\s+(\\w+)\\s+in\\s+([\\w.\\[\\]()+\\-*/\\s]+)\\s*\\.\\.\\.\\s*([\\w.\\[\\]()+\\-*/\\s]+)", template: "for (var $1 = $2; $1 <= $3; $1++)")
+        js = replaceRegex(in: js, pattern: "for\\s+(\\w+)\\s+in\\s+([\\w.\\[\\]()+\\-*/\\s]+)\\s*\\.\\.<\\s*([\\w.\\[\\]()+\\-*/\\s]+)", template: "for (var $1 = $2; $1 < $3; $1++)")
 
         // Dictionary iteration with tuple destructuring, e.g. `for (_, group)
         // in groups {` (discarding the key) or `for (key, value) in dict {`
@@ -3063,6 +3528,11 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // before this could ever misfire on an already-converted `{}`.
         js = replaceRegex(in: js, pattern: "\\[\\s*[\\w\\[\\]]+\\s*\\]\\(\\)", template: "[]")
 
+        // Must run BEFORE the blanket Array `.append(x) -> .push(x)` rule
+        // right below, so a detected String variable's `.append` calls are
+        // already rewritten to `+=` and no longer match that rule's regex.
+        js = rewriteStringAppendCalls(js)
+
         // .append(x) -> .push(x) and .removeLast() -> .pop() — Array methods
         // with no JS equivalent name (JS arrays use push/pop for the same
         // stack-style operations Swift spells append/removeLast).
@@ -3135,6 +3605,23 @@ public class CodeRunnerService: CodeRunnerProtocol {
         js = replaceRegex(in: js, pattern: "\\.dropFirst\\(\\s*\\)", template: ".slice(1)")
         js = replaceRegex(in: js, pattern: "\\.dropFirst\\(([^)]+)\\)", template: ".slice($1)")
 
+        // .max() / .min() (no-argument overloads) — Array method returning
+        // the largest/smallest element (an Optional, nil for an empty
+        // array). JS has no native Array.prototype.max()/min() at all, so
+        // this was a hard ReferenceError-equivalent (`TypeError: ...max is
+        // not a function`) for every question using it. `Math.max(...arr)`/
+        // `Math.min(...arr)` is the direct equivalent for a non-empty array
+        // of numbers, spreading it as individual arguments. Only handles a
+        // simple identifier/property-access receiver directly before the
+        // call (`arr.max()`, `self.items.max()`) — not an arbitrary
+        // expression receiver like a chained `.filter{...}.max()` — and
+        // does not replicate Swift's nil-for-empty-array behavior
+        // (`Math.max(...[])` is `-Infinity`, not `undefined`/`null`),
+        // which only matters for code that specifically branches on an
+        // empty-array call site.
+        js = replaceRegex(in: js, pattern: "([\\w.]+)\\.max\\(\\)", template: "Math.max(...$1)")
+        js = replaceRegex(in: js, pattern: "([\\w.]+)\\.min\\(\\)", template: "Math.min(...$1)")
+
         // .removeFirst() -> .shift() — Swift's "remove and return the first
         // element" (the standard way to pop from the front of an array-as-
         // queue, e.g. BFS/topological-sort traversal) has no `.removeFirst`
@@ -3147,6 +3634,36 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // a bare argument by the general call-site label stripper by this
         // point, or by the whitelist regex above if it ran first).
         js = replaceRegex(in: js, pattern: "\\.joined\\(", template: ".join(")
+
+        // .hasPrefix(x) / .hasSuffix(x) -> .startsWith(x) / .endsWith(x) —
+        // Swift String methods with no JS equivalent under the same name.
+        // Had no conversion path at all before (confirmed: every other
+        // `hasPrefix`/`hasSuffix` reference in this file is the transpiler's
+        // OWN host-side Swift code, not a rule converting target/user code),
+        // so any solution calling either — a very ordinary string-parsing
+        // idiom — left the literal Swift method name in the emitted JS,
+        // a hard "is not a function" TypeError at runtime.
+        js = replaceRegex(in: js, pattern: "\\.hasPrefix\\(", template: ".startsWith(")
+        js = replaceRegex(in: js, pattern: "\\.hasSuffix\\(", template: ".endsWith(")
+
+        // .lowercased() / .uppercased() -> .toLowerCase() / .toUpperCase()
+        // — had no conversion path at all (confirmed: no reference to
+        // either name anywhere else in this file), despite being an
+        // extremely ordinary String operation.
+        js = replaceRegex(in: js, pattern: "\\.lowercased\\(\\s*\\)", template: ".toLowerCase()")
+        js = replaceRegex(in: js, pattern: "\\.uppercased\\(\\s*\\)", template: ".toUpperCase()")
+
+        // .replacingOccurrences(of: X, with: Y) -> .split(X).join(Y) — by
+        // this point the general call-site label stripper has already
+        // reduced this to positional args, .replacingOccurrences(X, Y), but
+        // nothing renamed the METHOD ITSELF: JS strings have no
+        // `.replacingOccurrences` at all. `.split(X).join(Y)` is the
+        // classic (and universally-supported, unlike the newer
+        // `.replaceAll`) JS idiom for "replace every occurrence", matching
+        // Swift's own all-occurrences (not just-the-first) semantics
+        // exactly. Had no conversion path at all before, despite being an
+        // extremely ordinary string-parsing idiom.
+        js = replaceRegex(in: js, pattern: "\\.replacingOccurrences\\(([^,]+),\\s*([^)]+)\\)", template: ".split($1).join($2)")
 
         // .components(separatedBy: "x") -> .split("x") — Swift's String
         // splitting method; JS strings have no `.components`, only `.split`.
@@ -3234,7 +3751,17 @@ public class CodeRunnerService: CodeRunnerProtocol {
         js = replaceRegex(in: js, pattern: "(\\w+)\\.swapAt\\(([^,\\n]+),\\s*([^)\\n]+)\\)", template: "[$1[$2], $1[$3]] = [$1[$3], $1[$2]]")
 
         // isEmpty / count
-        js = js.replacingOccurrences(of: ".count", with: ".length")
+        // A word-boundary-aware regex, not a blind substring replace — the
+        // previous `replacingOccurrences(of: ".count", with: ".length")`
+        // matched ".count" as a literal substring ANYWHERE, including as a
+        // prefix of a longer, unrelated identifier (e.g. a user-defined
+        // method called `countAgesAtLeast50`), silently corrupting call
+        // sites like `Solution().countAgesAtLeast50(...)` into
+        // `Solution().lengthAgesAtLeast50(...)` — a hard "is not a
+        // function" TypeError at runtime, while the function's own
+        // declaration (never touched by this same blind replace, since it
+        // has no leading `.`) stayed correctly named, desyncing the two.
+        js = replaceRegex(in: js, pattern: "\\.count\\b", template: ".length")
         // `.isEmpty` -> `.length === 0` must be parenthesized as a whole unit,
         // not a bare textual substitution: `!x.isEmpty` correctly means
         // "!(x.length === 0)", but naively substituting just the `.isEmpty`
@@ -3246,6 +3773,23 @@ public class CodeRunnerService: CodeRunnerProtocol {
         // the real input (this silently broke every `guard !x.isEmpty else
         // {...}` in the codebase, always taking the early-return branch).
         js = replaceRegex(in: js, pattern: "([\\w]+(?:\\.[\\w]+|\\[[^\\]]+\\]|\\([^)]*\\))*)\\.isEmpty", template: "($1.length === 0)")
+
+        // Character.isLetter / .isNumber / .isUppercase / .isLowercase /
+        // .isWhitespace — had no conversion path at all (every other
+        // `isLetter`/`isNumber`/... reference anywhere in this file is the
+        // TRANSPILER'S OWN host-side Swift code scanning identifiers, not a
+        // rule converting target/user code), so a solution testing
+        // character classes one at a time character-by-character — an
+        // extremely ordinary string-parsing idiom (word-splitting,
+        // tokenizing, validating input) — silently evaluated every check to
+        // `undefined` (falsy), never throwing but always taking the "false"
+        // branch regardless of the real character.
+        let receiverPattern = "([\\w]+(?:\\.[\\w]+|\\[[^\\]]+\\])*)"
+        js = replaceRegex(in: js, pattern: "\(receiverPattern)\\.isLetter\\b", template: "/[a-zA-Z]/.test($1)")
+        js = replaceRegex(in: js, pattern: "\(receiverPattern)\\.isNumber\\b", template: "/[0-9]/.test($1)")
+        js = replaceRegex(in: js, pattern: "\(receiverPattern)\\.isUppercase\\b", template: "/[A-Z]/.test($1)")
+        js = replaceRegex(in: js, pattern: "\(receiverPattern)\\.isLowercase\\b", template: "/[a-z]/.test($1)")
+        js = replaceRegex(in: js, pattern: "\(receiverPattern)\\.isWhitespace\\b", template: "/\\s/.test($1)")
 
         // let and var
         js = replaceRegex(in: js, pattern: "\\blet\\b", template: "const")

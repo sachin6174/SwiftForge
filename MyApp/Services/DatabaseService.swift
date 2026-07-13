@@ -3,6 +3,7 @@ import Foundation
 public protocol DatabaseServiceProtocol {
     func loadQuestions() -> [Question]
     func loadMCQQuestions() -> [MCQQuestion]
+    func loadQAItems() -> [QAItem]
 }
 
 public class DatabaseService: DatabaseServiceProtocol {
@@ -114,6 +115,35 @@ public class DatabaseService: DatabaseServiceProtocol {
 
         print("DatabaseService: Total MCQ questions loaded: \(mcqList.count)")
         return mcqList
+    }
+
+    public func loadQAItems() -> [QAItem] {
+        var qaList: [QAItem] = []
+
+        var qaUrl = Bundle.main.url(forResource: "qa_questions", withExtension: "json")
+        if qaUrl == nil {
+            let localPath = "MyApp/Resources/qa_questions.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                qaUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+
+        if let url = qaUrl {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                qaList = try decoder.decode([QAItem].self, from: data)
+            } catch {
+                print("DatabaseService: Error decoding qa_questions JSON: \(error.localizedDescription)")
+            }
+        }
+
+        if qaList.isEmpty {
+            qaList = fallbackQAItems
+        }
+
+        print("DatabaseService: Total Q&A items loaded: \(qaList.count)")
+        return qaList
     }
 
     // MARK: - Resilient Fallback DSA Questions
@@ -884,7 +914,49 @@ let testCases = [
     TestCase(s: "tryhard", k: 4, expected: 1, name: "Single Vowel Window"),
     TestCase(s: "aaaaa", k: 1, expected: 1, name: "Single Char Window All Vowels"),
     TestCase(s: "bcdaeiou", k: 8, expected: 5, name: "Whole String Window"),
-    TestCase(s: "bcdfg", k: 5, expected: 0, name: "No Vowels Whole Window")
+    TestCase(s: "bcdfg", k: 5, expected: 0, name: "No Vowels Whole Window"),
+    TestCase(s: "daxihhexdvxrcsnbacghq", k: 20, expected: 4, name: "Random Case 1 (len=21, k=20)"),
+    TestCase(s: "r", k: 1, expected: 0, name: "Random Case 2 (len=1, k=1)"),
+    TestCase(s: "uwrnhosizayzfwnkiegykdc", k: 13, expected: 5, name: "Random Case 3 (len=23, k=13)"),
+    TestCase(s: "llti", k: 1, expected: 1, name: "Random Case 4 (len=4, k=1)"),
+    TestCase(s: "ordmcrjutlsgwcbvhyjchdmi", k: 15, expected: 2, name: "Random Case 5 (len=24, k=15)"),
+    TestCase(s: "lfllgviwvuctufrxhfomi", k: 21, expected: 5, name: "Random Case 6 (len=21, k=21)"),
+    TestCase(s: "rhvkyybhbzkmicgswkgupmu", k: 15, expected: 3, name: "Random Case 7 (len=23, k=15)"),
+    TestCase(s: "iehxr", k: 5, expected: 2, name: "Random Case 8 (len=5, k=5)"),
+    TestCase(s: "xsnsmlheq", k: 8, expected: 1, name: "Random Case 9 (len=9, k=8)"),
+    TestCase(s: "ybd", k: 1, expected: 0, name: "Random Case 10 (len=3, k=1)"),
+    TestCase(s: "fzvntcmmtoqiravxdvryi", k: 21, expected: 4, name: "Random Case 11 (len=21, k=21)"),
+    TestCase(s: "djnfoaxxiqy", k: 3, expected: 2, name: "Random Case 12 (len=11, k=3)"),
+    TestCase(s: "dujuqtgelyfryqatk", k: 16, expected: 4, name: "Random Case 13 (len=17, k=16)"),
+    TestCase(s: "d", k: 1, expected: 0, name: "Random Case 14 (len=1, k=1)"),
+    TestCase(s: "zjhbhsccxpcyryeevprfiqtngryxw", k: 7, expected: 3, name: "Random Case 15 (len=29, k=7)"),
+    TestCase(s: "jmvuloqodhhckasrhshacwu", k: 2, expected: 1, name: "Random Case 16 (len=23, k=2)"),
+    TestCase(s: "cbkcqhiv", k: 8, expected: 1, name: "Random Case 17 (len=8, k=8)"),
+    TestCase(s: "rexssph", k: 7, expected: 1, name: "Random Case 18 (len=7, k=7)"),
+    TestCase(s: "zngddvnlnnoxbvuu", k: 4, expected: 2, name: "Random Case 19 (len=16, k=4)"),
+    TestCase(s: "mx", k: 2, expected: 0, name: "Random Case 20 (len=2, k=2)"),
+    TestCase(s: "dhggroenfiohcozrdburacyhfn", k: 16, expected: 7, name: "Random Case 21 (len=26, k=16)"),
+    TestCase(s: "gmbfmamizzojnwxz", k: 16, expected: 3, name: "Random Case 22 (len=16, k=16)"),
+    TestCase(s: "gjgbs", k: 5, expected: 0, name: "Random Case 23 (len=5, k=5)"),
+    TestCase(s: "xk", k: 1, expected: 0, name: "Random Case 24 (len=2, k=1)"),
+    TestCase(s: "sp", k: 1, expected: 0, name: "Random Case 25 (len=2, k=1)"),
+    TestCase(s: "qc", k: 1, expected: 0, name: "Random Case 26 (len=2, k=1)"),
+    TestCase(s: "tcv", k: 1, expected: 0, name: "Random Case 27 (len=3, k=1)"),
+    TestCase(s: "dshstbtcnvssq", k: 6, expected: 0, name: "Random Case 28 (len=13, k=6)"),
+    TestCase(s: "igvwkhimevujokycaotsdcrgqielch", k: 12, expected: 6, name: "Random Case 29 (len=30, k=12)"),
+    TestCase(s: "forwjtzuqa", k: 9, expected: 3, name: "Random Case 30 (len=10, k=9)"),
+    TestCase(s: "vdeiddxrei", k: 5, expected: 2, name: "Random Case 31 (len=10, k=5)"),
+    TestCase(s: "gwkgvuiqpibcunibakye", k: 9, expected: 4, name: "Random Case 32 (len=20, k=9)"),
+    TestCase(s: "xorwnr", k: 1, expected: 1, name: "Random Case 33 (len=6, k=1)"),
+    TestCase(s: "cwer", k: 1, expected: 1, name: "Random Case 34 (len=4, k=1)"),
+    TestCase(s: "lsrenebjlzblgvhvdlyrntxehfz", k: 26, expected: 3, name: "Random Case 35 (len=27, k=26)"),
+    TestCase(s: "nafxkz", k: 4, expected: 1, name: "Random Case 36 (len=6, k=4)"),
+    TestCase(s: "vxzhifzwdmbphgoljzhhavgmki", k: 3, expected: 1, name: "Random Case 37 (len=26, k=3)"),
+    TestCase(s: "iluqmvrkadifsibdtnlxzkntq", k: 4, expected: 2, name: "Random Case 38 (len=25, k=4)"),
+    TestCase(s: "sgibwnaqzrvxx", k: 12, expected: 2, name: "Random Case 39 (len=13, k=12)"),
+    TestCase(s: "glncvktkvdxjqjvnkmwjre", k: 7, expected: 1, name: "Random Case 40 (len=22, k=7)"),
+    TestCase(s: "vmvxftsjmrajjg", k: 7, expected: 1, name: "Random Case 41 (len=14, k=7)"),
+    TestCase(s: "stukooovgqpzzxfvcjqvutkcyh", k: 22, expected: 5, name: "Random Case 42 (len=26, k=22)")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -956,7 +1028,49 @@ let testCases = [
     TestCase(nums: [0], expected: [0], name: "Single Zero"),
     TestCase(nums: [1], expected: [1], name: "Single One"),
     TestCase(nums: [0, 1, 0, 1, 0, 1, 0, 1], expected: [0, 0, 0, 0, 1, 1, 1, 1], name: "Alternating 4 and 4"),
-    TestCase(nums: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0], expected: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], name: "Alternating 5 and 5")
+    TestCase(nums: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0], expected: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1], name: "Alternating 5 and 5"),
+    TestCase(nums: [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1], name: "Random Case 1 (len=11)"),
+    TestCase(nums: [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1], name: "Random Case 2 (len=14)"),
+    TestCase(nums: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1], name: "Random Case 3 (len=14)"),
+    TestCase(nums: [1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 4 (len=15)"),
+    TestCase(nums: [1, 0, 1, 1, 0, 0], expected: [0, 0, 0, 1, 1, 1], name: "Random Case 5 (len=6)"),
+    TestCase(nums: [1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 6 (len=25)"),
+    TestCase(nums: [0, 1, 1, 1, 0], expected: [0, 0, 1, 1, 1], name: "Random Case 7 (len=5)"),
+    TestCase(nums: [1, 1, 1, 0, 1, 1], expected: [0, 1, 1, 1, 1, 1], name: "Random Case 8 (len=6)"),
+    TestCase(nums: [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 9 (len=23)"),
+    TestCase(nums: [1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 10 (len=25)"),
+    TestCase(nums: [1, 1, 1, 1, 0], expected: [0, 1, 1, 1, 1], name: "Random Case 11 (len=5)"),
+    TestCase(nums: [1, 1, 1, 1], expected: [1, 1, 1, 1], name: "Random Case 12 (len=4)"),
+    TestCase(nums: [0, 0, 0, 1, 1, 1, 0, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 1, 1, 1, 1], name: "Random Case 13 (len=10)"),
+    TestCase(nums: [0, 1, 0, 1, 1], expected: [0, 0, 1, 1, 1], name: "Random Case 14 (len=5)"),
+    TestCase(nums: [1, 0, 1, 0, 0, 0], expected: [0, 0, 0, 0, 1, 1], name: "Random Case 15 (len=6)"),
+    TestCase(nums: [0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1], expected: [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 16 (len=13)"),
+    TestCase(nums: [0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1], expected: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1], name: "Random Case 17 (len=12)"),
+    TestCase(nums: [0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 18 (len=21)"),
+    TestCase(nums: [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 19 (len=22)"),
+    TestCase(nums: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], name: "Random Case 20 (len=22)"),
+    TestCase(nums: [1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 21 (len=17)"),
+    TestCase(nums: [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], name: "Random Case 22 (len=15)"),
+    TestCase(nums: [0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 23 (len=24)"),
+    TestCase(nums: [0, 0, 0, 1], expected: [0, 0, 0, 1], name: "Random Case 24 (len=4)"),
+    TestCase(nums: [0, 0, 1, 0, 1, 1, 1, 0, 1], expected: [0, 0, 0, 0, 1, 1, 1, 1, 1], name: "Random Case 25 (len=9)"),
+    TestCase(nums: [1, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 26 (len=23)"),
+    TestCase(nums: [0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 27 (len=17)"),
+    TestCase(nums: [0, 0], expected: [0, 0], name: "Random Case 28 (len=2)"),
+    TestCase(nums: [0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 29 (len=24)"),
+    TestCase(nums: [1, 1, 0], expected: [0, 1, 1], name: "Random Case 30 (len=3)"),
+    TestCase(nums: [1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 31 (len=23)"),
+    TestCase(nums: [0, 0, 0, 0, 1, 0, 0, 1, 0], expected: [0, 0, 0, 0, 0, 0, 0, 1, 1], name: "Random Case 32 (len=9)"),
+    TestCase(nums: [0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1], name: "Random Case 33 (len=13)"),
+    TestCase(nums: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 34 (len=23)"),
+    TestCase(nums: [0, 1, 0, 0, 0, 1, 1, 1, 0], expected: [0, 0, 0, 0, 0, 1, 1, 1, 1], name: "Random Case 35 (len=9)"),
+    TestCase(nums: [1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1], name: "Random Case 36 (len=16)"),
+    TestCase(nums: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], name: "All Zeros Length 15"),
+    TestCase(nums: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], expected: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "All Ones Length 15"),
+    TestCase(nums: [0, 1], expected: [0, 1], name: "Two Elements Already Sorted"),
+    TestCase(nums: [1, 1, 0, 0, 1, 1, 0, 0], expected: [0, 0, 0, 0, 1, 1, 1, 1], name: "Blocks of Two"),
+    TestCase(nums: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Already Segregated"),
+    TestCase(nums: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], expected: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], name: "Reverse Segregated")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1028,7 +1142,49 @@ let testCases = [
     TestCase(matrix: [[0, 0, 0], [0, 0, 0], [0, 0, 1]], expected: 2, name: "One Only In Last Row/Col"),
     TestCase(matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], expected: 0, name: "All Ones"),
     TestCase(matrix: [[0, 1], [0, 1], [0, 1]], expected: 1, name: "Second Column All Ones"),
-    TestCase(matrix: [[0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [0, 0, 0, 1]], expected: 0, name: "Leading One In Third Row")
+    TestCase(matrix: [[0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [0, 0, 0, 1]], expected: 0, name: "Leading One In Third Row"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1], [0, 0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 1, 1, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1, 1, 1]], expected: 1, name: "Random Case 1 (8x8)"),
+    TestCase(matrix: [[0, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [1, 1, 1, 1, 1], [0, 0, 0, 0, 1], [0, 0, 0, 1, 1]], expected: 0, name: "Random Case 2 (8x5)"),
+    TestCase(matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [0, 1, 1], [0, 1, 1], [1, 1, 1], [0, 0, 0]], expected: 0, name: "Random Case 3 (8x3)"),
+    TestCase(matrix: [[0, 0, 0, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 1, 1, 1, 1, 1], [0, 0, 0, 0, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "Random Case 4 (6x8)"),
+    TestCase(matrix: [[0, 0, 0, 0, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 1, 1]], expected: 4, name: "Random Case 5 (2x8)"),
+    TestCase(matrix: [[0, 0, 1, 1, 1], [0, 1, 1, 1, 1]], expected: 1, name: "Random Case 6 (2x5)"),
+    TestCase(matrix: [[1], [1], [0], [1], [0]], expected: 0, name: "Random Case 7 (5x1)"),
+    TestCase(matrix: [[1, 1], [0, 0], [1, 1], [1, 1], [1, 1], [1, 1], [0, 1]], expected: 0, name: "Random Case 8 (7x2)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 1], [0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1, 1], [0, 0, 0, 0, 1, 1, 1], [0, 0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 1, 1, 1]], expected: 1, name: "Random Case 9 (7x7)"),
+    TestCase(matrix: [[0], [1], [1], [1], [1], [1]], expected: 0, name: "Random Case 10 (6x1)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1]], expected: 7, name: "Random Case 11 (1x8)"),
+    TestCase(matrix: [[0, 0, 0, 1], [0, 0, 0, 0], [0, 1, 1, 1]], expected: 1, name: "Random Case 12 (3x4)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 1], [0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 1]], expected: 1, name: "Random Case 13 (3x7)"),
+    TestCase(matrix: [[1, 1, 1, 1], [0, 0, 1, 1], [0, 0, 0, 0], [0, 0, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1], [0, 1, 1, 1]], expected: 0, name: "Random Case 14 (7x4)"),
+    TestCase(matrix: [[1, 1], [1, 1], [1, 1], [0, 1], [0, 1], [1, 1], [0, 0]], expected: 0, name: "Random Case 15 (7x2)"),
+    TestCase(matrix: [[0, 0, 0, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [1, 1, 1, 1, 1], [0, 1, 1, 1, 1], [0, 0, 0, 0, 1]], expected: 0, name: "Random Case 16 (6x5)"),
+    TestCase(matrix: [[0], [0], [0], [1]], expected: 0, name: "Random Case 17 (4x1)"),
+    TestCase(matrix: [[0, 0, 0], [0, 1, 1], [0, 1, 1], [0, 0, 1], [0, 1, 1], [0, 1, 1], [0, 1, 1], [0, 1, 1]], expected: 1, name: "Random Case 18 (8x3)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0, 1], [1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "Random Case 19 (4x7)"),
+    TestCase(matrix: [[1, 1], [0, 0]], expected: 0, name: "Random Case 20 (2x2)"),
+    TestCase(matrix: [[0, 0, 0, 1], [0, 0, 1, 1], [0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 1]], expected: 2, name: "Random Case 21 (5x4)"),
+    TestCase(matrix: [[1, 1, 1], [0, 1, 1], [0, 1, 1], [0, 0, 0], [1, 1, 1]], expected: 0, name: "Random Case 22 (5x3)"),
+    TestCase(matrix: [[0, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [0, 0, 1, 1], [0, 0, 0, 1]], expected: 0, name: "Random Case 23 (5x4)"),
+    TestCase(matrix: [[1, 1, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1], [0, 0, 1, 1], [0, 0, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 1, 1]], expected: 0, name: "Random Case 24 (8x4)"),
+    TestCase(matrix: [[0, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1]], expected: 1, name: "Random Case 25 (2x6)"),
+    TestCase(matrix: [[1, 1, 1], [1, 1, 1], [0, 0, 0], [0, 0, 1], [0, 0, 1], [1, 1, 1]], expected: 0, name: "Random Case 26 (6x3)"),
+    TestCase(matrix: [[0, 1]], expected: 1, name: "Random Case 27 (1x2)"),
+    TestCase(matrix: [[0, 0, 1, 1, 1], [0, 1, 1, 1, 1]], expected: 1, name: "Random Case 28 (2x5)"),
+    TestCase(matrix: [[0, 1], [0, 0]], expected: 1, name: "Random Case 29 (2x2)"),
+    TestCase(matrix: [[1], [0], [0], [1], [0], [1]], expected: 0, name: "Random Case 30 (6x1)"),
+    TestCase(matrix: [[0], [1], [0], [0], [1], [1], [1]], expected: 0, name: "Random Case 31 (7x1)"),
+    TestCase(matrix: [[0, 1], [0, 1]], expected: 1, name: "Random Case 32 (2x2)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0], [0, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 1, 1, 1]], expected: 0, name: "Random Case 33 (6x7)"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1, 1, 1]], expected: 0, name: "Random Case 34 (2x8)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1, 1, 1]], expected: 4, name: "Random Case 35 (2x8)"),
+    TestCase(matrix: [[0, 0, 1, 1, 1, 1]], expected: 2, name: "Random Case 36 (1x6)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]], expected: -1, name: "All Zero Matrix 5x8"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "All One Matrix 5x8"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1]], expected: 7, name: "Single Row Last Column Only"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "Single Row All Ones"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]], expected: 0, name: "Decreasing Leading Zeros Per Row"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1], [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0]], expected: 0, name: "Increasing Leading Zeros Per Row")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1102,7 +1258,50 @@ let testCases = [
     TestCase(strs: ["abc", "bca", "cab", "xyz"], expected: [["abc", "bca", "cab"], ["xyz"]], name: "Three-Way Anagram Group"),
     TestCase(strs: ["abc", "def"], expected: [["abc"], ["def"]], name: "No Anagrams"),
     TestCase(strs: ["ab", "ba", "ab"], expected: [["ab", "ab", "ba"]], name: "Duplicate Strings"),
-    TestCase(strs: ["listen", "silent", "enlist", "google", "gooogle"], expected: [["enlist", "listen", "silent"], ["google"], ["gooogle"]], name: "Different Lengths Not Grouped")
+    TestCase(strs: ["listen", "silent", "enlist", "google", "gooogle"], expected: [["enlist", "listen", "silent"], ["google"], ["gooogle"]], name: "Different Lengths Not Grouped"),
+    TestCase(strs: ["a", "e", "c", "d", "d"], expected: [["a"], ["e"], ["c"], ["d", "d"]], name: "Random Case 1 (n=5, len=1)"),
+    TestCase(strs: ["bbc", "dab", "eda", "aad", "dae", "dca", "bae", "cbe", "bce"], expected: [["bbc"], ["dab"], ["eda", "dae"], ["aad"], ["dca"], ["bae"], ["cbe", "bce"]], name: "Random Case 2 (n=9, len=3)"),
+    TestCase(strs: ["ccead", "bdedb", "bbece", "beaaa", "daece", "cecac"], expected: [["ccead"], ["bdedb"], ["bbece"], ["beaaa"], ["daece"], ["cecac"]], name: "Random Case 3 (n=6, len=5)"),
+    TestCase(strs: ["cdebc", "baead", "bcebe", "adbda", "addab"], expected: [["cdebc"], ["baead"], ["bcebe"], ["adbda", "addab"]], name: "Random Case 4 (n=5, len=5)"),
+    TestCase(strs: ["abaeda", "caddba", "acdebd", "cbaaee"], expected: [["abaeda"], ["caddba"], ["acdebd"], ["cbaaee"]], name: "Random Case 5 (n=4, len=6)"),
+    TestCase(strs: ["eebcad", "badcdb", "edabec"], expected: [["eebcad", "edabec"], ["badcdb"]], name: "Random Case 6 (n=3, len=6)"),
+    TestCase(strs: ["ceee", "acaa", "bced", "bbac", "eeab", "eddc", "acda"], expected: [["ceee"], ["acaa"], ["bced"], ["bbac"], ["eeab"], ["eddc"], ["acda"]], name: "Random Case 7 (n=7, len=4)"),
+    TestCase(strs: ["dbabdd", "adcdee", "ebeecc"], expected: [["dbabdd"], ["adcdee"], ["ebeecc"]], name: "Random Case 8 (n=3, len=6)"),
+    TestCase(strs: ["ad", "da"], expected: [["ad", "da"]], name: "Random Case 9 (n=2, len=2)"),
+    TestCase(strs: ["dccdc", "cccbd", "addec", "ecadb", "cbeca", "edace", "daaca", "bedad"], expected: [["dccdc"], ["cccbd"], ["addec"], ["ecadb"], ["cbeca"], ["edace"], ["daaca"], ["bedad"]], name: "Random Case 10 (n=8, len=5)"),
+    TestCase(strs: ["bce", "bea"], expected: [["bce"], ["bea"]], name: "Random Case 11 (n=2, len=3)"),
+    TestCase(strs: ["edecca", "eebaab", "abebcd"], expected: [["edecca"], ["eebaab"], ["abebcd"]], name: "Random Case 12 (n=3, len=6)"),
+    TestCase(strs: ["aaeea", "cabca", "bbbdc", "ebeed", "cebec"], expected: [["aaeea"], ["cabca"], ["bbbdc"], ["ebeed"], ["cebec"]], name: "Random Case 13 (n=5, len=5)"),
+    TestCase(strs: ["bcdcad", "dcbebb", "cddaac", "ddbedc", "bcacdb", "dcedae", "edebdb", "dadadd"], expected: [["bcdcad"], ["dcbebb"], ["cddaac"], ["ddbedc"], ["bcacdb"], ["dcedae"], ["edebdb"], ["dadadd"]], name: "Random Case 14 (n=8, len=6)"),
+    TestCase(strs: ["a", "d", "d", "c", "c"], expected: [["a"], ["d", "d"], ["c", "c"]], name: "Random Case 15 (n=5, len=1)"),
+    TestCase(strs: ["ea", "ee", "de"], expected: [["ea"], ["ee"], ["de"]], name: "Random Case 16 (n=3, len=2)"),
+    TestCase(strs: ["d", "d"], expected: [["d", "d"]], name: "Random Case 17 (n=2, len=1)"),
+    TestCase(strs: ["caeaee", "bebccc", "cddeec"], expected: [["caeaee"], ["bebccc"], ["cddeec"]], name: "Random Case 18 (n=3, len=6)"),
+    TestCase(strs: ["abeeba", "baccae", "aaadae", "cceeda", "babbbd", "abcaed"], expected: [["abeeba"], ["baccae"], ["aaadae"], ["cceeda"], ["babbbd"], ["abcaed"]], name: "Random Case 19 (n=6, len=6)"),
+    TestCase(strs: ["edaab"], expected: [["edaab"]], name: "Random Case 20 (n=1, len=5)"),
+    TestCase(strs: ["c", "e", "e"], expected: [["c"], ["e", "e"]], name: "Random Case 21 (n=3, len=1)"),
+    TestCase(strs: ["adad", "ccea", "bbca", "bbbe", "aede", "bbee", "eeba", "ceae", "baed"], expected: [["adad"], ["ccea"], ["bbca"], ["bbbe"], ["aede"], ["bbee"], ["eeba"], ["ceae"], ["baed"]], name: "Random Case 22 (n=9, len=4)"),
+    TestCase(strs: ["b", "e", "d", "c", "a", "b"], expected: [["b", "b"], ["e"], ["d"], ["c"], ["a"]], name: "Random Case 23 (n=6, len=1)"),
+    TestCase(strs: ["ddb", "bee", "bca"], expected: [["ddb"], ["bee"], ["bca"]], name: "Random Case 24 (n=3, len=3)"),
+    TestCase(strs: ["abbae", "caada", "bccbd", "ccadd", "adedd", "abeaa", "acbac", "dbdcb", "eceee", "eeeed"], expected: [["abbae"], ["caada"], ["bccbd"], ["ccadd"], ["adedd"], ["abeaa"], ["acbac"], ["dbdcb"], ["eceee"], ["eeeed"]], name: "Random Case 25 (n=10, len=5)"),
+    TestCase(strs: ["cdcba", "ccead", "dcada"], expected: [["cdcba"], ["ccead"], ["dcada"]], name: "Random Case 26 (n=3, len=5)"),
+    TestCase(strs: ["aa", "ee", "bc", "db", "ea"], expected: [["aa"], ["ee"], ["bc"], ["db"], ["ea"]], name: "Random Case 27 (n=5, len=2)"),
+    TestCase(strs: ["ccbbbe", "bdcdcc", "ebedad", "ceaaab", "abadcb", "cbaccc", "edebed", "eeceab", "adedab"], expected: [["ccbbbe"], ["bdcdcc"], ["ebedad"], ["ceaaab"], ["abadcb"], ["cbaccc"], ["edebed"], ["eeceab"], ["adedab"]], name: "Random Case 28 (n=9, len=6)"),
+    TestCase(strs: ["c", "d", "b", "e", "b", "b", "a", "c"], expected: [["c", "c"], ["d"], ["b", "b", "b"], ["e"], ["a"]], name: "Random Case 29 (n=8, len=1)"),
+    TestCase(strs: ["ac", "de", "ac", "cd", "ed", "be", "dd", "ba", "bd", "ad"], expected: [["ac", "ac"], ["de", "ed"], ["cd"], ["be"], ["dd"], ["ba"], ["bd"], ["ad"]], name: "Random Case 30 (n=10, len=2)"),
+    TestCase(strs: ["cbcbbb", "acebda"], expected: [["cbcbbb"], ["acebda"]], name: "Random Case 31 (n=2, len=6)"),
+    TestCase(strs: ["bbae", "baaa", "bcae"], expected: [["bbae"], ["baaa"], ["bcae"]], name: "Random Case 32 (n=3, len=4)"),
+    TestCase(strs: ["dceda"], expected: [["dceda"]], name: "Random Case 33 (n=1, len=5)"),
+    TestCase(strs: ["aba", "aab", "aab", "bad"], expected: [["aba", "aab", "aab"], ["bad"]], name: "Random Case 34 (n=4, len=3)"),
+    TestCase(strs: ["dde", "aae", "bac", "eed", "aed", "bce", "eac", "eee", "bdc"], expected: [["dde"], ["aae"], ["bac"], ["eed"], ["aed"], ["bce"], ["eac"], ["eee"], ["bdc"]], name: "Random Case 35 (n=9, len=3)"),
+    TestCase(strs: ["cc", "ec"], expected: [["cc"], ["ec"]], name: "Random Case 36 (n=2, len=2)"),
+    TestCase(strs: ["db", "aa", "ac", "de", "dd"], expected: [["db"], ["aa"], ["ac"], ["de"], ["dd"]], name: "Random Case 37 (n=5, len=2)"),
+    TestCase(strs: ["abc", "abc", "abc", "abc", "abc"], expected: [["abc", "abc", "abc", "abc", "abc"]], name: "Five Identical Strings"),
+    TestCase(strs: ["a", "b", "c", "d", "e"], expected: [["a"], ["b"], ["c"], ["d"], ["e"]], name: "All Distinct Single Chars"),
+    TestCase(strs: ["ab", "ab", "ab", "ba", "ba"], expected: [["ab", "ab", "ab", "ba", "ba"]], name: "Two Groups Heavy Duplication"),
+    TestCase(strs: ["xyz", "zyx", "yxz", "zxy", "xzy", "yzx"], expected: [["xyz", "zyx", "yxz", "zxy", "xzy", "yzx"]], name: "All Six Permutations of Three Chars"),
+    TestCase(strs: ["", "", ""], expected: [["", "", ""]], name: "Three Empty Strings"),
+    TestCase(strs: ["aabb", "bbaa", "abab", "baba"], expected: [["aabb", "bbaa", "abab", "baba"]], name: "Four-Way Anagram of Repeated Chars")
 ]
 // The problem explicitly allows returning groups (and, since no order is
 // specified within a group either) in ANY order — and Swift's Dictionary
@@ -1184,7 +1383,49 @@ let testCases = [
     TestCase(s: " ", expected: 1, name: "Single Space"),
     TestCase(s: "au", expected: 2, name: "Two Distinct Chars"),
     TestCase(s: "dvdf", expected: 3, name: "Repeat Mid-Window (dvdf)"),
-    TestCase(s: "abba", expected: 2, name: "Palindromic Repeat (abba)")
+    TestCase(s: "abba", expected: 2, name: "Palindromic Repeat (abba)"),
+    TestCase(s: "", expected: 0, name: "Random Case 1 (len=0)"),
+    TestCase(s: "bgcacbdccaacdhg", expected: 5, name: "Random Case 2 (len=15)"),
+    TestCase(s: "bbagfd", expected: 5, name: "Random Case 3 (len=6)"),
+    TestCase(s: "fgfddd", expected: 3, name: "Random Case 4 (len=6)"),
+    TestCase(s: "aacfcdcgabhdd", expected: 6, name: "Random Case 5 (len=13)"),
+    TestCase(s: "gfdfdhaefefghfdbecebcdafb", expected: 7, name: "Random Case 6 (len=25)"),
+    TestCase(s: "geedbhdfhgabebbddfcch", expected: 7, name: "Random Case 7 (len=21)"),
+    TestCase(s: "h", expected: 1, name: "Random Case 8 (len=1)"),
+    TestCase(s: "efhabhchaehhfdabgeh", expected: 7, name: "Random Case 9 (len=19)"),
+    TestCase(s: "acbad", expected: 4, name: "Random Case 10 (len=5)"),
+    TestCase(s: "dechgddhehfcfbfdegcabgdcd", expected: 7, name: "Random Case 11 (len=25)"),
+    TestCase(s: "edgedeaaheed", expected: 3, name: "Random Case 12 (len=12)"),
+    TestCase(s: "fdgahgdddffef", expected: 5, name: "Random Case 13 (len=13)"),
+    TestCase(s: "dbd", expected: 2, name: "Random Case 14 (len=3)"),
+    TestCase(s: "hhhecgabhcehaaegeeedegddcfbd", expected: 6, name: "Random Case 15 (len=28)"),
+    TestCase(s: "", expected: 0, name: "Random Case 16 (len=0)"),
+    TestCase(s: "heheeggddga", expected: 3, name: "Random Case 17 (len=11)"),
+    TestCase(s: "ddagfebafdhgcaefagdhcbahhh", expected: 8, name: "Random Case 18 (len=26)"),
+    TestCase(s: "hhafdcbh", expected: 6, name: "Random Case 19 (len=8)"),
+    TestCase(s: "fagfgdgdahaghgcfgdebhacedcg", expected: 8, name: "Random Case 20 (len=27)"),
+    TestCase(s: "deffgfehgfbcde", expected: 7, name: "Random Case 21 (len=14)"),
+    TestCase(s: "cbbeehgdbbfhhfcghcaeffeafb", expected: 6, name: "Random Case 22 (len=26)"),
+    TestCase(s: "dceceghfebccchcghcchcf", expected: 6, name: "Random Case 23 (len=22)"),
+    TestCase(s: "ghdhfahfdchecdbhhfcbecbba", expected: 5, name: "Random Case 24 (len=25)"),
+    TestCase(s: "afcdbfggeaegbbbgcecafbcge", expected: 6, name: "Random Case 25 (len=25)"),
+    TestCase(s: "bfddhfggceaddacbedhdfhcehfd", expected: 6, name: "Random Case 26 (len=27)"),
+    TestCase(s: "fehfgdgg", expected: 5, name: "Random Case 27 (len=8)"),
+    TestCase(s: "aahfhgbhhaadagegeb", expected: 4, name: "Random Case 28 (len=18)"),
+    TestCase(s: "dchdgchdcefaee", expected: 6, name: "Random Case 29 (len=14)"),
+    TestCase(s: "baggahbhbhgecbffcefecb", expected: 6, name: "Random Case 30 (len=22)"),
+    TestCase(s: "ebbd", expected: 2, name: "Random Case 31 (len=4)"),
+    TestCase(s: "aehdebagaaadceb", expected: 6, name: "Random Case 32 (len=15)"),
+    TestCase(s: "bbbbcfgefbfacg", expected: 5, name: "Random Case 33 (len=14)"),
+    TestCase(s: "hdhdaafddcahcbgfbehfegfbga", expected: 6, name: "Random Case 34 (len=26)"),
+    TestCase(s: "facd", expected: 4, name: "Random Case 35 (len=4)"),
+    TestCase(s: "hcd", expected: 3, name: "Random Case 36 (len=3)"),
+    TestCase(s: "abcdefgh", expected: 8, name: "All Distinct Chars"),
+    TestCase(s: "aaaaaaaaaa", expected: 1, name: "Ten Same Chars"),
+    TestCase(s: "abcabcabcabc", expected: 3, name: "Repeating Pattern of Three"),
+    TestCase(s: "a", expected: 1, name: "Single Char"),
+    TestCase(s: "  ", expected: 1, name: "Two Spaces"),
+    TestCase(s: "tmmzuxt", expected: 5, name: "Classic Tricky Case")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1203,6 +1444,60 @@ for (index, tc) in testCases.enumerated() {
 }
 print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
 print("---DSA_TEST_RESULTS_END---")
+""",
+                alternateSolutionTitle: "Your Walmart Interview Attempt (Buggy — Resets Instead of Sliding the Window)",
+                alternateSolutionCode: """
+class Solution {
+    // This is close to your actual attempt from the interview, wrapped
+    // into this method's shape. It happens to get "abcabcbb" -> 3 right,
+    // which can make the bug easy to miss - but it is not a correct
+    // sliding-window implementation.
+    func lengthOfLongestSubstring(_ s: String) -> Int {
+        var ans = 0
+        var len = 0
+        let strArray = Array(s)
+        var map: [Character: Int] = [:]
+
+        for i in 0..<strArray.count {
+            if map[strArray[i]] != nil {
+                ans = max(ans, len)
+                // THE BUG: wipes the ENTIRE window and restarts the count
+                // at 1, instead of sliding the window's START forward to
+                // just past the character's PREVIOUS occurrence. A real
+                // sliding window only drops what's actually now invalid
+                // (everything up to and including the earlier duplicate)
+                // - it does not throw away characters that are still
+                // perfectly valid to keep in the window.
+                map = [:]
+                len = 1
+            } else {
+                len += 1
+            }
+            map[strArray[i]] = i
+        }
+        ans = max(ans, len)
+        return ans
+    }
+}
+
+// Concrete counter-example where this gives the WRONG answer:
+// input "dvdf" - the correct answer is 3 ("vdf").
+//
+// i=0 'd': not seen -> len=1, map=[d:0]
+// i=1 'v': not seen -> len=2, map=[d:0, v:1]
+// i=2 'd': SEEN (at 0) -> ans=max(0,2)=2, map WIPED to [:], len=1,
+//          then map=[d:2]
+//          <- this is the bug: 'v' at index 1 is still a perfectly
+//          valid character to keep in the window (it is not a repeat of
+//          anything after the FIRST 'd'), but wiping the whole map
+//          forgets it ever existed.
+// i=3 'f': not seen (map=[d:2]) -> len=2, map=[d:2, f:3]
+// final: ans = max(2, 2) = 2   <- WRONG. Correct answer is 3 ("vdf").
+//
+// The fix (see the main Solution above): track the window's START index
+// directly, and when a repeat is found, only move start forward to just
+// past the repeat's PREVIOUS position - never reset the whole window,
+// and never forget characters that are still inside the valid range.
 """
             ),
             Question(
@@ -1251,7 +1546,49 @@ let testCases = [
     TestCase(nums: [1], expected: [-1], name: "Single Element"),
     TestCase(nums: [3, 8, 4, 1, 2], expected: [8, -1, -1, 2, -1], name: "Mixed Values"),
     TestCase(nums: [1, 3, 2, 4], expected: [3, 4, 4, -1], name: "Two Pops Chain"),
-    TestCase(nums: [6, 5, 4, 3, 2, 1, 7], expected: [7, 7, 7, 7, 7, 7, -1], name: "Big Jump At End")
+    TestCase(nums: [6, 5, 4, 3, 2, 1, 7], expected: [7, 7, 7, 7, 7, 7, -1], name: "Big Jump At End"),
+    TestCase(nums: [1, -6, -10, 4, 16, -2, 15, -3, 4, 16, -20, -5, -19], expected: [4, 4, 4, 16, -1, 15, 16, 4, 16, -1, -5, -1, -1], name: "Random Case 1 (len=13)"),
+    TestCase(nums: [-11, -11, 0, -10, -4, 19, 17, -17, -13, 17, -18, 7, -2, -7, -16], expected: [0, 0, 19, -4, 19, -1, -1, -13, 17, -1, 7, -1, -1, -1, -1], name: "Random Case 2 (len=15)"),
+    TestCase(nums: [10, -12, 15, -19, -13, -14, -11, -9, -17, -3, 0, -6], expected: [15, 15, -1, -13, -11, -11, -9, -3, -3, 0, -1, -1], name: "Random Case 3 (len=12)"),
+    TestCase(nums: [-19, 18, 16, -9, 7, -17, -1, 5, -11, -14, -15, 6, -19, 11, 5, -6, -19, -15, -12, -16], expected: [18, -1, -1, 7, 11, -1, 5, 6, 6, 6, 6, 11, 11, -1, -1, -1, -15, -12, -1, -1], name: "Random Case 4 (len=20)"),
+    TestCase(nums: [5, 7, 14, -3, 14, -19, -20, 9, 0, -9, -12, -16, -18, -14, -12], expected: [7, 14, -1, 14, -1, 9, 9, -1, -1, -1, -1, -14, -14, -12, -1], name: "Random Case 5 (len=15)"),
+    TestCase(nums: [-15, 18, 13, 6, 18, -14, -5, -6, 7, 3, 9, 6, 8, -15], expected: [18, -1, 18, 18, -1, -5, 7, 7, 9, 9, -1, 8, -1, -1], name: "Random Case 6 (len=14)"),
+    TestCase(nums: [14, -7, -5, -3, 4, 0, 19, 4, -2], expected: [19, -5, -3, 4, 19, 19, -1, -1, -1], name: "Random Case 7 (len=9)"),
+    TestCase(nums: [-15, -7, 15, -10, -7, -19, -6, -9, 10, -5, -16, -5, 15, 16, 19], expected: [-7, 15, 16, -7, -6, -6, 10, 10, 15, 15, -5, 15, 16, 19, -1], name: "Random Case 8 (len=15)"),
+    TestCase(nums: [11, 1, -13, -6, 4], expected: [-1, 4, -6, 4, -1], name: "Random Case 9 (len=5)"),
+    TestCase(nums: [8, 18, -8, 15], expected: [18, -1, 15, -1], name: "Random Case 10 (len=4)"),
+    TestCase(nums: [5, 2, -3, 2, -19, -9, 17, -11, 20, -11, 12, 13, -9, 6, -16, -18], expected: [17, 17, 2, 17, -9, 17, 20, 20, -1, 12, 13, -1, 6, -1, -1, -1], name: "Random Case 11 (len=16)"),
+    TestCase(nums: [18, 2, -7, 5, -1, -2, -11, -4, 4, 19, -6, -13, -3, 19, 17, 6, -1], expected: [19, 5, 5, 19, 4, 4, -4, 4, 19, -1, -3, -3, 19, -1, -1, -1, -1], name: "Random Case 12 (len=17)"),
+    TestCase(nums: [11, -5, -14, 12, 10, 18, 8, -6, 10, -9, 10, -2, -16], expected: [12, 12, 12, 18, 18, -1, 10, 10, -1, 10, -1, -1, -1], name: "Random Case 13 (len=13)"),
+    TestCase(nums: [11, 10, 16, 4, -17, 19, 14, -19], expected: [16, 16, 19, 19, 19, -1, -1, -1], name: "Random Case 14 (len=8)"),
+    TestCase(nums: [6, 11, 0, 3, 17, -9, 7], expected: [11, 17, 3, 17, -1, 7, -1], name: "Random Case 15 (len=7)"),
+    TestCase(nums: [-6], expected: [-1], name: "Random Case 16 (len=1)"),
+    TestCase(nums: [19, 12, 5, -11, -19, 17], expected: [-1, 17, 17, 17, 17, -1], name: "Random Case 17 (len=6)"),
+    TestCase(nums: [4, -19, -6, -3, 19, -19, 15, 13, -5, 4, -9, -18, 13, 0, 17, 12, -9], expected: [19, -6, -3, 19, -1, 15, 17, 17, 4, 13, 13, 13, 17, 17, -1, -1, -1], name: "Random Case 18 (len=17)"),
+    TestCase(nums: [-16, 16, 14, -18, -8, 3, -9, -3, 11, -15, 8, -19, -1, -14, -1, 4], expected: [16, -1, -1, -8, 3, 11, -3, 11, -1, 8, -1, -1, 4, -1, 4, -1], name: "Random Case 19 (len=16)"),
+    TestCase(nums: [14, 0, 8], expected: [-1, 8, -1], name: "Random Case 20 (len=3)"),
+    TestCase(nums: [12, -9, -15, -16, 3, 4, 2, -10, 9, -9, -4, -10], expected: [-1, 3, 3, 3, 4, 9, 9, 9, -1, -4, -1, -1], name: "Random Case 21 (len=12)"),
+    TestCase(nums: [-16, -20, 0], expected: [0, 0, -1], name: "Random Case 22 (len=3)"),
+    TestCase(nums: [0, 0, -19, -8, -17, 7, -13, -19, -11, -3], expected: [7, 7, -8, 7, 7, -1, -11, -11, -3, -1], name: "Random Case 23 (len=10)"),
+    TestCase(nums: [-3, 2, -10, 10, 13, 5, 10, -4, 19, 14, -3, 16, -10, -5, -19, -3, 13], expected: [2, 10, 10, 13, 19, 10, 19, 19, -1, 16, 16, -1, -5, -3, -3, 13, -1], name: "Random Case 24 (len=17)"),
+    TestCase(nums: [-8, 0], expected: [0, -1], name: "Random Case 25 (len=2)"),
+    TestCase(nums: [-2, -4, -2, -3, -2, -15, -16, -4, 16, -1], expected: [16, -2, 16, -2, 16, -4, -4, 16, -1, -1], name: "Random Case 26 (len=10)"),
+    TestCase(nums: [5, 14, 15, -20, 3], expected: [14, 15, -1, 3, -1], name: "Random Case 27 (len=5)"),
+    TestCase(nums: [3, 6, 18, 8, 6, -6, -18, -8], expected: [6, 18, -1, -1, -1, -1, -8, -1], name: "Random Case 28 (len=8)"),
+    TestCase(nums: [-2, 19], expected: [19, -1], name: "Random Case 29 (len=2)"),
+    TestCase(nums: [-19, -9, 11, 6, -15, 12, 16, 15, 10, 19, -17, -13], expected: [-9, 11, 12, 12, 12, 16, 19, 19, 19, -1, -13, -1], name: "Random Case 30 (len=12)"),
+    TestCase(nums: [9, -15, 15, -15, -19, -15, 16, -3, 8, 7, 4, -3, -18], expected: [15, 15, 16, 16, -15, 16, -1, 8, -1, -1, -1, -1, -1], name: "Random Case 31 (len=13)"),
+    TestCase(nums: [19, 19, -15, 14, 5], expected: [-1, -1, 14, -1, -1], name: "Random Case 32 (len=5)"),
+    TestCase(nums: [2, 10, -8, 3, 17, -15, 13, 12, -10, -2, -7, -9, 20], expected: [10, 17, 3, 17, 20, 13, 20, 20, -2, 20, 20, 20, -1], name: "Random Case 33 (len=13)"),
+    TestCase(nums: [-3, 11, 11, -15, -5, 13, -6, -10, -19], expected: [11, 13, 13, -5, 13, -1, -1, -1, -1], name: "Random Case 34 (len=9)"),
+    TestCase(nums: [-15, -3, 0], expected: [-3, 0, -1], name: "Random Case 35 (len=3)"),
+    TestCase(nums: [-9, -12, -4, -11, -10, 2, 17, -20], expected: [-4, -4, 2, -10, 2, 17, -1, -1], name: "Random Case 36 (len=8)"),
+    TestCase(nums: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], expected: [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1], name: "Ten Zeros"),
+    TestCase(nums: [-5, -4, -3, -2, -1], expected: [-4, -3, -2, -1, -1], name: "Negative Increasing"),
+    TestCase(nums: [-1, -2, -3, -4, -5], expected: [-1, -1, -1, -1, -1], name: "Negative Decreasing"),
+    TestCase(nums: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], expected: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, -1], name: "Zero to Nineteen Increasing"),
+    TestCase(nums: [19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0], expected: [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1], name: "Nineteen to Zero Decreasing"),
+    TestCase(nums: [100, -100, 50, -50, 0], expected: [-1, 50, -1, 0, -1], name: "Wide Range Mixed")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1270,116 +1607,39 @@ for (index, tc) in testCases.enumerated() {
 }
 print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
 print("---DSA_TEST_RESULTS_END---")
-"""
-            ),
-            Question(
-                id: "todo_command_processor",
-                title: "Task Command Processor",
-                category: "dsa",
-                difficulty: "Medium",
-                topics: ["Simulation", "Array", "String Parsing"],
-                description: "Design a task management system that processes a series of commands: ADD Title, REMOVE TaskNumber, MARK TaskNumber, and LIST (all 1-based indices). Return the output lines produced. Invalid or out-of-range REMOVE/MARK commands must produce a descriptive error line instead of crashing.",
-                templateCode: """
-class Solution {
-    func manageToDoList(_ commands: [String]) -> [String] {
-        // TODO: Write your solution here
-        return []
-    }
-}
 """,
-                solutionCode: """
+                alternateSolutionTitle: "Your Walmart Interview Attempt (Correct, but O(n²) Brute Force)",
+                alternateSolutionCode: """
 class Solution {
-    func manageToDoList(_ commands: [String]) -> [String] {
-        var titles: [String] = []
-        var completed: [Bool] = []
-        var output: [String] = []
-
-        for command in commands {
-            let parts = command.components(separatedBy: " ")
-            guard let action = parts.first else {
-                output.append("Error: Invalid command.")
-                continue
+    // Your actual approach from the interview: for each element, scan
+    // forward until you find something bigger. This IS correct - it
+    // matches every case the main Solution's test suite checks - but it
+    // is O(n^2) in the worst case (e.g. a strictly decreasing array:
+    // every element scans all the way to the end before giving up and
+    // returning -1).
+    //
+    // The main Solution above solves the exact same problem in O(n)
+    // using a monotonic stack: each index is pushed and popped from the
+    // stack at most once across the whole array, instead of being
+    // re-scanned by every earlier index that has not found its answer yet.
+    func nextGreaterElements(_ nums: [Int]) -> [Int] {
+        var ans: [Int] = []
+        for i in 0..<nums.count {
+            var found = false
+            for j in (i + 1)..<nums.count {
+                if nums[i] < nums[j] {
+                    ans.append(nums[j])
+                    found = true
+                    break
+                }
             }
-
-            switch action {
-            case "ADD":
-                let title = parts.dropFirst().joined(separator: " ")
-                titles.append(title)
-                completed.append(false)
-            case "REMOVE":
-                guard parts.count == 2, let idx = Int(parts[1]) else {
-                    output.append("Error: Invalid REMOVE command.")
-                    continue
-                }
-                if idx < 1 || idx > titles.count {
-                    output.append("Error: Task number \\(idx) does not exist.")
-                } else {
-                    titles.remove(at: idx - 1)
-                    completed.remove(at: idx - 1)
-                }
-            case "MARK":
-                guard parts.count == 2, let idx = Int(parts[1]) else {
-                    output.append("Error: Invalid MARK command.")
-                    continue
-                }
-                if idx < 1 || idx > titles.count {
-                    output.append("Error: Task number \\(idx) does not exist.")
-                } else {
-                    completed[idx - 1] = true
-                }
-            case "LIST":
-                for i in 0..<titles.count {
-                    let mark = completed[i] ? "✓" : " "
-                    output.append("\\(i + 1). [\\(mark)] \\(titles[i])")
-                }
-            default:
-                output.append("Error: Invalid command.")
+            if !found {
+                ans.append(-1)
             }
         }
-
-        return output
+        return ans
     }
 }
-""",
-                testHarness: """
-let solution = Solution()
-struct TestCase {
-    let commands: [String]
-    let expected: [String]
-    let name: String
-}
-func formatLines(_ lines: [String]) -> String {
-    return lines.joined(separator: " || ")
-}
-let testCases = [
-    TestCase(commands: ["ADD Buy groceries", "ADD Walk the dog", "MARK 1", "LIST"], expected: ["1. [✓] Buy groceries", "2. [ ] Walk the dog"], name: "Example 1 (Add, Mark, List)"),
-    TestCase(commands: ["ADD Finish homework", "REMOVE 2"], expected: ["Error: Task number 2 does not exist."], name: "Example 2 (Remove Out of Range)"),
-    TestCase(commands: ["REMOVE 1"], expected: ["Error: Task number 1 does not exist."], name: "Remove Before Any Add"),
-    TestCase(commands: ["MARK abc"], expected: ["Error: Invalid MARK command."], name: "Mark Non-Numeric"),
-    TestCase(commands: ["REMOVE"], expected: ["Error: Invalid REMOVE command."], name: "Remove Missing Argument"),
-    TestCase(commands: ["FOO 1"], expected: ["Error: Invalid command."], name: "Unrecognized Command"),
-    TestCase(commands: ["ADD Task A", "ADD Task B", "ADD Task C", "REMOVE 2", "LIST"], expected: ["1. [ ] Task A", "2. [ ] Task C"], name: "Remove Middle Then List"),
-    TestCase(commands: ["ADD X", "MARK 1", "MARK 1", "LIST"], expected: ["1. [✓] X"], name: "Mark Same Task Twice")
-]
-var passedCount = 0
-print("---DSA_TEST_RESULTS_START---")
-for (index, tc) in testCases.enumerated() {
-    let startTime = DispatchTime.now()
-    let result = solution.manageToDoList(tc.commands)
-    let endTime = DispatchTime.now()
-    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
-    let timeInterval = Double(nanoTime) / 1_000_000.0
-    let resultStr = formatLines(result)
-    let expectedStr = formatLines(tc.expected)
-    if resultStr == expectedStr {
-        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
-        passedCount += 1
-    } else {
-        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
-    }
-}
-print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
-print("---DSA_TEST_RESULTS_END---")
 """
             ),
             Question(
@@ -1432,7 +1692,49 @@ let testCases = [
     TestCase(productNames: ["A", "B"], productPrices: [1.11, 2.22], purchaseNames: ["A", "B", "A"], purchaseQuantities: [1, 1, 1], expected: 4.44, name: "Repeated Purchase Of Same Product"),
     TestCase(productNames: [], productPrices: [], purchaseNames: ["X"], purchaseQuantities: [5], expected: 0.0, name: "Empty Inventory"),
     TestCase(productNames: ["Item"], productPrices: [3.333], purchaseNames: ["Item"], purchaseQuantities: [3], expected: 10.0, name: "Rounding To Nearest Cent"),
-    TestCase(productNames: ["X", "Y", "Z"], productPrices: [10.0, 20.0, 30.0], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "No Purchases Made")
+    TestCase(productNames: ["X", "Y", "Z"], productPrices: [10.0, 20.0, 30.0], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "No Purchases Made"),
+    TestCase(productNames: ["Banana"], productPrices: [1.67], purchaseNames: ["Mango", "Pear"], purchaseQuantities: [4, 5], expected: 0.0, name: "Random Case 1 (products=1, purchases=2)"),
+    TestCase(productNames: ["Grape", "Mango", "Apple", "Cherry", "Plum", "Pear"], productPrices: [35.45, 6.65, 46.16, 5.82, 4.95, 29.81], purchaseNames: ["Apple", "Plum"], purchaseQuantities: [3, 10], expected: 187.98, name: "Random Case 2 (products=6, purchases=2)"),
+    TestCase(productNames: ["Kiwi", "Pear", "Mango", "Cherry", "Apple", "Grape"], productPrices: [6.53, 31.08, 12.94, 26.45, 13.41, 36.43], purchaseNames: ["Grape", "Pear", "Mango"], purchaseQuantities: [1, 5, 3], expected: 230.65, name: "Random Case 3 (products=6, purchases=3)"),
+    TestCase(productNames: ["Mango", "Banana", "Plum", "Pear", "Kiwi"], productPrices: [47.59, 48.69, 37.44, 7.8, 4.51], purchaseNames: ["Mango", "Banana", "Grape", "Mango", "Pear", "Pear"], purchaseQuantities: [2, 10, 9, 10, 7, 1], expected: 1120.38, name: "Random Case 4 (products=5, purchases=6)"),
+    TestCase(productNames: ["Banana", "Kiwi", "Plum", "Apple"], productPrices: [27.83, 14.51, 10.14, 43.59], purchaseNames: ["Cherry"], purchaseQuantities: [5], expected: 0.0, name: "Random Case 5 (products=4, purchases=1)"),
+    TestCase(productNames: ["Grape", "Cherry", "Pear", "Kiwi"], productPrices: [19.69, 45.04, 0.88, 48.52], purchaseNames: ["Mango", "Mango", "Mango", "Apple"], purchaseQuantities: [1, 3, 6, 6], expected: 0.0, name: "Random Case 6 (products=4, purchases=4)"),
+    TestCase(productNames: ["Apple", "Kiwi"], productPrices: [40.46, 12.98], purchaseNames: ["Grape", "Apple", "Apple", "Mango", "Apple"], purchaseQuantities: [2, 10, 7, 5, 1], expected: 728.28, name: "Random Case 7 (products=2, purchases=5)"),
+    TestCase(productNames: ["Kiwi", "Mango", "Pear", "Banana"], productPrices: [12.93, 47.24, 25.95, 46.27], purchaseNames: ["Mango"], purchaseQuantities: [5], expected: 236.2, name: "Random Case 8 (products=4, purchases=1)"),
+    TestCase(productNames: ["Apple", "Pear"], productPrices: [42.52, 22.16], purchaseNames: ["Kiwi", "Mango", "Grape", "Pear", "Grape"], purchaseQuantities: [4, 6, 4, 7, 3], expected: 155.12, name: "Random Case 9 (products=2, purchases=5)"),
+    TestCase(productNames: ["Pear", "Plum", "Banana", "Apple"], productPrices: [30.54, 35.62, 37.59, 47.4], purchaseNames: ["Cherry", "Pear", "Apple", "Banana"], purchaseQuantities: [5, 4, 4, 6], expected: 537.3, name: "Random Case 10 (products=4, purchases=4)"),
+    TestCase(productNames: ["Banana", "Apple", "Grape"], productPrices: [9.44, 24.42, 31.56], purchaseNames: ["Grape", "Apple", "Kiwi", "Grape", "Pear", "Grape"], purchaseQuantities: [2, 5, 8, 9, 4, 6], expected: 658.62, name: "Random Case 11 (products=3, purchases=6)"),
+    TestCase(productNames: ["Banana", "Cherry"], productPrices: [0.71, 22.83], purchaseNames: ["Banana", "Plum", "Plum", "Plum"], purchaseQuantities: [8, 6, 3, 3], expected: 5.68, name: "Random Case 12 (products=2, purchases=4)"),
+    TestCase(productNames: ["Cherry"], productPrices: [3.54], purchaseNames: ["Pear", "Mango", "Cherry", "Plum"], purchaseQuantities: [4, 6, 5, 8], expected: 17.7, name: "Random Case 13 (products=1, purchases=4)"),
+    TestCase(productNames: ["Apple", "Plum", "Grape", "Pear", "Mango", "Banana"], productPrices: [24.95, 9.66, 43.36, 25.87, 5.52, 20.92], purchaseNames: ["Grape", "Plum"], purchaseQuantities: [5, 1], expected: 226.46, name: "Random Case 14 (products=6, purchases=2)"),
+    TestCase(productNames: ["Banana", "Apple"], productPrices: [31.16, 13.59], purchaseNames: ["Banana", "Kiwi", "Banana", "Kiwi", "Kiwi", "Apple"], purchaseQuantities: [10, 1, 6, 5, 3, 3], expected: 539.33, name: "Random Case 15 (products=2, purchases=6)"),
+    TestCase(productNames: ["Kiwi", "Plum", "Apple"], productPrices: [30.75, 37.54, 42.1], purchaseNames: ["Grape", "Pear", "Plum", "Mango", "Mango"], purchaseQuantities: [4, 2, 6, 4, 7], expected: 225.24, name: "Random Case 16 (products=3, purchases=5)"),
+    TestCase(productNames: ["Banana", "Cherry", "Pear", "Mango", "Kiwi", "Apple"], productPrices: [12.31, 30.66, 17.55, 32.65, 37.23, 28.76], purchaseNames: ["Pear"], purchaseQuantities: [10], expected: 175.5, name: "Random Case 17 (products=6, purchases=1)"),
+    TestCase(productNames: ["Mango", "Apple", "Kiwi", "Pear"], productPrices: [34.2, 42.34, 13.09, 44.46], purchaseNames: ["Pear", "Banana", "Pear", "Apple", "Kiwi", "Banana"], purchaseQuantities: [3, 3, 7, 7, 2, 7], expected: 767.16, name: "Random Case 18 (products=4, purchases=6)"),
+    TestCase(productNames: ["Mango", "Banana", "Cherry"], productPrices: [24.82, 43.36, 42.76], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "Random Case 19 (products=3, purchases=0)"),
+    TestCase(productNames: ["Apple", "Mango", "Plum", "Banana", "Kiwi"], productPrices: [16.99, 31.05, 48.18, 47.41, 48.96], purchaseNames: ["Plum"], purchaseQuantities: [9], expected: 433.62, name: "Random Case 20 (products=5, purchases=1)"),
+    TestCase(productNames: ["Apple", "Pear"], productPrices: [5.83, 37.38], purchaseNames: ["Cherry"], purchaseQuantities: [10], expected: 0.0, name: "Random Case 21 (products=2, purchases=1)"),
+    TestCase(productNames: ["Cherry", "Banana", "Plum"], productPrices: [5.1, 17.49, 4.2], purchaseNames: ["Plum", "Kiwi", "Pear", "Banana", "Banana", "Apple"], purchaseQuantities: [7, 1, 7, 9, 1, 1], expected: 204.3, name: "Random Case 22 (products=3, purchases=6)"),
+    TestCase(productNames: ["Banana", "Mango", "Plum"], productPrices: [39.88, 47.89, 35.64], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "Random Case 23 (products=3, purchases=0)"),
+    TestCase(productNames: ["Banana"], productPrices: [23.7], purchaseNames: ["Plum", "Banana", "Grape"], purchaseQuantities: [3, 1, 3], expected: 23.7, name: "Random Case 24 (products=1, purchases=3)"),
+    TestCase(productNames: ["Kiwi", "Apple", "Plum", "Banana"], productPrices: [26.03, 9.12, 45.05, 33.13], purchaseNames: ["Pear", "Grape", "Kiwi", "Cherry", "Apple", "Pear"], purchaseQuantities: [5, 4, 9, 10, 4, 9], expected: 270.75, name: "Random Case 25 (products=4, purchases=6)"),
+    TestCase(productNames: ["Grape", "Plum", "Mango", "Banana", "Cherry", "Apple"], productPrices: [11.16, 13.9, 48.55, 44.62, 41.86, 17.92], purchaseNames: ["Pear", "Banana", "Banana", "Cherry", "Grape"], purchaseQuantities: [9, 1, 9, 8, 4], expected: 825.72, name: "Random Case 26 (products=6, purchases=5)"),
+    TestCase(productNames: ["Banana", "Cherry", "Plum", "Pear"], productPrices: [19.69, 5.84, 43.24, 28.61], purchaseNames: ["Kiwi", "Mango"], purchaseQuantities: [2, 10], expected: 0.0, name: "Random Case 27 (products=4, purchases=2)"),
+    TestCase(productNames: ["Plum"], productPrices: [26.38], purchaseNames: ["Plum", "Apple", "Pear", "Mango"], purchaseQuantities: [1, 1, 6, 9], expected: 26.38, name: "Random Case 28 (products=1, purchases=4)"),
+    TestCase(productNames: ["Cherry", "Grape", "Pear"], productPrices: [29.64, 44.16, 13.03], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "Random Case 29 (products=3, purchases=0)"),
+    TestCase(productNames: ["Cherry", "Banana", "Mango", "Apple", "Kiwi"], productPrices: [12.76, 12.35, 40.8, 33.2, 19.73], purchaseNames: ["Grape", "Banana", "Grape"], purchaseQuantities: [9, 5, 7], expected: 61.75, name: "Random Case 30 (products=5, purchases=3)"),
+    TestCase(productNames: ["Banana", "Cherry", "Grape", "Pear"], productPrices: [30.12, 46.37, 45.71, 6.67], purchaseNames: ["Pear", "Grape", "Mango", "Banana", "Cherry", "Kiwi"], purchaseQuantities: [6, 1, 5, 5, 9, 8], expected: 653.66, name: "Random Case 31 (products=4, purchases=6)"),
+    TestCase(productNames: ["Plum", "Mango", "Pear"], productPrices: [41.31, 8.75, 37.86], purchaseNames: ["Plum", "Mango", "Mango", "Grape", "Grape"], purchaseQuantities: [7, 7, 10, 9, 10], expected: 437.92, name: "Random Case 32 (products=3, purchases=5)"),
+    TestCase(productNames: ["Mango", "Plum", "Cherry", "Kiwi", "Banana"], productPrices: [21.95, 5.43, 20.2, 35.55, 2.91], purchaseNames: ["Grape"], purchaseQuantities: [1], expected: 0.0, name: "Random Case 33 (products=5, purchases=1)"),
+    TestCase(productNames: ["Plum", "Grape", "Mango", "Pear", "Apple"], productPrices: [33.76, 4.18, 41.18, 37.42, 19.1], purchaseNames: ["Cherry"], purchaseQuantities: [2], expected: 0.0, name: "Random Case 34 (products=5, purchases=1)"),
+    TestCase(productNames: ["Plum", "Apple", "Banana"], productPrices: [13.83, 34.99, 8.38], purchaseNames: ["Pear", "Mango", "Banana", "Mango"], purchaseQuantities: [1, 7, 9, 9], expected: 75.42, name: "Random Case 35 (products=3, purchases=4)"),
+    TestCase(productNames: ["Apple", "Kiwi", "Pear", "Mango", "Plum", "Banana"], productPrices: [30.83, 3.95, 10.43, 39.58, 20.19, 21.44], purchaseNames: [], purchaseQuantities: [], expected: 0.0, name: "Random Case 36 (products=6, purchases=0)"),
+    TestCase(productNames: ["A"], productPrices: [1.005], purchaseNames: ["A"], purchaseQuantities: [1], expected: 1.0, name: "Half Cent Rounding Up"),
+    TestCase(productNames: ["A"], productPrices: [0.0], purchaseNames: ["A"], purchaseQuantities: [100], expected: 0.0, name: "Zero Price Product"),
+    TestCase(productNames: ["A"], productPrices: [10.0], purchaseNames: ["A"], purchaseQuantities: [0], expected: 0.0, name: "Zero Quantity Purchase"),
+    TestCase(productNames: ["A", "B", "C", "D", "E"], productPrices: [1.0, 2.0, 3.0, 4.0, 5.0], purchaseNames: ["A", "B", "C", "D", "E"], purchaseQuantities: [1, 1, 1, 1, 1], expected: 15.0, name: "One Each Of Five Products"),
+    TestCase(productNames: ["A"], productPrices: [99.99], purchaseNames: ["A", "A", "A"], purchaseQuantities: [1, 1, 1], expected: 299.97, name: "Same Product Purchased Three Times"),
+    TestCase(productNames: ["Book"], productPrices: [12.5], purchaseNames: ["Book"], purchaseQuantities: [7], expected: 87.5, name: "Simple Multiplication No Rounding Needed")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1634,14 +1936,56 @@ struct TestCase {
     let name: String
 }
 let testCases: [TestCase] = [
-    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .get(1), .put(3,3), .get(2), .put(4,4), .get(1), .get(3), .get(4)], expectedGets: [1,-1,-1,3,4], name: "Example 1 (Canonical LRU Sequence, capacity 2)"),
-    TestCase(capacity: 1, ops: [.put(1,1), .get(1), .put(2,2), .get(1), .get(2)], expectedGets: [1,-1,2], name: "Capacity 1 (Immediate Eviction)"),
-    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .put(1,10), .get(1), .get(2)], expectedGets: [10,2], name: "Update Existing Key Refreshes Recency"),
-    TestCase(capacity: 3, ops: [.put(1,1), .put(2,2), .put(3,3), .get(1), .get(2), .get(3)], expectedGets: [1,2,3], name: "No Eviction Needed (Under Capacity)"),
-    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .get(1), .get(2), .put(3,3), .get(1), .get(2), .get(3)], expectedGets: [1,2,-1,2,3], name: "Recency Reordering Changes Eviction Victim"),
+    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .get(1), .put(3,3), .get(2), .put(4,4), .get(1), .get(3), .get(4)], expectedGets: [1, -1, -1, 3, 4], name: "Example 1 (Canonical LRU Sequence, capacity 2)"),
+    TestCase(capacity: 1, ops: [.put(1,1), .get(1), .put(2,2), .get(1), .get(2)], expectedGets: [1, -1, 2], name: "Capacity 1 (Immediate Eviction)"),
+    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .put(1,10), .get(1), .get(2)], expectedGets: [10, 2], name: "Update Existing Key Refreshes Recency"),
+    TestCase(capacity: 3, ops: [.put(1,1), .put(2,2), .put(3,3), .get(1), .get(2), .get(3)], expectedGets: [1, 2, 3], name: "No Eviction Needed (Under Capacity)"),
+    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .get(1), .get(2), .put(3,3), .get(1), .get(2), .get(3)], expectedGets: [1, 2, -1, 2, 3], name: "Recency Reordering Changes Eviction Victim"),
     TestCase(capacity: 1, ops: [.put(1,1), .put(1,2), .get(1)], expectedGets: [2], name: "Repeated Put On Same Key Updates Value"),
     TestCase(capacity: 2, ops: [.get(5)], expectedGets: [-1], name: "Get On Empty Cache Misses"),
-    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .put(3,3), .put(4,4), .get(1), .get(2), .get(3), .get(4)], expectedGets: [-1,-1,3,4], name: "Multiple Sequential Evictions")
+    TestCase(capacity: 2, ops: [.put(1,1), .put(2,2), .put(3,3), .put(4,4), .get(1), .get(2), .get(3), .get(4)], expectedGets: [-1, -1, 3, 4], name: "Multiple Sequential Evictions"),
+    TestCase(capacity: 1, ops: [.get(5), .get(3), .get(5), .put(3,98), .put(5,97), .put(3,30), .put(4,18), .put(1,68), .put(3,69), .put(1,70), .put(5,4), .put(4,39), .get(1), .put(5,9)], expectedGets: [-1, -1, -1, -1], name: "Random Case 1 (cap=1, ops=14)"),
+    TestCase(capacity: 1, ops: [.put(4,52), .get(5), .put(3,67), .get(5), .put(2,12), .put(4,38), .get(1), .get(4), .put(1,100), .put(2,10), .put(4,47), .put(4,47)], expectedGets: [-1, -1, -1, 38], name: "Random Case 2 (cap=1, ops=12)"),
+    TestCase(capacity: 1, ops: [.get(4), .get(2), .put(3,100), .get(5), .put(1,100), .put(2,30)], expectedGets: [-1, -1, -1], name: "Random Case 3 (cap=1, ops=6)"),
+    TestCase(capacity: 3, ops: [.get(2), .put(4,26), .put(2,30), .put(2,98), .put(3,12), .put(5,88), .put(3,63)], expectedGets: [-1], name: "Random Case 4 (cap=3, ops=7)"),
+    TestCase(capacity: 4, ops: [.put(4,63), .get(1), .put(2,28), .get(5), .get(4), .put(4,98), .get(2), .put(5,31), .put(4,48), .get(5), .put(4,86), .put(4,70), .get(4), .get(2)], expectedGets: [-1, -1, 63, 28, 31, 70, 28], name: "Random Case 5 (cap=4, ops=14)"),
+    TestCase(capacity: 4, ops: [.put(2,76), .get(1), .put(2,7), .get(1), .get(2), .put(5,75)], expectedGets: [-1, -1, 7], name: "Random Case 6 (cap=4, ops=6)"),
+    TestCase(capacity: 2, ops: [.put(3,59), .put(5,47), .put(1,79), .put(1,36), .put(1,68), .put(4,97), .put(5,21), .get(2), .put(4,5), .put(1,8), .put(3,33)], expectedGets: [-1], name: "Random Case 7 (cap=2, ops=11)"),
+    TestCase(capacity: 1, ops: [.put(4,14), .get(2), .get(2), .get(4)], expectedGets: [-1, -1, 14], name: "Random Case 8 (cap=1, ops=4)"),
+    TestCase(capacity: 2, ops: [.get(4), .put(1,41), .put(5,85), .put(1,66), .get(4)], expectedGets: [-1, -1], name: "Random Case 9 (cap=2, ops=5)"),
+    TestCase(capacity: 2, ops: [.get(1), .put(5,7), .put(5,98), .put(5,77), .get(1), .get(2), .put(1,97), .get(3), .put(3,2), .put(3,38), .put(4,44)], expectedGets: [-1, -1, -1, -1], name: "Random Case 10 (cap=2, ops=11)"),
+    TestCase(capacity: 3, ops: [.put(1,13), .put(1,33), .get(5), .put(2,64), .put(4,7), .get(1), .get(4)], expectedGets: [-1, 33, 7], name: "Random Case 11 (cap=3, ops=7)"),
+    TestCase(capacity: 2, ops: [.put(5,45), .put(4,59), .put(5,51), .get(5), .put(3,51), .put(1,78), .get(2), .put(5,21), .put(3,88), .put(1,25), .put(4,49), .put(1,64), .put(4,53)], expectedGets: [51, -1], name: "Random Case 12 (cap=2, ops=13)"),
+    TestCase(capacity: 2, ops: [.put(1,87), .get(4), .get(3), .put(5,67), .get(1)], expectedGets: [-1, -1, 87], name: "Random Case 13 (cap=2, ops=5)"),
+    TestCase(capacity: 3, ops: [.put(2,69), .get(3), .get(3), .put(3,82), .put(4,86), .put(3,90), .put(5,93), .put(3,78), .put(1,38), .put(1,4)], expectedGets: [-1, -1], name: "Random Case 14 (cap=3, ops=10)"),
+    TestCase(capacity: 4, ops: [.get(5), .put(1,44), .put(2,2), .get(5), .get(1), .put(1,42), .get(1), .put(4,65), .put(2,88), .put(5,17), .put(5,82), .get(1), .put(2,43), .put(5,53)], expectedGets: [-1, -1, 44, 42, 42], name: "Random Case 15 (cap=4, ops=14)"),
+    TestCase(capacity: 3, ops: [.put(5,43), .put(2,1), .get(4), .get(1), .put(2,23), .get(2), .put(5,40)], expectedGets: [-1, -1, 23], name: "Random Case 16 (cap=3, ops=7)"),
+    TestCase(capacity: 3, ops: [.put(2,39), .get(1), .get(3), .get(3), .put(1,98)], expectedGets: [-1, -1, -1], name: "Random Case 17 (cap=3, ops=5)"),
+    TestCase(capacity: 3, ops: [.put(3,22), .get(3), .put(1,9), .put(3,65), .put(4,95), .put(2,49), .put(1,15), .get(2), .get(1), .put(4,88), .get(5), .put(3,50), .put(2,99)], expectedGets: [22, 49, 15, -1], name: "Random Case 18 (cap=3, ops=13)"),
+    TestCase(capacity: 1, ops: [.put(3,55), .put(3,28), .put(5,100)], expectedGets: [], name: "Random Case 19 (cap=1, ops=3)"),
+    TestCase(capacity: 1, ops: [.put(1,84), .get(2), .get(5), .put(4,55), .put(5,34), .put(2,83), .put(2,70), .put(2,33), .get(2), .get(3)], expectedGets: [-1, -1, 33, -1], name: "Random Case 20 (cap=1, ops=10)"),
+    TestCase(capacity: 4, ops: [.get(3), .put(3,77), .put(2,88), .get(5), .get(2), .put(3,94), .get(5), .put(2,70), .get(4), .put(4,72), .get(4)], expectedGets: [-1, -1, 88, -1, -1, 72], name: "Random Case 21 (cap=4, ops=11)"),
+    TestCase(capacity: 1, ops: [.put(2,53), .put(3,86), .get(5), .put(1,40), .put(1,96), .put(2,8), .get(3), .put(1,5), .get(4), .put(1,90)], expectedGets: [-1, -1, -1], name: "Random Case 22 (cap=1, ops=10)"),
+    TestCase(capacity: 3, ops: [.get(4), .put(2,21), .put(4,84)], expectedGets: [-1], name: "Random Case 23 (cap=3, ops=3)"),
+    TestCase(capacity: 2, ops: [.put(4,40), .put(4,11), .put(2,71), .get(1), .get(2), .put(4,84)], expectedGets: [-1, 71], name: "Random Case 24 (cap=2, ops=6)"),
+    TestCase(capacity: 4, ops: [.get(2), .put(1,1), .get(5), .put(1,74), .put(4,83), .put(4,6)], expectedGets: [-1, -1], name: "Random Case 25 (cap=4, ops=6)"),
+    TestCase(capacity: 3, ops: [.get(3), .put(3,15), .put(1,34), .put(2,10), .put(5,76), .get(5), .get(4), .put(3,56), .put(3,7), .put(4,26), .get(3), .get(5), .get(3), .put(5,19)], expectedGets: [-1, 76, -1, 7, 76, 7], name: "Random Case 26 (cap=3, ops=14)"),
+    TestCase(capacity: 4, ops: [.put(4,87), .get(4), .get(5)], expectedGets: [87, -1], name: "Random Case 27 (cap=4, ops=3)"),
+    TestCase(capacity: 4, ops: [.get(3), .put(2,37), .put(3,86)], expectedGets: [-1], name: "Random Case 28 (cap=4, ops=3)"),
+    TestCase(capacity: 2, ops: [.get(3), .put(4,57), .put(1,82), .put(3,11), .put(3,9), .put(5,72), .get(5), .get(2), .put(4,97)], expectedGets: [-1, 72, -1], name: "Random Case 29 (cap=2, ops=9)"),
+    TestCase(capacity: 2, ops: [.get(1), .get(4), .put(4,6), .put(1,62), .get(1)], expectedGets: [-1, -1, 62], name: "Random Case 30 (cap=2, ops=5)"),
+    TestCase(capacity: 1, ops: [.put(5,78), .put(4,94), .put(5,37), .get(4), .get(3), .put(4,28), .put(4,27), .get(1), .put(1,13), .get(2)], expectedGets: [-1, -1, -1, -1], name: "Random Case 31 (cap=1, ops=10)"),
+    TestCase(capacity: 4, ops: [.get(3), .put(1,26), .put(4,29), .put(1,16), .get(5), .put(2,11), .get(1), .get(2), .get(3), .get(1), .get(1), .get(4)], expectedGets: [-1, -1, 16, 11, -1, 16, 16, 29], name: "Random Case 32 (cap=4, ops=12)"),
+    TestCase(capacity: 4, ops: [.get(2), .get(5), .get(1), .get(5)], expectedGets: [-1, -1, -1, -1], name: "Random Case 33 (cap=4, ops=4)"),
+    TestCase(capacity: 1, ops: [.get(5), .get(3), .put(5,19), .get(5), .put(4,78), .get(4), .put(2,80), .put(4,91), .get(1), .put(5,9)], expectedGets: [-1, -1, 19, 78, -1], name: "Random Case 34 (cap=1, ops=10)"),
+    TestCase(capacity: 1, ops: [.put(5,30), .put(4,45), .put(4,3), .get(3)], expectedGets: [-1], name: "Random Case 35 (cap=1, ops=4)"),
+    TestCase(capacity: 3, ops: [.put(5,15), .put(4,30), .get(5), .put(1,68), .get(4), .get(1), .put(2,42), .put(4,12), .put(5,34), .put(3,25), .put(5,23), .put(5,77)], expectedGets: [15, 30, 68], name: "Random Case 36 (cap=3, ops=12)"),
+    TestCase(capacity: 1, ops: [.put(1,1), .put(2,2), .put(3,3), .get(1), .get(2), .get(3)], expectedGets: [-1, -1, 3], name: "Capacity 1 Rapid Eviction Chain"),
+    TestCase(capacity: 5, ops: [.put(1,10), .put(2,20), .put(3,30), .put(4,40), .put(5,50), .get(1), .get(2), .get(3), .get(4), .get(5)], expectedGets: [10, 20, 30, 40, 50], name: "Fill To Exact Capacity Then Read All"),
+    TestCase(capacity: 2, ops: [.put(1,1), .get(1), .get(1), .get(1)], expectedGets: [1, 1, 1], name: "Repeated Get Same Key"),
+    TestCase(capacity: 4, ops: [.put(1,1), .put(2,2), .put(3,3), .put(4,4), .get(2), .put(5,5), .get(1), .get(2), .get(3), .get(5)], expectedGets: [2, -1, 2, 3, 5], name: "LRU Victim Is Least Recently Used Not Oldest"),
+    TestCase(capacity: 2, ops: [.put(1,1), .put(1,1), .put(1,1), .get(1)], expectedGets: [1], name: "Same Key Same Value Repeated Put"),
+    TestCase(capacity: 3, ops: [.get(1), .get(2), .put(1,1), .get(1), .get(2)], expectedGets: [-1, -1, 1, -1], name: "Gets Before Any Puts")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1774,14 +2118,56 @@ struct TestCase {
     let name: String
 }
 let testCases: [TestCase] = [
-    TestCase(intervals: [[1,3],[2,6],[8,10],[15,18]], expected: [[1,6],[8,10],[15,18]], name: "Example 1 (Classic Overlap Chain)"),
-    TestCase(intervals: [[1,4],[4,5]], expected: [[1,5]], name: "Touching Intervals Merge"),
+    TestCase(intervals: [[1, 3], [2, 6], [8, 10], [15, 18]], expected: [[1, 6], [8, 10], [15, 18]], name: "Example 1 (Classic Overlap Chain)"),
+    TestCase(intervals: [[1, 4], [4, 5]], expected: [[1, 5]], name: "Touching Intervals Merge"),
     TestCase(intervals: [], expected: [], name: "Empty Input"),
-    TestCase(intervals: [[1,4]], expected: [[1,4]], name: "Single Interval"),
-    TestCase(intervals: [[1,4],[2,3]], expected: [[1,4]], name: "Fully Contained Interval"),
-    TestCase(intervals: [[1,10],[2,3],[4,5],[6,7]], expected: [[1,10]], name: "All Contained In First"),
-    TestCase(intervals: [[1,2],[3,4],[5,6]], expected: [[1,2],[3,4],[5,6]], name: "No Overlaps"),
-    TestCase(intervals: [[2,3],[1,2]], expected: [[1,3]], name: "Unsorted Input, Touching")
+    TestCase(intervals: [[1, 4]], expected: [[1, 4]], name: "Single Interval"),
+    TestCase(intervals: [[1, 4], [2, 3]], expected: [[1, 4]], name: "Fully Contained Interval"),
+    TestCase(intervals: [[1, 10], [2, 3], [4, 5], [6, 7]], expected: [[1, 10]], name: "All Contained In First"),
+    TestCase(intervals: [[1, 2], [3, 4], [5, 6]], expected: [[1, 2], [3, 4], [5, 6]], name: "No Overlaps"),
+    TestCase(intervals: [[2, 3], [1, 2]], expected: [[1, 3]], name: "Unsorted Input, Touching"),
+    TestCase(intervals: [[14, 22], [22, 29], [29, 37], [11, 18]], expected: [[11, 37]], name: "Random Case 1 (n=4)"),
+    TestCase(intervals: [[27, 27]], expected: [[27, 27]], name: "Random Case 2 (n=1)"),
+    TestCase(intervals: [[11, 13], [8, 8], [5, 5]], expected: [[5, 5], [8, 8], [11, 13]], name: "Random Case 3 (n=3)"),
+    TestCase(intervals: [[7, 14], [6, 9], [4, 6], [11, 19], [24, 29], [16, 22]], expected: [[4, 22], [24, 29]], name: "Random Case 4 (n=6)"),
+    TestCase(intervals: [[10, 14]], expected: [[10, 14]], name: "Random Case 5 (n=1)"),
+    TestCase(intervals: [[2, 10], [13, 19], [14, 17]], expected: [[2, 10], [13, 19]], name: "Random Case 6 (n=3)"),
+    TestCase(intervals: [[24, 24], [14, 21], [7, 12]], expected: [[7, 12], [14, 21], [24, 24]], name: "Random Case 7 (n=3)"),
+    TestCase(intervals: [[28, 30], [2, 2], [24, 25], [26, 26]], expected: [[2, 2], [24, 25], [26, 26], [28, 30]], name: "Random Case 8 (n=4)"),
+    TestCase(intervals: [[29, 35], [17, 22], [8, 11], [1, 7], [13, 15], [26, 28], [6, 14], [10, 15]], expected: [[1, 15], [17, 22], [26, 28], [29, 35]], name: "Random Case 9 (n=8)"),
+    TestCase(intervals: [[15, 18], [16, 23], [29, 34], [5, 12]], expected: [[5, 12], [15, 23], [29, 34]], name: "Random Case 10 (n=4)"),
+    TestCase(intervals: [[19, 23], [3, 9], [2, 8], [12, 13]], expected: [[2, 9], [12, 13], [19, 23]], name: "Random Case 11 (n=4)"),
+    TestCase(intervals: [[4, 10], [7, 14], [19, 22], [29, 33], [7, 10]], expected: [[4, 14], [19, 22], [29, 33]], name: "Random Case 12 (n=5)"),
+    TestCase(intervals: [[15, 21], [7, 9], [26, 29], [17, 22], [4, 6], [8, 15], [10, 16], [28, 29]], expected: [[4, 6], [7, 22], [26, 29]], name: "Random Case 13 (n=8)"),
+    TestCase(intervals: [[7, 8]], expected: [[7, 8]], name: "Random Case 14 (n=1)"),
+    TestCase(intervals: [[11, 15], [6, 10], [18, 25], [30, 35], [19, 21], [5, 13], [29, 34]], expected: [[5, 15], [18, 25], [29, 35]], name: "Random Case 15 (n=7)"),
+    TestCase(intervals: [[1, 9], [12, 18]], expected: [[1, 9], [12, 18]], name: "Random Case 16 (n=2)"),
+    TestCase(intervals: [[24, 30]], expected: [[24, 30]], name: "Random Case 17 (n=1)"),
+    TestCase(intervals: [[15, 17], [21, 27], [21, 24], [19, 24], [1, 4], [8, 14], [17, 17], [16, 21]], expected: [[1, 4], [8, 14], [15, 27]], name: "Random Case 18 (n=8)"),
+    TestCase(intervals: [[10, 14]], expected: [[10, 14]], name: "Random Case 19 (n=1)"),
+    TestCase(intervals: [[27, 33], [22, 22]], expected: [[22, 22], [27, 33]], name: "Random Case 20 (n=2)"),
+    TestCase(intervals: [[1, 9]], expected: [[1, 9]], name: "Random Case 21 (n=1)"),
+    TestCase(intervals: [[17, 17], [21, 28], [23, 31], [4, 9], [16, 17], [12, 18], [21, 21]], expected: [[4, 9], [12, 18], [21, 31]], name: "Random Case 22 (n=7)"),
+    TestCase(intervals: [[13, 21]], expected: [[13, 21]], name: "Random Case 23 (n=1)"),
+    TestCase(intervals: [[6, 14], [20, 28], [25, 25], [12, 16], [9, 12], [4, 12], [12, 16]], expected: [[4, 16], [20, 28]], name: "Random Case 24 (n=7)"),
+    TestCase(intervals: [[15, 16], [19, 26], [7, 13], [25, 25]], expected: [[7, 13], [15, 16], [19, 26]], name: "Random Case 25 (n=4)"),
+    TestCase(intervals: [[9, 11], [6, 12], [20, 24], [14, 19], [26, 29], [14, 20], [4, 7]], expected: [[4, 12], [14, 24], [26, 29]], name: "Random Case 26 (n=7)"),
+    TestCase(intervals: [[5, 13], [3, 8], [16, 23], [7, 9], [5, 9], [10, 11], [10, 12], [18, 19]], expected: [[3, 13], [16, 23]], name: "Random Case 27 (n=8)"),
+    TestCase(intervals: [[12, 18], [2, 3], [27, 27], [3, 11], [27, 32]], expected: [[2, 11], [12, 18], [27, 32]], name: "Random Case 28 (n=5)"),
+    TestCase(intervals: [[11, 17]], expected: [[11, 17]], name: "Random Case 29 (n=1)"),
+    TestCase(intervals: [[12, 14], [24, 27], [21, 22], [2, 9], [27, 33]], expected: [[2, 9], [12, 14], [21, 22], [24, 33]], name: "Random Case 30 (n=5)"),
+    TestCase(intervals: [[5, 10], [25, 29], [25, 27], [29, 29], [30, 32]], expected: [[5, 10], [25, 29], [30, 32]], name: "Random Case 31 (n=5)"),
+    TestCase(intervals: [[2, 7], [9, 13]], expected: [[2, 7], [9, 13]], name: "Random Case 32 (n=2)"),
+    TestCase(intervals: [[0, 2]], expected: [[0, 2]], name: "Random Case 33 (n=1)"),
+    TestCase(intervals: [[8, 10], [12, 19], [14, 20], [19, 27], [21, 28]], expected: [[8, 10], [12, 28]], name: "Random Case 34 (n=5)"),
+    TestCase(intervals: [[21, 22], [11, 11], [2, 10], [30, 33], [6, 13], [22, 27], [29, 31]], expected: [[2, 13], [21, 27], [29, 33]], name: "Random Case 35 (n=7)"),
+    TestCase(intervals: [[11, 16], [22, 24]], expected: [[11, 16], [22, 24]], name: "Random Case 36 (n=2)"),
+    TestCase(intervals: [[1, 4], [0, 4]], expected: [[0, 4]], name: "Reordered Identical End"),
+    TestCase(intervals: [[1, 4], [2, 3], [3, 4]], expected: [[1, 4]], name: "Nested Then Touching"),
+    TestCase(intervals: [[0, 0], [1, 1], [2, 2]], expected: [[0, 0], [1, 1], [2, 2]], name: "Zero-Length Non-Overlapping"),
+    TestCase(intervals: [[5, 5], [5, 5], [5, 5]], expected: [[5, 5]], name: "Identical Zero-Length Repeated"),
+    TestCase(intervals: [[1, 100], [2, 3], [4, 5], [50, 60], [90, 110]], expected: [[1, 110]], name: "One Big Interval Swallows All"),
+    TestCase(intervals: [[-5, -1], [-3, 3], [2, 10]], expected: [[-5, 10]], name: "Negative and Positive Overlap Chain")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -1919,7 +2305,49 @@ let testCases: [TestCase] = [
     TestCase(s: "a", wordDict: ["a"], expected: true, name: "Single Char Match"),
     TestCase(s: "aaaaaaa", wordDict: ["aaaa", "aaa"], expected: true, name: "Overlapping Ambiguous Segments"),
     TestCase(s: "abcd", wordDict: ["a", "abc", "b", "cd"], expected: true, name: "Multiple Valid Paths"),
-    TestCase(s: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", wordDict: ["a","aa","aaa","aaaa","aaaaa","aaaaaa","aaaaaaa","aaaaaaaa","aaaaaaaaa","aaaaaaaaaa"], expected: false, name: "Exponential Blowup Guard (No Memo Would TLE)")
+    TestCase(s: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaab", wordDict: ["a", "aa", "aaa", "aaaa", "aaaaa", "aaaaaa", "aaaaaaa", "aaaaaaaa", "aaaaaaaaa", "aaaaaaaaaa"], expected: false, name: "Exponential Blowup Guard (No Memo Would TLE)"),
+    TestCase(s: "penplele", wordDict: ["pen", "et", "le", "ple", "car"], expected: true, name: "Random Case 1 (dict_size=5)"),
+    TestCase(s: "aetanaaple", wordDict: ["a", "et", "ana", "ple"], expected: true, name: "Random Case 2 (dict_size=4)"),
+    TestCase(s: "lelele", wordDict: ["and", "le"], expected: true, name: "Random Case 3 (dict_size=2)"),
+    TestCase(s: "deqde", wordDict: ["de", "ban"], expected: false, name: "Random Case 4 (dict_size=2)"),
+    TestCase(s: "car", wordDict: ["and", "car"], expected: true, name: "Random Case 5 (dict_size=2)"),
+    TestCase(s: "anasandcatple", wordDict: ["sand", "ana", "ple", "dog", "cat"], expected: true, name: "Random Case 6 (dict_size=5)"),
+    TestCase(s: "deapapap", wordDict: ["ap", "de"], expected: true, name: "Random Case 7 (dict_size=2)"),
+    TestCase(s: "apleaple", wordDict: ["ap", "le"], expected: true, name: "Random Case 8 (dict_size=2)"),
+    TestCase(s: "pen", wordDict: ["pen", "ana"], expected: true, name: "Random Case 9 (dict_size=2)"),
+    TestCase(s: "aandq", wordDict: ["and", "dog", "a"], expected: false, name: "Random Case 10 (dict_size=3)"),
+    TestCase(s: "coet", wordDict: ["co", "et", "ap", "de", "cat"], expected: true, name: "Random Case 11 (dict_size=5)"),
+    TestCase(s: "appetxpet", wordDict: ["ap", "et", "pet"], expected: false, name: "Random Case 12 (dict_size=3)"),
+    TestCase(s: "plepleapple", wordDict: ["ap", "ple", "cat"], expected: true, name: "Random Case 13 (dict_size=3)"),
+    TestCase(s: "xcatandan", wordDict: ["pen", "and", "ap", "cat", "an"], expected: false, name: "Random Case 14 (dict_size=5)"),
+    TestCase(s: "anaetcarana", wordDict: ["sand", "et", "ana", "de", "car"], expected: true, name: "Random Case 15 (dict_size=5)"),
+    TestCase(s: "peqtapsand", wordDict: ["sand", "le", "ple", "ap", "pet"], expected: false, name: "Random Case 16 (dict_size=5)"),
+    TestCase(s: "dogpetana", wordDict: ["dog", "ana", "pet"], expected: true, name: "Random Case 17 (dict_size=3)"),
+    TestCase(s: "sandana", wordDict: ["pen", "sand", "ana"], expected: true, name: "Random Case 18 (dict_size=3)"),
+    TestCase(s: "anaana", wordDict: ["ana"], expected: true, name: "Random Case 19 (dict_size=1)"),
+    TestCase(s: "appenaap", wordDict: ["a", "pen", "ap", "de", "car"], expected: true, name: "Random Case 20 (dict_size=5)"),
+    TestCase(s: "etpenetetyand", wordDict: ["a", "pen", "et", "ap", "and"], expected: false, name: "Random Case 21 (dict_size=5)"),
+    TestCase(s: "etetet", wordDict: ["et", "an", "ple"], expected: true, name: "Random Case 22 (dict_size=3)"),
+    TestCase(s: "peynetpencar", wordDict: ["pen", "et", "and", "car", "pet"], expected: false, name: "Random Case 23 (dict_size=5)"),
+    TestCase(s: "lexa", wordDict: ["a", "le", "pen", "cat"], expected: false, name: "Random Case 24 (dict_size=4)"),
+    TestCase(s: "ycocarcarco", wordDict: ["co", "ap", "car"], expected: false, name: "Random Case 25 (dict_size=3)"),
+    TestCase(s: "apapapapaxp", wordDict: ["ap"], expected: false, name: "Random Case 26 (dict_size=1)"),
+    TestCase(s: "ypenpenpenpenpen", wordDict: ["pen", "a"], expected: false, name: "Random Case 27 (dict_size=2)"),
+    TestCase(s: "etdeapdeana", wordDict: ["ap", "de", "et", "ana"], expected: true, name: "Random Case 28 (dict_size=4)"),
+    TestCase(s: "coco", wordDict: ["co", "de", "dog"], expected: true, name: "Random Case 29 (dict_size=3)"),
+    TestCase(s: "cosanddeco", wordDict: ["co", "ap", "de", "sand"], expected: true, name: "Random Case 30 (dict_size=4)"),
+    TestCase(s: "saynd", wordDict: ["a", "et", "sand", "ple"], expected: false, name: "Random Case 31 (dict_size=4)"),
+    TestCase(s: "cardogpetle", wordDict: ["co", "pen", "le", "car", "dog", "pet"], expected: true, name: "Random Case 32 (dict_size=6)"),
+    TestCase(s: "cat", wordDict: ["and", "cat"], expected: true, name: "Random Case 33 (dict_size=2)"),
+    TestCase(s: "catcatpetcat", wordDict: ["sand", "dog", "pet", "cat"], expected: true, name: "Random Case 34 (dict_size=4)"),
+    TestCase(s: "codogdogdogcat", wordDict: ["co", "dog", "cat"], expected: true, name: "Random Case 35 (dict_size=3)"),
+    TestCase(s: "bancat", wordDict: ["co", "ap", "dog", "ban", "cat"], expected: true, name: "Random Case 36 (dict_size=5)"),
+    TestCase(s: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", wordDict: ["a"], expected: true, name: "Fifty-Two a's Single Letter Dict"),
+    TestCase(s: "wordbreak", wordDict: ["word", "break"], expected: true, name: "Simple Two Word Exact Match"),
+    TestCase(s: "wordbreakproblem", wordDict: ["word", "break", "problem"], expected: true, name: "Three Word Exact Match"),
+    TestCase(s: "xyz", wordDict: ["a", "b", "c"], expected: false, name: "No Match At All"),
+    TestCase(s: "aaaa", wordDict: ["a"], expected: true, name: "Repeated Single Letter"),
+    TestCase(s: "abcdefgh", wordDict: ["abcd", "efgh"], expected: true, name: "Two Halves Exact Split")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -2067,36 +2495,56 @@ struct TestCase {
     let name: String
 }
 let testCases: [TestCase] = [
-    TestCase(grid: [
-        ["1","1","1","1","0"],
-        ["1","1","0","1","0"],
-        ["1","1","0","0","0"],
-        ["0","0","0","0","0"]
-    ], expected: 1, name: "One Large Connected Island"),
-    TestCase(grid: [
-        ["1","1","0","0","0"],
-        ["1","1","0","0","0"],
-        ["0","0","1","0","0"],
-        ["0","0","0","1","1"]
-    ], expected: 3, name: "Three Separate Islands"),
+    TestCase(grid: [["1","1","1","1","0"], ["1","1","0","1","0"], ["1","1","0","0","0"], ["0","0","0","0","0"]], expected: 1, name: "One Large Connected Island"),
+    TestCase(grid: [["1","1","0","0","0"], ["1","1","0","0","0"], ["0","0","1","0","0"], ["0","0","0","1","1"]], expected: 3, name: "Three Separate Islands"),
     TestCase(grid: [["0"]], expected: 0, name: "Single Water Cell"),
+    TestCase(grid: [["0","1","1","0","1"], ["1","1","1","1","0"], ["1","0","1","1","1"]], expected: 2, name: "Random Case 1 (3x5, density=0.7)"),
+    TestCase(grid: [["1","1","1"]], expected: 1, name: "Random Case 2 (1x3, density=0.7)"),
+    TestCase(grid: [["1","1","0"], ["1","0","1"]], expected: 2, name: "Random Case 3 (2x3, density=0.5)"),
+    TestCase(grid: [["1","1","1","1","1"], ["1","1","1","1","0"], ["0","1","1","1","1"], ["0","1","1","1","0"], ["0","0","0","0","1"], ["1","1","0","0","0"]], expected: 3, name: "Random Case 4 (6x5, density=0.5)"),
+    TestCase(grid: [["0","0"], ["1","1"], ["1","0"]], expected: 1, name: "Random Case 5 (3x2, density=0.5)"),
+    TestCase(grid: [["1","1","0","1","0","1"], ["1","0","1","0","1","1"]], expected: 4, name: "Random Case 6 (2x6, density=0.5)"),
+    TestCase(grid: [["0","0","1","1","1"], ["1","1","0","1","1"], ["1","0","1","1","1"], ["1","0","1","0","1"], ["0","0","1","0","1"], ["1","0","1","1","1"]], expected: 3, name: "Random Case 7 (6x5, density=0.7)"),
+    TestCase(grid: [["0","1","1","0"], ["0","0","0","0"], ["0","0","1","0"], ["1","1","0","0"], ["1","0","1","0"]], expected: 4, name: "Random Case 8 (5x4, density=0.3)"),
+    TestCase(grid: [["1","0","1"]], expected: 2, name: "Random Case 9 (1x3, density=0.3)"),
+    TestCase(grid: [["0","1"], ["0","1"], ["1","1"], ["1","1"], ["0","0"], ["0","1"]], expected: 2, name: "Random Case 10 (6x2, density=0.7)"),
+    TestCase(grid: [["1"], ["0"], ["1"]], expected: 2, name: "Random Case 11 (3x1, density=0.7)"),
+    TestCase(grid: [["1","1","1","0","1","1"], ["1","1","1","0","1","1"], ["1","1","1","1","1","1"], ["1","1","1","1","1","1"], ["1","1","1","1","0","1"]], expected: 1, name: "Random Case 12 (5x6, density=0.7)"),
+    TestCase(grid: [["1","0","0","0","1","0"], ["1","0","1","1","1","0"], ["1","1","1","0","0","0"], ["1","1","0","1","0","0"], ["1","1","1","0","1","1"]], expected: 3, name: "Random Case 13 (5x6, density=0.5)"),
+    TestCase(grid: [["1","0","1","1"]], expected: 2, name: "Random Case 14 (1x4, density=0.5)"),
+    TestCase(grid: [["0","1","1","0","0"], ["1","1","0","0","0"], ["1","0","1","1","1"], ["0","0","1","1","1"], ["0","0","0","1","0"], ["0","1","0","0","1"]], expected: 4, name: "Random Case 15 (6x5, density=0.5)"),
+    TestCase(grid: [["0"], ["1"], ["0"]], expected: 1, name: "Random Case 16 (3x1, density=0.5)"),
+    TestCase(grid: [["1","1","0","0"]], expected: 1, name: "Random Case 17 (1x4, density=0.7)"),
+    TestCase(grid: [["0","1","0"]], expected: 1, name: "Random Case 18 (1x3, density=0.3)"),
+    TestCase(grid: [["1","1","0","1","1"], ["0","1","0","1","0"], ["1","0","1","1","1"], ["1","0","0","1","1"]], expected: 3, name: "Random Case 19 (4x5, density=0.7)"),
+    TestCase(grid: [["0"], ["1"]], expected: 1, name: "Random Case 20 (2x1, density=0.7)"),
+    TestCase(grid: [["1","0","0","0","1","0"], ["0","0","1","1","0","1"], ["0","1","1","0","1","0"], ["1","1","0","1","0","1"]], expected: 7, name: "Random Case 21 (4x6, density=0.7)"),
+    TestCase(grid: [["0","0","1","0","0"]], expected: 1, name: "Random Case 22 (1x5, density=0.3)"),
+    TestCase(grid: [["1","0","1","0","0"], ["0","0","0","1","1"]], expected: 3, name: "Random Case 23 (2x5, density=0.3)"),
+    TestCase(grid: [["0","0","0","0","0","0"], ["0","1","0","0","0","0"], ["0","0","1","0","0","0"], ["1","0","1","0","0","1"], ["0","1","1","0","1","1"]], expected: 4, name: "Random Case 24 (5x6, density=0.3)"),
+    TestCase(grid: [["0","0","0","0","0"], ["0","0","0","0","1"], ["0","0","0","0","1"], ["1","0","1","0","0"], ["0","0","0","0","1"], ["1","0","0","1","0"]], expected: 6, name: "Random Case 25 (6x5, density=0.3)"),
+    TestCase(grid: [["0"], ["0"], ["0"]], expected: 0, name: "Random Case 26 (3x1, density=0.3)"),
+    TestCase(grid: [["1","1","0","1","1"], ["0","0","1","0","1"], ["1","1","0","0","1"], ["0","0","1","1","0"], ["0","0","0","0","1"]], expected: 6, name: "Random Case 27 (5x5, density=0.5)"),
+    TestCase(grid: [["1"], ["1"], ["0"], ["1"], ["1"]], expected: 2, name: "Random Case 28 (5x1, density=0.3)"),
+    TestCase(grid: [["1"], ["1"], ["0"], ["0"]], expected: 1, name: "Random Case 29 (4x1, density=0.3)"),
+    TestCase(grid: [["0","0","1","1","0"], ["1","0","0","0","1"], ["1","1","0","0","0"], ["1","0","1","1","0"], ["1","1","0","0","0"]], expected: 4, name: "Random Case 30 (5x5, density=0.5)"),
+    TestCase(grid: [["0"], ["1"], ["0"], ["0"]], expected: 1, name: "Random Case 31 (4x1, density=0.3)"),
+    TestCase(grid: [["0","1","1"], ["0","1","0"], ["1","0","1"], ["1","0","1"], ["0","1","1"], ["0","1","0"]], expected: 3, name: "Random Case 32 (6x3, density=0.3)"),
+    TestCase(grid: [["1","1","1","0","1"], ["1","1","1","1","1"], ["1","1","0","1","1"]], expected: 1, name: "Random Case 33 (3x5, density=0.7)"),
+    TestCase(grid: [["1","1","1","0","0","1"], ["1","1","0","1","1","1"], ["1","0","1","1","0","1"]], expected: 2, name: "Random Case 34 (3x6, density=0.7)"),
+    TestCase(grid: [["1","0"], ["0","1"], ["1","0"], ["1","0"], ["0","1"]], expected: 4, name: "Random Case 35 (5x2, density=0.3)"),
+    TestCase(grid: [["1","1","0"], ["0","0","0"], ["0","0","0"], ["1","0","0"], ["0","0","1"]], expected: 3, name: "Random Case 36 (5x3, density=0.3)"),
+    TestCase(grid: [["0","1","0","1","0"], ["1","1","1","1","0"], ["1","1","1","1","1"], ["1","1","0","1","0"], ["0","0","1","0","1"]], expected: 3, name: "Random Case 37 (5x5, density=0.5)"),
+    TestCase(grid: [["0","1","1","1","0","0"], ["0","0","0","1","0","0"], ["0","1","0","1","0","1"]], expected: 3, name: "Random Case 38 (3x6, density=0.5)"),
+    TestCase(grid: [["0","0"]], expected: 0, name: "Random Case 39 (1x2, density=0.5)"),
+    TestCase(grid: [["0","0","0","0","0"], ["1","1","1","1","1"], ["0","0","0","0","0"], ["0","0","0","0","0"], ["0","1","0","1","0"]], expected: 3, name: "Random Case 40 (5x5, density=0.3)"),
+    TestCase(grid: [["0","1","1","1","1"], ["1","0","0","0","0"], ["1","0","1","1","1"], ["1","0","0","1","1"], ["0","1","0","1","1"], ["0","1","0","0","1"]], expected: 4, name: "Random Case 41 (6x5, density=0.5)"),
     TestCase(grid: [["1"]], expected: 1, name: "Single Land Cell"),
-    TestCase(grid: [], expected: 0, name: "Empty Grid"),
-    TestCase(grid: [
-        ["1","0","1","0","1"]
-    ], expected: 3, name: "Single Row Alternating"),
-    TestCase(grid: [
-        ["1"],
-        ["0"],
-        ["1"],
-        ["0"],
-        ["1"]
-    ], expected: 3, name: "Single Column Alternating"),
-    TestCase(grid: [
-        ["1","1","1"],
-        ["1","1","1"],
-        ["1","1","1"]
-    ], expected: 1, name: "Fully Land Grid")
+    TestCase(grid: [["1","1","1"], ["1","1","1"], ["1","1","1"]], expected: 1, name: "All Land 3x3"),
+    TestCase(grid: [["0","0","0"], ["0","0","0"], ["0","0","0"]], expected: 0, name: "All Water 3x3"),
+    TestCase(grid: [["1","0","1","0","1"]], expected: 3, name: "Alternating Single Row"),
+    TestCase(grid: [["1"], ["0"], ["1"], ["0"], ["1"]], expected: 3, name: "Alternating Single Column"),
+    TestCase(grid: [["1","0","0","0","1"], ["0","0","0","0","0"], ["1","0","0","0","1"]], expected: 4, name: "Four Corner Islands")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -2210,14 +2658,56 @@ struct TestCase {
     let name: String
 }
 let testCases: [TestCase] = [
-    TestCase(nums: [3,2,1,5,6,4], k: 2, expected: 5, name: "Classic Example"),
-    TestCase(nums: [3,2,3,1,2,4,5,5,6], k: 4, expected: 4, name: "With Duplicates"),
+    TestCase(nums: [3, 2, 1, 5, 6, 4], k: 2, expected: 5, name: "Classic Example"),
+    TestCase(nums: [3, 2, 3, 1, 2, 4, 5, 5, 6], k: 4, expected: 4, name: "With Duplicates"),
     TestCase(nums: [1], k: 1, expected: 1, name: "Single Element"),
-    TestCase(nums: [1,2], k: 1, expected: 2, name: "Two Elements, K=1"),
-    TestCase(nums: [1,2], k: 2, expected: 1, name: "Two Elements, K=2 (Smallest)"),
-    TestCase(nums: [-1,-2,-3,-4], k: 1, expected: -1, name: "All Negative Numbers"),
-    TestCase(nums: [7,7,7,7,7], k: 3, expected: 7, name: "All Duplicates"),
-    TestCase(nums: [9,3,2,4,8], k: 5, expected: 2, name: "K Equals Array Length (Minimum)")
+    TestCase(nums: [1, 2], k: 1, expected: 2, name: "Two Elements, K=1"),
+    TestCase(nums: [1, 2], k: 2, expected: 1, name: "Two Elements, K=2 (Smallest)"),
+    TestCase(nums: [-1, -2, -3, -4], k: 1, expected: -1, name: "All Negative Numbers"),
+    TestCase(nums: [8, -39, -34, -2, -46, -44, 33, -23, -26, -28, -11, -40, -44, 2, -31, -5], k: 10, expected: -31, name: "Random Case 1 (len=16, k=10)"),
+    TestCase(nums: [-25, 10, 50, 30, 40, -21, 7, -29, -45, 50, -47, -48, 46, 9, -6, -1, 23, 42], k: 6, expected: 30, name: "Random Case 2 (len=18, k=6)"),
+    TestCase(nums: [-10, 11, 8, 26, -9, 6, -21, -33, 46, 41, 2, 30, 15, 20, -27, 22, -34, -49], k: 12, expected: -9, name: "Random Case 3 (len=18, k=12)"),
+    TestCase(nums: [-26, 34, 7, 29, -46, 34, -35, 10, 25, 21, 4, -32, -23, -16, -18], k: 2, expected: 34, name: "Random Case 4 (len=15, k=2)"),
+    TestCase(nums: [-41, -30, -37, 28, 2, 24, 26, -42, -27, -18, 9], k: 5, expected: 2, name: "Random Case 5 (len=11, k=5)"),
+    TestCase(nums: [35, 34, 2, 13, -30, 22, -7, 31, 24, -19, 20], k: 10, expected: -19, name: "Random Case 6 (len=11, k=10)"),
+    TestCase(nums: [26, -48, 14, 5, 7, 30, 0, 44, 35, -37], k: 1, expected: 44, name: "Random Case 7 (len=10, k=1)"),
+    TestCase(nums: [-36, 25, 40, 9, -30, -43, 11, -16, 10, 40, -41, 16, 0, 36, -44], k: 7, expected: 10, name: "Random Case 8 (len=15, k=7)"),
+    TestCase(nums: [-32, 25, 38, 7, -2, -42, -13, -2, -10, -2, -29, -22, -39, -46, 30, -37, 15, 32, 42, 14], k: 2, expected: 38, name: "Random Case 9 (len=20, k=2)"),
+    TestCase(nums: [-44, 12, 5, -36, 44, -43, 25, 21, -20], k: 7, expected: -36, name: "Random Case 10 (len=9, k=7)"),
+    TestCase(nums: [32, -38, 48, -42, 20, -14, 20, 50, -14, 10, -23, 14, -31, -19], k: 12, expected: -31, name: "Random Case 11 (len=14, k=12)"),
+    TestCase(nums: [4, 18, -22, -37, -7, 43, -21, -5, 37, 6, 6, 25, 42, -4, -48], k: 12, expected: -21, name: "Random Case 12 (len=15, k=12)"),
+    TestCase(nums: [17, 24, 49, 36, 35, -4], k: 5, expected: 17, name: "Random Case 13 (len=6, k=5)"),
+    TestCase(nums: [5, 11, -14, 9, -34, -5, 27, -32, -13, 19, -22, -18, 34, -33, -31, 8], k: 12, expected: -22, name: "Random Case 14 (len=16, k=12)"),
+    TestCase(nums: [2, 4, -43, 33, 38, -42, -24, -10], k: 5, expected: -10, name: "Random Case 15 (len=8, k=5)"),
+    TestCase(nums: [-30, 18, -48, 44, 25, -32, 34, -26, -29, -14, -42], k: 7, expected: -29, name: "Random Case 16 (len=11, k=7)"),
+    TestCase(nums: [6, -13, 46, 14, 18, -47], k: 2, expected: 18, name: "Random Case 17 (len=6, k=2)"),
+    TestCase(nums: [-25, -9, -44, 8, -30, -10, -44, -41, -47, 35, -30, -49, -6, -43, 31, 38, 45, -1, -14, 9], k: 18, expected: -44, name: "Random Case 18 (len=20, k=18)"),
+    TestCase(nums: [-2, 24, -7, -17, 39, 17, 36, 39, 36, -28, -25, 34, 42, 20, 2, -15], k: 2, expected: 39, name: "Random Case 19 (len=16, k=2)"),
+    TestCase(nums: [9, 8, 3, 49, -4, -17, 10, 34, 48, -6, 48, -44, 23, -44, -16, 35, 50], k: 8, expected: 10, name: "Random Case 20 (len=17, k=8)"),
+    TestCase(nums: [-13, -18, 26, -7, -25, -49, -1, 46, -50, -23, 13, -38, 38, 6, 44, -27, -46, 10, 14, -26], k: 17, expected: -38, name: "Random Case 21 (len=20, k=17)"),
+    TestCase(nums: [14, 49, -20, 15], k: 2, expected: 15, name: "Random Case 22 (len=4, k=2)"),
+    TestCase(nums: [-36, -38, 1, -38, 39, 25, -26, 15, -12, 20, 12, 21, -40, 41, -8, 31, -9], k: 15, expected: -38, name: "Random Case 23 (len=17, k=15)"),
+    TestCase(nums: [24, 32, -16, 23, 24, 3, -42, 34, -11, -48], k: 3, expected: 24, name: "Random Case 24 (len=10, k=3)"),
+    TestCase(nums: [-17, 46, 23, 27, 36, -9, 9, 23, -29, -22, 36, 13, -40, -16, -21, 28, 46, -19, 6, -36], k: 17, expected: -22, name: "Random Case 25 (len=20, k=17)"),
+    TestCase(nums: [34, 26, 37], k: 3, expected: 26, name: "Random Case 26 (len=3, k=3)"),
+    TestCase(nums: [19, 43, -42, -22, -45, 46, -39, -22, -31, -46, 15, -14, 22], k: 12, expected: -45, name: "Random Case 27 (len=13, k=12)"),
+    TestCase(nums: [11, -35, -50, 25, 0, 15, 26, 39], k: 4, expected: 15, name: "Random Case 28 (len=8, k=4)"),
+    TestCase(nums: [-41], k: 1, expected: -41, name: "Random Case 29 (len=1, k=1)"),
+    TestCase(nums: [-1, -17, -37, -41, 9, 34, 37, 12], k: 5, expected: -1, name: "Random Case 30 (len=8, k=5)"),
+    TestCase(nums: [14, -39, -1, 16, -3, 26, -11, -9, 30, -48, 42, 15, 41, -24, -38, 1, 14], k: 10, expected: -1, name: "Random Case 31 (len=17, k=10)"),
+    TestCase(nums: [-49, -41, 25, -15], k: 4, expected: -49, name: "Random Case 32 (len=4, k=4)"),
+    TestCase(nums: [44, -12, 21, -45, 29, 20, 36, -15, -9, 27, -5, -3, 44, -12, -25, -3, 3, 41], k: 16, expected: -15, name: "Random Case 33 (len=18, k=16)"),
+    TestCase(nums: [-21, -2, 6, -40, 29, 27, 21, 13, -14], k: 7, expected: -14, name: "Random Case 34 (len=9, k=7)"),
+    TestCase(nums: [-30, -16, 43, -25, 42, 3, 12, -25, 44, 49, 19, -36, 10, -46, 27, 32, -36, -1], k: 11, expected: -1, name: "Random Case 35 (len=18, k=11)"),
+    TestCase(nums: [-8, -5, 43, 12], k: 4, expected: -8, name: "Random Case 36 (len=4, k=4)"),
+    TestCase(nums: [39], k: 1, expected: 39, name: "Random Case 37 (len=1, k=1)"),
+    TestCase(nums: [0, -30, -2, -23, 33, 13, -20, 50, -23, -12, -8, -34, -36, -42, 3, 40], k: 1, expected: 50, name: "Random Case 38 (len=16, k=1)"),
+    TestCase(nums: [5, 5, 5, 5, 5, 5, 5, 5, 5, 5], k: 5, expected: 5, name: "All Identical Elements"),
+    TestCase(nums: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], k: 1, expected: 20, name: "Ascending 1 to 20, K=1"),
+    TestCase(nums: [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], k: 20, expected: 1, name: "Descending 20 to 1, K=20"),
+    TestCase(nums: [0], k: 1, expected: 0, name: "Single Zero"),
+    TestCase(nums: [100, -100], k: 1, expected: 100, name: "Two Extremes K=1"),
+    TestCase(nums: [100, -100], k: 2, expected: -100, name: "Two Extremes K=2")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
@@ -2365,61 +2855,481 @@ struct TestCase {
 let testCases: [TestCase] = [
     TestCase(name: "Allows burst up to capacity") {
         let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 1)
-        return limiter.allowRequest(currentTime: 0) &&
-               limiter.allowRequest(currentTime: 0) &&
-               limiter.allowRequest(currentTime: 0) &&
-               !limiter.allowRequest(currentTime: 0)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != false { ok = false }
+        return ok
     },
     TestCase(name: "Rejects when bucket empty") {
         let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 1)
-        let first = limiter.allowRequest(currentTime: 0)
-        let second = limiter.allowRequest(currentTime: 0)
-        return first && !second
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != false { ok = false }
+        return ok
     },
     TestCase(name: "Refills over time allows new request") {
         let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 1)
-        let first = limiter.allowRequest(currentTime: 0)
-        let blockedImmediately = !limiter.allowRequest(currentTime: 0.1)
-        let allowedAfterRefill = limiter.allowRequest(currentTime: 1.0)
-        return first && blockedImmediately && allowedAfterRefill
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0.1, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != true { ok = false }
+        return ok
     },
     TestCase(name: "Does not exceed capacity after long idle") {
         let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 5)
-        let a = limiter.allowRequest(currentTime: 100)
-        let b = limiter.allowRequest(currentTime: 100)
-        let c = !limiter.allowRequest(currentTime: 100)
-        return a && b && c
+        var ok = true
+        if limiter.allowRequest(currentTime: 100, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 100, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 100, cost: 1) != false { ok = false }
+        return ok
     },
     TestCase(name: "Fractional refill rate works correctly") {
         let limiter = TokenBucketRateLimiter(capacity: 5, refillRatePerSecond: 0.5)
-        for _ in 0..<5 { _ = limiter.allowRequest(currentTime: 0) }
-        let blocked = !limiter.allowRequest(currentTime: 1)
-        let allowed = limiter.allowRequest(currentTime: 2)
-        return blocked && allowed
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 2, cost: 1) != true { ok = false }
+        return ok
     },
     TestCase(name: "Weighted request cost consumes multiple tokens") {
         let limiter = TokenBucketRateLimiter(capacity: 10, refillRatePerSecond: 1)
-        let big = limiter.allowRequest(currentTime: 0, cost: 7)
-        let tooBig = !limiter.allowRequest(currentTime: 0, cost: 5)
-        let smallOk = limiter.allowRequest(currentTime: 0, cost: 3)
-        return big && tooBig && smallOk
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 7) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 5) != false { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 3) != true { ok = false }
+        return ok
     },
     TestCase(name: "Sustained rate at exactly refill rate stays allowed") {
         let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 2)
-        var allAllowed = true
-        var t = 0.0
-        for _ in 0..<5 {
-            if !limiter.allowRequest(currentTime: t) { allAllowed = false }
-            t += 0.5
-        }
-        return allAllowed
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0.5, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.5, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2, cost: 1) != true { ok = false }
+        return ok
     },
     TestCase(name: "Zero elapsed time between calls does not double count") {
         let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 1)
-        let a = limiter.allowRequest(currentTime: 5)
-        let b = limiter.allowRequest(currentTime: 5)
-        let c = !limiter.allowRequest(currentTime: 5)
-        return a && b && c
+        var ok = true
+        if limiter.allowRequest(currentTime: 5, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5, cost: 1) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 1 (cap=7, rate=3.41, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 7, refillRatePerSecond: 3.41)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.27, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.97, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.81, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.73, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.65, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.1, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 8.26, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 2 (cap=3, rate=0.78, calls=3)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 0.78)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.46, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.82, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.94, cost: 3) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 3 (cap=8, rate=0.59, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 0.59)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.6, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.04, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.72, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.35, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.86, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.68, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 7.19, cost: 2) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 4 (cap=2, rate=2.78, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 2.78)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.25, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.86, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.26, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.69, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.21, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.59, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.72, cost: 2) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 5 (cap=6, rate=1.37, calls=2)") {
+        let limiter = TokenBucketRateLimiter(capacity: 6, refillRatePerSecond: 1.37)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.86, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.07, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 6 (cap=2, rate=0.65, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 0.65)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.97, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.51, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1.6, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1.78, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1.95, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.02, cost: 2) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 7 (cap=8, rate=2.35, calls=3)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 2.35)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.83, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.58, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.36, cost: 4) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 8 (cap=4, rate=1.13, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 4, refillRatePerSecond: 1.13)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.82, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.25, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.77, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.92, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.76, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.18, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.39, cost: 2) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 9 (cap=3, rate=2.79, calls=2)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 2.79)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.11, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.18, cost: 3) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 10 (cap=3, rate=1.15, calls=4)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 1.15)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.03, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.91, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.28, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 11 (cap=8, rate=3.18, calls=3)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 3.18)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.69, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.99, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.92, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 12 (cap=1, rate=3.77, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 3.77)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.15, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0.79, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.33, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.8, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.69, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.56, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 13 (cap=5, rate=1.64, calls=5)") {
+        let limiter = TokenBucketRateLimiter(capacity: 5, refillRatePerSecond: 1.64)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.8, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.07, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.44, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1.7, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 2.49, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 14 (cap=8, rate=2.69, calls=4)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 2.69)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.25, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.51, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.91, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.74, cost: 3) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 15 (cap=8, rate=1.25, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 1.25)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.76, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.23, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.85, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.76, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.19, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.65, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 6.88, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 16 (cap=8, rate=1.17, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 1.17)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.21, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.27, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.53, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.2, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.32, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.37, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.82, cost: 4) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 17 (cap=6, rate=0.41, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 6, refillRatePerSecond: 0.41)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.96, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.74, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.75, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.87, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.23, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.1, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 18 (cap=8, rate=3.25, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 3.25)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.45, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.16, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.18, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.19, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.53, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.43, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 19 (cap=7, rate=1.85, calls=3)") {
+        let limiter = TokenBucketRateLimiter(capacity: 7, refillRatePerSecond: 1.85)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.06, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.88, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.34, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 20 (cap=3, rate=1.22, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 1.22)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.57, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.49, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.25, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 4.51, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.17, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.21, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 21 (cap=7, rate=0.45, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 7, refillRatePerSecond: 0.45)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.52, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.05, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.66, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.7, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5.42, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.15, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 22 (cap=3, rate=0.76, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 0.76)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.4, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.2, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 2.55, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.25, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.57, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5.88, cost: 3) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 23 (cap=7, rate=1.67, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 7, refillRatePerSecond: 1.67)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.99, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.25, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.4, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.52, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.59, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.84, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 24 (cap=2, rate=3.9, calls=2)") {
+        let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 3.9)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.98, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.35, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 25 (cap=1, rate=1.2, calls=4)") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 1.2)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.59, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.54, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.02, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.06, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 26 (cap=3, rate=2.31, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 2.31)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.88, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.16, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.47, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.28, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.76, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.65, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 8.52, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 27 (cap=1, rate=1.79, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 1.79)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.79, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.41, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.51, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.51, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5.08, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.31, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.46, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 28 (cap=4, rate=3.83, calls=2)") {
+        let limiter = TokenBucketRateLimiter(capacity: 4, refillRatePerSecond: 3.83)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.45, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.34, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 29 (cap=4, rate=0.39, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 4, refillRatePerSecond: 0.39)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.03, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.29, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 2.91, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 4.43, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5.09, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 7.03, cost: 4) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 30 (cap=4, rate=1.62, calls=3)") {
+        let limiter = TokenBucketRateLimiter(capacity: 4, refillRatePerSecond: 1.62)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.65, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.9, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.6, cost: 4) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 31 (cap=4, rate=2.2, calls=7)") {
+        let limiter = TokenBucketRateLimiter(capacity: 4, refillRatePerSecond: 2.2)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.99, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.05, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.04, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.51, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.01, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.32, cost: 3) != false { ok = false }
+        if limiter.allowRequest(currentTime: 8.27, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 32 (cap=8, rate=1.4, calls=2)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 1.4)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.21, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.11, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 33 (cap=8, rate=3.12, calls=5)") {
+        let limiter = TokenBucketRateLimiter(capacity: 8, refillRatePerSecond: 3.12)
+        var ok = true
+        if limiter.allowRequest(currentTime: 1.46, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.26, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.83, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 4.98, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 6.25, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 34 (cap=3, rate=2.3, calls=4)") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 2.3)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.86, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0.99, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 1.48, cost: 2) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.27, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 35 (cap=1, rate=2.04, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 2.04)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.73, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.84, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.88, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.38, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3.77, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5.48, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Random Case 36 (cap=5, rate=2.97, calls=6)") {
+        let limiter = TokenBucketRateLimiter(capacity: 5, refillRatePerSecond: 2.97)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0.03, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.49, cost: 4) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.22, cost: 2) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2.8, cost: 4) != false { ok = false }
+        if limiter.allowRequest(currentTime: 3.92, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 5.6, cost: 2) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Slow Refill Rate Over Long Gaps") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 0.1)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 5, cost: 1) != false { ok = false }
+        if limiter.allowRequest(currentTime: 20, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Large Capacity Full Burst Then Reject") {
+        let limiter = TokenBucketRateLimiter(capacity: 20, refillRatePerSecond: 10)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 20) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != false { ok = false }
+        return ok
+    },
+    TestCase(name: "Exact Refill Timing Chain") {
+        let limiter = TokenBucketRateLimiter(capacity: 3, refillRatePerSecond: 1)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 3) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 2, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 3, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Single Call Always Allowed") {
+        let limiter = TokenBucketRateLimiter(capacity: 1, refillRatePerSecond: 1)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Partial Refill Then Multiple Small Requests") {
+        let limiter = TokenBucketRateLimiter(capacity: 5, refillRatePerSecond: 2)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 5) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0.5, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 1.5, cost: 1) != true { ok = false }
+        return ok
+    },
+    TestCase(name: "Zero Refill Rate Never Refills") {
+        let limiter = TokenBucketRateLimiter(capacity: 2, refillRatePerSecond: 0)
+        var ok = true
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 0, cost: 1) != true { ok = false }
+        if limiter.allowRequest(currentTime: 100, cost: 1) != false { ok = false }
+        return ok
     }
 ]
 var passedCount = 0
@@ -2726,22 +3636,515 @@ struct TestCase {
     let name: String
 }
 let testCases = [
-    TestCase(numCourses: 2, prerequisites: [[1,0]], expected: true, name: "Example 1 (2 courses, linear)"),
-    TestCase(numCourses: 2, prerequisites: [[1,0],[0,1]], expected: false, name: "Example 2 (2 courses, cycle)"),
+    TestCase(numCourses: 2, prerequisites: [[1, 0]], expected: true, name: "Example 1 (2 courses, linear)"),
+    TestCase(numCourses: 2, prerequisites: [[1, 0], [0, 1]], expected: false, name: "Example 2 (2 courses, cycle)"),
     TestCase(numCourses: 3, prerequisites: [], expected: true, name: "No Prerequisites"),
     TestCase(numCourses: 1, prerequisites: [], expected: true, name: "Single Course"),
-    TestCase(numCourses: 4, prerequisites: [[1,0],[2,1],[3,2],[0,3]], expected: false, name: "4-Course Cycle"),
-    TestCase(numCourses: 6, prerequisites: [[1,0],[2,0],[3,1],[3,2],[4,3],[5,4]], expected: true, name: "Larger DAG (6 courses)"),
-    TestCase(numCourses: 3, prerequisites: [[1,0],[2,0],[2,1]], expected: true, name: "Multiple Prerequisites, No Cycle"),
+    TestCase(numCourses: 4, prerequisites: [[1, 0], [2, 1], [3, 2], [0, 3]], expected: false, name: "4-Course Cycle"),
+    TestCase(numCourses: 6, prerequisites: [[1, 0], [2, 0], [3, 1], [3, 2], [4, 3], [5, 4]], expected: true, name: "Larger DAG (6 courses)"),
+    TestCase(numCourses: 3, prerequisites: [[1, 0], [2, 0], [2, 1]], expected: true, name: "Multiple Prerequisites, No Cycle"),
     TestCase(numCourses: 2000, prerequisites: [], expected: true, name: "Large numCourses, No Prerequisites"),
-    TestCase(numCourses: 3, prerequisites: [[0,1],[1,2],[2,0]], expected: false, name: "3-Course Cycle"),
-    TestCase(numCourses: 5, prerequisites: [[1,4],[2,4],[3,1],[3,2]], expected: true, name: "Diamond DAG")
+    TestCase(numCourses: 3, prerequisites: [[0, 1], [1, 2], [2, 0]], expected: false, name: "3-Course Cycle"),
+    TestCase(numCourses: 5, prerequisites: [[1, 4], [2, 4], [3, 1], [3, 2]], expected: true, name: "Diamond DAG"),
+    TestCase(numCourses: 4, prerequisites: [[1, 0], [3, 0], [1, 0], [2, 0], [1, 0]], expected: true, name: "Random Case 1 (n=4, edges=5, forced_cycle=False)"),
+    TestCase(numCourses: 8, prerequisites: [[2, 1], [2, 1], [7, 3], [5, 1], [2, 0], [2, 0], [1, 0], [1, 0], [5, 4], [3, 2]], expected: true, name: "Random Case 2 (n=8, edges=10, forced_cycle=False)"),
+    TestCase(numCourses: 2, prerequisites: [[1, 0], [1, 0], [1, 0]], expected: true, name: "Random Case 3 (n=2, edges=3, forced_cycle=False)"),
+    TestCase(numCourses: 6, prerequisites: [[2, 0], [2, 0], [2, 1], [1, 0], [1, 0], [5, 3], [4, 0], [1, 0], [1, 0], [4, 3], [3, 4]], expected: false, name: "Random Case 4 (n=6, edges=11, forced_cycle=True)"),
+    TestCase(numCourses: 7, prerequisites: [[4, 0], [5, 2], [4, 2], [2, 4]], expected: false, name: "Random Case 5 (n=7, edges=4, forced_cycle=True)"),
+    TestCase(numCourses: 6, prerequisites: [[2, 0], [3, 1], [1, 0]], expected: true, name: "Random Case 6 (n=6, edges=3, forced_cycle=False)"),
+    TestCase(numCourses: 10, prerequisites: [[2, 0], [9, 7], [1, 0], [5, 4], [1, 0], [9, 4], [9, 0], [2, 1], [7, 1], [6, 5], [2, 0], [7, 4], [1, 0], [8, 3], [9, 6]], expected: true, name: "Random Case 7 (n=10, edges=15, forced_cycle=False)"),
+    TestCase(numCourses: 1, prerequisites: [], expected: true, name: "Random Case 8 (n=1, edges=0, forced_cycle=False)"),
+    TestCase(numCourses: 4, prerequisites: [[1, 0], [2, 0], [1, 0], [0, 1]], expected: false, name: "Random Case 9 (n=4, edges=4, forced_cycle=True)"),
+    TestCase(numCourses: 1, prerequisites: [], expected: true, name: "Random Case 10 (n=1, edges=0, forced_cycle=False)"),
+    TestCase(numCourses: 4, prerequisites: [[3, 1]], expected: true, name: "Random Case 11 (n=4, edges=1, forced_cycle=False)"),
+    TestCase(numCourses: 5, prerequisites: [[2, 4], [4, 2]], expected: false, name: "Random Case 12 (n=5, edges=2, forced_cycle=True)"),
+    TestCase(numCourses: 5, prerequisites: [[2, 0]], expected: true, name: "Random Case 13 (n=5, edges=1, forced_cycle=False)"),
+    TestCase(numCourses: 7, prerequisites: [[3, 0], [5, 1], [3, 0], [6, 0], [2, 0], [2, 1], [1, 0], [4, 3], [5, 1], [5, 3], [6, 5], [5, 3], [6, 4], [4, 6]], expected: false, name: "Random Case 14 (n=7, edges=14, forced_cycle=True)"),
+    TestCase(numCourses: 9, prerequisites: [[5, 3], [7, 3], [4, 1], [8, 4], [4, 3], [8, 7], [3, 0], [3, 0], [8, 3], [8, 3], [4, 0], [6, 4], [7, 1], [2, 0]], expected: true, name: "Random Case 15 (n=9, edges=14, forced_cycle=False)"),
+    TestCase(numCourses: 7, prerequisites: [[5, 3], [2, 3], [3, 2]], expected: false, name: "Random Case 16 (n=7, edges=3, forced_cycle=True)"),
+    TestCase(numCourses: 9, prerequisites: [[5, 3], [1, 0], [1, 0], [6, 1], [4, 2], [2, 1], [8, 6], [6, 5], [4, 0], [6, 2], [3, 2], [6, 1], [1, 0], [4, 2], [2, 0]], expected: true, name: "Random Case 17 (n=9, edges=15, forced_cycle=False)"),
+    TestCase(numCourses: 9, prerequisites: [[2, 0], [5, 4], [3, 2], [3, 2], [1, 0], [4, 1], [8, 6], [2, 1], [6, 3], [3, 6]], expected: false, name: "Random Case 18 (n=9, edges=10, forced_cycle=True)"),
+    TestCase(numCourses: 4, prerequisites: [[1, 0], [3, 0], [3, 0], [1, 0], [1, 0]], expected: true, name: "Random Case 19 (n=4, edges=5, forced_cycle=False)"),
+    TestCase(numCourses: 5, prerequisites: [[3, 2], [4, 1], [2, 1], [3, 0], [2, 0], [2, 0], [2, 0], [2, 0], [4, 1], [2, 1]], expected: true, name: "Random Case 20 (n=5, edges=10, forced_cycle=False)"),
+    TestCase(numCourses: 10, prerequisites: [[4, 3], [6, 0], [1, 0], [4, 0], [3, 1], [6, 0], [3, 1], [6, 4], [6, 1], [4, 0], [9, 0], [6, 2], [7, 5], [7, 1], [1, 0], [3, 2], [3, 0], [0, 3], [3, 0]], expected: false, name: "Random Case 21 (n=10, edges=19, forced_cycle=True)"),
+    TestCase(numCourses: 9, prerequisites: [[4, 3], [4, 2], [2, 1], [4, 3], [2, 0], [6, 0], [3, 0], [3, 1], [4, 0], [7, 5], [8, 4], [5, 1], [6, 0]], expected: true, name: "Random Case 22 (n=9, edges=13, forced_cycle=False)"),
+    TestCase(numCourses: 8, prerequisites: [[5, 6], [6, 5]], expected: false, name: "Random Case 23 (n=8, edges=2, forced_cycle=True)"),
+    TestCase(numCourses: 10, prerequisites: [[5, 0], [9, 6], [9, 2], [5, 4], [7, 3], [5, 4], [5, 4], [6, 3], [7, 5], [9, 5], [9, 7], [5, 2], [1, 0]], expected: true, name: "Random Case 24 (n=10, edges=13, forced_cycle=False)"),
+    TestCase(numCourses: 10, prerequisites: [[1, 0], [8, 4], [3, 7], [7, 3]], expected: false, name: "Random Case 25 (n=10, edges=4, forced_cycle=True)"),
+    TestCase(numCourses: 9, prerequisites: [[2, 0], [7, 2], [2, 5], [5, 2]], expected: false, name: "Random Case 26 (n=9, edges=4, forced_cycle=True)"),
+    TestCase(numCourses: 10, prerequisites: [[2, 0], [5, 4], [4, 1], [6, 0], [9, 2], [6, 2], [7, 1], [2, 1], [3, 2], [7, 5], [9, 2], [7, 5], [8, 3]], expected: true, name: "Random Case 27 (n=10, edges=13, forced_cycle=False)"),
+    TestCase(numCourses: 4, prerequisites: [[3, 2], [3, 0], [2, 0], [0, 2]], expected: false, name: "Random Case 28 (n=4, edges=4, forced_cycle=True)"),
+    TestCase(numCourses: 8, prerequisites: [[2, 1]], expected: true, name: "Random Case 29 (n=8, edges=1, forced_cycle=False)"),
+    TestCase(numCourses: 6, prerequisites: [[2, 1], [2, 0], [4, 3], [2, 4], [4, 2]], expected: false, name: "Random Case 30 (n=6, edges=5, forced_cycle=True)"),
+    TestCase(numCourses: 5, prerequisites: [[2, 1], [3, 1], [3, 0], [3, 2]], expected: true, name: "Random Case 31 (n=5, edges=4, forced_cycle=False)"),
+    TestCase(numCourses: 10, prerequisites: [[9, 1]], expected: true, name: "Random Case 32 (n=10, edges=1, forced_cycle=False)"),
+    TestCase(numCourses: 1, prerequisites: [], expected: true, name: "Random Case 33 (n=1, edges=0, forced_cycle=False)"),
+    TestCase(numCourses: 2, prerequisites: [[1, 0], [1, 0], [1, 0], [1, 0]], expected: true, name: "Random Case 34 (n=2, edges=4, forced_cycle=False)"),
+    TestCase(numCourses: 10, prerequisites: [[1, 0], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [7, 6], [8, 7], [9, 8]], expected: true, name: "Long Chain DAG (10 nodes)"),
+    TestCase(numCourses: 10, prerequisites: [[1, 0], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [7, 6], [8, 7], [9, 8], [0, 9]], expected: false, name: "Long Chain Plus Back Edge Cycle"),
+    TestCase(numCourses: 1, prerequisites: [[0, 0]], expected: false, name: "Self Loop Single Course"),
+    TestCase(numCourses: 5, prerequisites: [[1, 0], [2, 0], [3, 0], [4, 0]], expected: true, name: "Star DAG, One Root"),
+    TestCase(numCourses: 5, prerequisites: [[0, 1], [0, 2], [0, 3], [0, 4]], expected: true, name: "Star DAG Reversed"),
+    TestCase(numCourses: 100, prerequisites: [[1, 0], [2, 1], [3, 2], [4, 3], [5, 4], [6, 5], [7, 6], [8, 7], [9, 8], [10, 9], [11, 10], [12, 11], [13, 12], [14, 13], [15, 14], [16, 15], [17, 16], [18, 17], [19, 18], [20, 19], [21, 20], [22, 21], [23, 22], [24, 23], [25, 24], [26, 25], [27, 26], [28, 27], [29, 28], [30, 29], [31, 30], [32, 31], [33, 32], [34, 33], [35, 34], [36, 35], [37, 36], [38, 37], [39, 38], [40, 39], [41, 40], [42, 41], [43, 42], [44, 43], [45, 44], [46, 45], [47, 46], [48, 47], [49, 48], [50, 49], [51, 50], [52, 51], [53, 52], [54, 53], [55, 54], [56, 55], [57, 56], [58, 57], [59, 58], [60, 59], [61, 60], [62, 61], [63, 62], [64, 63], [65, 64], [66, 65], [67, 66], [68, 67], [69, 68], [70, 69], [71, 70], [72, 71], [73, 72], [74, 73], [75, 74], [76, 75], [77, 76], [78, 77], [79, 78], [80, 79], [81, 80], [82, 81], [83, 82], [84, 83], [85, 84], [86, 85], [87, 86], [88, 87], [89, 88], [90, 89], [91, 90], [92, 91], [93, 92], [94, 93], [95, 94], [96, 95], [97, 96], [98, 97], [99, 98]], expected: true, name: "Long Chain 100 Nodes")
 ]
 var passedCount = 0
 print("---DSA_TEST_RESULTS_START---")
 for (index, tc) in testCases.enumerated() {
     let startTime = DispatchTime.now()
     let result = solution.canFinish(tc.numCourses, tc.prerequisites)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "set_matrix_zeroes",
+                title: "73. Set Matrix Zeroes",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["Array", "Matrix"],
+                description: "Given an m x n integer matrix matrix, if an element is 0, set its entire row and column to 0's. You must do it in place.",
+                templateCode: """
+class Solution {
+    func setZeroes(_ matrix: inout [[Int]]) {
+        // TODO: Write your solution here
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func setZeroes(_ matrix: inout [[Int]]) {
+        var row0 = false
+        var col0 = false
+        for j in 0..<matrix[0].count {
+            if matrix[0][j] == 0 {
+                row0  = true
+                break
+            }
+        }
+        for i in 0..<matrix.count {
+            if matrix[i][0] == 0 {
+                col0 = true
+                break
+            }
+        }
+        for i in 1..<matrix.count {
+            var found0InRow = false
+            for j in 1..<matrix[0].count{
+                if matrix[i][j] == 0 {
+                    found0InRow = true
+                    break
+                }
+            }
+            if found0InRow {
+                matrix[i][0] = 0
+            }
+        }
+        for j in 1..<matrix[0].count {
+            var found0InCol = false
+            for i in 1..<matrix.count {
+                if matrix[i][j] == 0 {
+                    found0InCol = true
+                    break
+                }
+            }
+            if found0InCol {
+                matrix[0][j] = 0
+            }
+        }
+        for i in 1..<matrix.count {
+            for j in 1..<matrix[0].count {
+                if matrix[0][j] == 0 || matrix[i][0] == 0 {
+                    matrix[i][j] = 0
+                }
+            }
+        }
+        if row0 {
+            for j in 0..<matrix[0].count{
+                matrix[0][j] = 0
+            }
+        }
+        if col0 {
+            for i in 0..<matrix.count{
+                matrix[i][0] = 0
+            }
+        }
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let input: [[Int]]
+    let expected: [[Int]]
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(input: [[1, 1, 1], [1, 0, 1], [1, 1, 1]], expected: [[1, 0, 1], [0, 0, 0], [1, 0, 1]], name: "Example 1"),
+    TestCase(input: [[0, 1, 2, 0], [3, 4, 5, 2], [1, 3, 1, 5]], expected: [[0, 0, 0, 0], [0, 4, 5, 0], [0, 3, 1, 0]], name: "Example 2"),
+    TestCase(input: [[1]], expected: [[1]], name: "Single Cell No Zero"),
+    TestCase(input: [[0]], expected: [[0]], name: "Single Cell Zero"),
+    TestCase(input: [[1, 2, 3]], expected: [[1, 2, 3]], name: "Single Row No Zero"),
+    TestCase(input: [[1], [0], [3]], expected: [[0], [0], [0]], name: "Single Column With Zero"),
+    TestCase(input: [[0, 2, 3], [4, 5, 6]], expected: [[0, 0, 0], [0, 5, 6]], name: "Corner Zero"),
+    TestCase(input: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], expected: [[1, 2, 3], [4, 5, 6], [7, 8, 9]], name: "No Zeros At All"),
+    TestCase(input: [[8, 0], [4, 8], [4, 8], [0, 0], [0, 6]], expected: [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], name: "Random Case 1 (5x2)"),
+    TestCase(input: [[7, 2, 5, 6], [5, 7, 2, 7]], expected: [[7, 2, 5, 6], [5, 7, 2, 7]], name: "Random Case 2 (2x4)"),
+    TestCase(input: [[6, 6, 1, 3]], expected: [[6, 6, 1, 3]], name: "Random Case 3 (1x4)"),
+    TestCase(input: [[3, 6, 8, 9]], expected: [[3, 6, 8, 9]], name: "Random Case 4 (1x4)"),
+    TestCase(input: [[1, 2], [0, 8], [2, 8]], expected: [[0, 2], [0, 0], [0, 8]], name: "Random Case 5 (3x2)"),
+    TestCase(input: [[0, 9], [3, 0], [0, 7], [0, 6], [4, 0], [2, 0]], expected: [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], name: "Random Case 6 (6x2)"),
+    TestCase(input: [[2, 6, 5], [3, 0, 8]], expected: [[2, 0, 5], [0, 0, 0]], name: "Random Case 7 (2x3)"),
+    TestCase(input: [[4, 8, 9, 6, 3], [6, 7, 4, 4, 2], [2, 8, 4, 6, 9], [8, 6, 5, 4, 4], [5, 4, 0, 8, 1], [4, 8, 1, 0, 5]], expected: [[4, 8, 0, 0, 3], [6, 7, 0, 0, 2], [2, 8, 0, 0, 9], [8, 6, 0, 0, 4], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], name: "Random Case 8 (6x5)"),
+    TestCase(input: [[1, 0], [2, 8], [2, 0], [7, 0], [0, 9]], expected: [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], name: "Random Case 9 (5x2)"),
+    TestCase(input: [[0, 0]], expected: [[0, 0]], name: "Random Case 10 (1x2)"),
+    TestCase(input: [[4, 1, 9, 9, 2], [1, 9, 8, 2, 0], [0, 2, 7, 1, 0], [1, 5, 0, 0, 9], [6, 4, 4, 4, 3], [8, 5, 4, 1, 0]], expected: [[0, 1, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 4, 0, 0, 0], [0, 0, 0, 0, 0]], name: "Random Case 11 (6x5)"),
+    TestCase(input: [[7, 6, 8], [5, 1, 5], [0, 6, 1], [7, 0, 0], [0, 7, 3]], expected: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]], name: "Random Case 12 (5x3)"),
+    TestCase(input: [[8, 0, 4, 5, 3, 9], [5, 7, 9, 0, 1, 8], [0, 5, 0, 4, 8, 7], [0, 2, 1, 8, 0, 7]], expected: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 13 (4x6)"),
+    TestCase(input: [[9], [7]], expected: [[9], [7]], name: "Random Case 14 (2x1)"),
+    TestCase(input: [[1, 2, 0, 3], [9, 9, 4, 2], [1, 8, 3, 5], [3, 7, 1, 2], [3, 1, 1, 4], [3, 7, 4, 6]], expected: [[0, 0, 0, 0], [9, 9, 0, 2], [1, 8, 0, 5], [3, 7, 0, 2], [3, 1, 0, 4], [3, 7, 0, 6]], name: "Random Case 15 (6x4)"),
+    TestCase(input: [[5, 5, 7, 3, 3, 1], [9, 3, 8, 4, 0, 0], [7, 1, 3, 7, 0, 6]], expected: [[5, 5, 7, 3, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 16 (3x6)"),
+    TestCase(input: [[0], [9], [5], [3], [7]], expected: [[0], [0], [0], [0], [0]], name: "Random Case 17 (5x1)"),
+    TestCase(input: [[0, 9, 3, 0, 1, 4], [8, 7, 6, 1, 6, 2], [6, 1, 0, 7, 0, 0]], expected: [[0, 0, 0, 0, 0, 0], [0, 7, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 18 (3x6)"),
+    TestCase(input: [[0, 9], [5, 2]], expected: [[0, 0], [0, 2]], name: "Random Case 19 (2x2)"),
+    TestCase(input: [[1, 7], [5, 6], [7, 9], [4, 1], [0, 4], [6, 2]], expected: [[0, 7], [0, 6], [0, 9], [0, 1], [0, 0], [0, 2]], name: "Random Case 20 (6x2)"),
+    TestCase(input: [[5, 1, 4], [9, 0, 7], [0, 2, 7], [6, 2, 5], [8, 2, 3], [0, 2, 0]], expected: [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]], name: "Random Case 21 (6x3)"),
+    TestCase(input: [[0, 8, 0, 0, 0], [3, 0, 0, 5, 0]], expected: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], name: "Random Case 22 (2x5)"),
+    TestCase(input: [[1, 3, 9, 1, 4, 8], [0, 7, 9, 9, 2, 7], [8, 3, 5, 9, 2, 8], [4, 1, 1, 4, 8, 0], [0, 4, 9, 6, 4, 3], [0, 3, 2, 1, 2, 0]], expected: [[0, 3, 9, 1, 4, 0], [0, 0, 0, 0, 0, 0], [0, 3, 5, 9, 2, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 23 (6x6)"),
+    TestCase(input: [[7, 5, 1, 3, 2, 5], [2, 6, 6, 4, 3, 0]], expected: [[7, 5, 1, 3, 2, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 24 (2x6)"),
+    TestCase(input: [[0, 0, 4, 0], [3, 6, 9, 0], [5, 5, 7, 6], [9, 0, 0, 9]], expected: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]], name: "Random Case 25 (4x4)"),
+    TestCase(input: [[6, 0, 1, 0, 6], [7, 2, 0, 3, 5], [0, 7, 5, 2, 5], [9, 1, 0, 4, 6], [0, 0, 8, 0, 8], [7, 0, 5, 7, 6]], expected: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], name: "Random Case 26 (6x5)"),
+    TestCase(input: [[2, 6], [9, 2], [0, 6], [6, 8], [6, 0], [2, 9]], expected: [[0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]], name: "Random Case 27 (6x2)"),
+    TestCase(input: [[8, 5, 2, 8, 0, 4], [8, 0, 6, 9, 8, 9], [7, 3, 6, 0, 7, 8], [9, 2, 0, 4, 6, 1], [0, 1, 0, 0, 5, 8]], expected: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]], name: "Random Case 28 (5x6)"),
+    TestCase(input: [[9, 8, 2]], expected: [[9, 8, 2]], name: "Random Case 29 (1x3)"),
+    TestCase(input: [[3, 1, 3, 0], [0, 9, 4, 5], [4, 0, 8, 3], [6, 5, 3, 5]], expected: [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 3, 0]], name: "Random Case 30 (4x4)"),
+    TestCase(input: [[5, 4, 9], [7, 0, 8], [0, 8, 4]], expected: [[0, 0, 9], [0, 0, 0], [0, 0, 0]], name: "Random Case 31 (3x3)"),
+    TestCase(input: [[6], [8], [4]], expected: [[6], [8], [4]], name: "Random Case 32 (3x1)"),
+    TestCase(input: [[9, 4, 3, 1, 1], [6, 2, 0, 3, 3], [1, 2, 1, 6, 9], [7, 8, 8, 2, 0], [6, 3, 2, 5, 2]], expected: [[9, 4, 0, 1, 0], [0, 0, 0, 0, 0], [1, 2, 0, 6, 0], [0, 0, 0, 0, 0], [6, 3, 0, 5, 0]], name: "Random Case 33 (5x5)"),
+    TestCase(input: [[0, 3, 7, 2, 2, 4], [2, 9, 6, 3, 0, 1], [9, 9, 7, 9, 4, 6], [2, 4, 7, 6, 4, 2], [8, 0, 9, 5, 7, 2], [6, 7, 9, 9, 1, 2]], expected: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 7, 9, 0, 6], [0, 0, 7, 6, 0, 2], [0, 0, 0, 0, 0, 0], [0, 0, 9, 9, 0, 2]], name: "Random Case 34 (6x6)"),
+    TestCase(input: [[0, 9], [6, 4], [2, 9], [1, 9]], expected: [[0, 0], [0, 4], [0, 9], [0, 9]], name: "Random Case 35 (4x2)"),
+    TestCase(input: [[1, 5, 3, 7, 5, 5], [1, 2, 9, 0, 0, 6], [3, 2, 7, 8, 2, 5], [2, 4, 5, 5, 2, 3]], expected: [[1, 5, 3, 0, 0, 5], [0, 0, 0, 0, 0, 0], [3, 2, 7, 0, 0, 5], [2, 4, 5, 0, 0, 3]], name: "Random Case 36 (4x6)"),
+    TestCase(input: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], expected: [[0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]], name: "All Zero 5x5"),
+    TestCase(input: [[0, 1, 2, 3, 4], [1, 2, 3, 4, 5], [2, 3, 4, 5, 6], [3, 4, 5, 6, 7], [4, 5, 6, 7, 8]], expected: [[0, 0, 0, 0, 0], [0, 2, 3, 4, 5], [0, 3, 4, 5, 6], [0, 4, 5, 6, 7], [0, 5, 6, 7, 8]], name: "No Zeros Gradient 5x5"),
+    TestCase(input: [[1, 0], [0, 1]], expected: [[0, 0], [0, 0]], name: "Diagonal Zeros 2x2"),
+    TestCase(input: [[0, 1], [1, 0]], expected: [[0, 0], [0, 0]], name: "Anti-Diagonal Zeros 2x2"),
+    TestCase(input: [[5, 5, 5, 5, 5]], expected: [[5, 5, 5, 5, 5]], name: "Single Row No Zero Length 5"),
+    TestCase(input: [[5], [5], [5], [5], [5]], expected: [[5], [5], [5], [5], [5]], name: "Single Column No Zero Length 5")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    var matrix = tc.input
+    let startTime = DispatchTime.now()
+    solution.setZeroes(&matrix)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if matrix == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(matrix) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(matrix) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "leftmost_column_one_interactive",
+                title: "Leftmost Column With At Least A One (Interactive Matrix)",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["Binary Search", "Matrix", "Interactive"],
+                description: "You are given a row-sorted binary matrix - every row is sorted in non-decreasing order, and every entry is 0 or 1 - but you may not access it directly. Instead you are given a BinaryMatrix object exposing exactly two methods: dimensions() returns [m, n], the number of rows and columns, and get(x, y) returns the value at row x, column y (0-based indexing). Return the index of the leftmost column that contains at least one 1. If no column contains a 1, return -1.\n\nConstraints: you may call dimensions() at most once, and get(x, y) at most 2000 times.",
+                templateCode: """
+class BinaryMatrix {
+    private let matrix: [[Int]]
+    private(set) var getCallCount = 0
+
+    init(_ matrix: [[Int]]) {
+        self.matrix = matrix
+    }
+
+    func dimensions() -> [Int] {
+        return [matrix.count, matrix.isEmpty ? 0 : matrix[0].count]
+    }
+
+    func get(_ x: Int, _ y: Int) -> Int {
+        getCallCount += 1
+        return matrix[x][y]
+    }
+}
+
+class Solution {
+    func leftMostColumnWithOne(_ binaryMatrix: BinaryMatrix) -> Int {
+        // TODO: Write your solution here.
+        // You may call binaryMatrix.dimensions() only once, and
+        // binaryMatrix.get(x, y) at most 2000 times.
+        return -1
+    }
+}
+""",
+                solutionCode: """
+class BinaryMatrix {
+    private let matrix: [[Int]]
+    private(set) var getCallCount = 0
+
+    init(_ matrix: [[Int]]) {
+        self.matrix = matrix
+    }
+
+    func dimensions() -> [Int] {
+        return [matrix.count, matrix.isEmpty ? 0 : matrix[0].count]
+    }
+
+    func get(_ x: Int, _ y: Int) -> Int {
+        getCallCount += 1
+        return matrix[x][y]
+    }
+}
+
+class Solution {
+    func leftMostColumnWithOne(_ binaryMatrix: BinaryMatrix) -> Int {
+        let dims = binaryMatrix.dimensions()
+        let rows = dims[0]
+        let cols = dims[1]
+
+        var row = 0
+        var col = cols - 1
+        var foundOne = false
+
+        while row < rows && col >= 0 {
+            if binaryMatrix.get(row, col) == 1 {
+                col -= 1
+                foundOne = true
+            } else {
+                row += 1
+            }
+        }
+
+        return foundOne ? col + 1 : -1
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let matrix: [[Int]]
+    let expected: Int
+    let name: String
+}
+let testCases = [
+    TestCase(matrix: [[0, 0, 0], [0, 1, 1]], expected: 1, name: "Problem Sample 1 (2x3)"),
+    TestCase(matrix: [[0, 0], [0, 0], [0, 0]], expected: -1, name: "Problem Sample 2 (3x2 all zero)"),
+    TestCase(matrix: [[1]], expected: 0, name: "Single Cell One (1x1)"),
+    TestCase(matrix: [[0]], expected: -1, name: "Single Cell Zero (1x1)"),
+    TestCase(matrix: [[0, 0, 0], [0, 0, 0], [0, 0, 1]], expected: 2, name: "Only Last Cell One (3x3)"),
+    TestCase(matrix: [[0, 0, 0, 1], [0, 1, 1, 1], [0, 0, 1, 1]], expected: 1, name: "Staircase Matrix (3x4)"),
+    TestCase(matrix: [[1, 1, 1], [1, 1, 1], [1, 1, 1]], expected: 0, name: "All Ones (3x3)"),
+    TestCase(matrix: [[0, 1], [0, 1], [0, 1]], expected: 1, name: "Second Column All Ones (3x2)"),
+    TestCase(matrix: [[0, 0, 1, 1], [0, 1, 1, 1], [1, 1, 1, 1], [0, 0, 0, 1]], expected: 0, name: "Leading One In Third Row (4x4)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1]], expected: 7, name: "Single Row Last Col Only (1x8)"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "Single Row All Ones (1x8)"),
+    TestCase(matrix: [[1], [1], [0], [1], [0]], expected: 0, name: "Single Column Mixed (5x1)"),
+    TestCase(matrix: [[0], [0], [0], [0]], expected: -1, name: "Single Column No Ones (4x1)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0]], expected: -1, name: "All Zero 5x8"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1]], expected: 0, name: "All One 5x8"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1]], expected: 0, name: "Decreasing Leading Zeros (7x6)"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1], [0, 1, 1, 1, 1, 1], [0, 0, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1], [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 0, 0]], expected: 0, name: "Increasing Leading Zeros (7x6)"),
+    TestCase(matrix: [[0, 0, 0, 0, 0, 0, 0, 1], [0, 0, 0, 0, 1, 1, 1, 1]], expected: 4, name: "Two Rows, One Late (2x8)"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1, 1, 1]], expected: 0, name: "Two Rows, One Early (2x8)"),
+    TestCase(matrix: [[0], [1]], expected: 0, name: "Random Case 1 (2x1)"),
+    TestCase(matrix: [[1, 1, 1], [1, 1, 1], [0, 0, 0], [1, 1, 1]], expected: 0, name: "Random Case 2 (4x3)"),
+    TestCase(matrix: [[1, 1]], expected: 0, name: "Random Case 3 (1x2)"),
+    TestCase(matrix: [[1], [0], [1], [0]], expected: 0, name: "Random Case 4 (4x1)"),
+    TestCase(matrix: [[1], [0], [0], [0], [1]], expected: 0, name: "Random Case 5 (5x1)"),
+    TestCase(matrix: [[1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1], [0, 0, 0, 1, 1, 1], [1, 1, 1, 1, 1, 1]], expected: 0, name: "Random Case 6 (4x6)"),
+    TestCase(matrix: [[0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 1, 1], [0, 0, 0, 0, 0, 0], [1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 0, 1], [0, 0, 0, 1, 1, 1]], expected: 0, name: "Random Case 7 (6x6)"),
+    TestCase(matrix: [[0, 1, 1, 1, 1, 1, 1], [0, 0, 0, 0, 1, 1, 1]], expected: 1, name: "Random Case 8 (2x7)"),
+    TestCase(matrix: [[1, 1, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1], [0, 0, 1, 1], [1, 1, 1, 1], [0, 1, 1, 1]], expected: 0, name: "Random Case 9 (6x4)"),
+    TestCase(matrix: [[0, 0, 0, 0, 1, 1, 1], [0, 0, 0, 0, 0, 0, 0]], expected: 4, name: "Random Case 10 (2x7)"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let bm = BinaryMatrix(tc.matrix)
+    let result = solution.leftMostColumnWithOne(bm)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "move_zeroes",
+                title: "283. Move Zeroes",
+                category: "dsa",
+                difficulty: "Easy",
+                topics: ["Array", "Two Pointers"],
+                description: "Given an integer array nums, move all 0's to the end of it while maintaining the relative order of the non-zero elements. Note that you must do this in-place without making a copy of the array.",
+                templateCode: """
+class Solution {
+    func moveZeroes(_ nums: inout [Int]) {
+        // TODO: Write your solution here
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func moveZeroes(_ nums: inout [Int]) {
+        var f = -1 // where to put
+        for i in 0..<nums.count {
+            if nums[i] == 0 {
+                f = i
+                break
+            }
+        }
+        if f == -1 {
+            return
+        }
+        var s = f + 1 // what to put
+        while s < nums.count {
+            if nums[s] != 0 {
+                nums[f] = nums[s]
+                s += 1 
+                f += 1
+            }else{
+                s += 1 
+            }
+        }
+        while f < nums.count {
+            nums[f] = 0 
+            f += 1
+        }
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let input: [Int]
+    let expected: [Int]
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(input: [0, 1, 0, 3, 12], expected: [1, 3, 12, 0, 0], name: "Example 1"),
+    TestCase(input: [0], expected: [0], name: "Example 2 (Single Zero)"),
+    TestCase(input: [1, 2, 3], expected: [1, 2, 3], name: "No Zeros At All"),
+    TestCase(input: [0, 0, 0], expected: [0, 0, 0], name: "All Zeros"),
+    TestCase(input: [5], expected: [5], name: "Single Non-Zero"),
+    TestCase(input: [1, 2, 0], expected: [1, 2, 0], name: "Zero Already At End"),
+    TestCase(input: [1, 0, 2, 0, 3, 0, 4], expected: [1, 2, 3, 4, 0, 0, 0], name: "Zeros Interspersed"),
+    TestCase(input: [-1, 0, -2, 0, 3], expected: [-1, -2, 3, 0, 0], name: "Negative Numbers Mixed With Zero"),
+    TestCase(input: [2147483647, 0, -2147483648, 0], expected: [2147483647, -2147483648, 0, 0], name: "Int32 Boundary Values"),
+    TestCase(input: [0, 1], expected: [1, 0], name: "Two Elements"),
+    TestCase(input: [5, 0, 5, 0, 5], expected: [5, 5, 5, 0, 0], name: "Repeated Value With Zeros"),
+    TestCase(input: [0, 0, 0, 1, 2, 3], expected: [1, 2, 3, 0, 0, 0], name: "Leading Zeros Then All Non-Zero"),
+    TestCase(input: [1, 2, 3, 0, 0], expected: [1, 2, 3, 0, 0], name: "Trailing Zeros Already"),
+    TestCase(input: [0], expected: [0], name: "Single Zero Only"),
+    TestCase(input: [0, 1, 0, 1, 0, 1], expected: [1, 1, 1, 0, 0, 0], name: "Alternating Zero Nonzero"),
+    TestCase(input: [-5, -3, -1], expected: [-5, -3, -1], name: "All Negative No Zero"),
+    TestCase(input: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7], expected: [7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], name: "Large Array Mostly Zero"),
+    TestCase(input: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0], expected: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 0], name: "Large Array Mostly Nonzero"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    var nums = tc.input
+    let startTime = DispatchTime.now()
+    solution.moveZeroes(&nums)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if nums == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(nums) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(nums) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "pascals_triangle",
+                title: "118. Pascal's Triangle",
+                category: "dsa",
+                difficulty: "Easy",
+                topics: ["Array", "Dynamic Programming"],
+                description: "Given an integer numRows, return the first numRows of Pascal's triangle. In Pascal's triangle, each number is the sum of the two numbers directly above it.",
+                templateCode: """
+class Solution {
+    func generate(_ numRows: Int) -> [[Int]] {
+        // TODO: Write your solution here
+        return []
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func generate(_ numRows: Int) -> [[Int]] {
+        var ans : [[Int]] = []
+        if numRows == 1 {
+            return [[1]]
+        }
+        ans = [[1]]
+        for i in 1..<numRows {
+            var oldArray = ans[i - 1]
+            var newArray = Array(repeating : 1 , count : oldArray.count + 1)
+            newArray[0] = 1
+            for j in 1..<(newArray.count - 1) { // j index of new array
+                newArray[j] = oldArray[j - 1] + oldArray[j] 
+            }
+            newArray[newArray.count - 1] = 1
+            ans.append(newArray)
+        }
+       return ans
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let numRows: Int
+    let expected: [[Int]]
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(numRows: 5, expected: [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1]], name: "Example 1"),
+    TestCase(numRows: 1, expected: [[1]], name: "Example 2 (Single Row)"),
+    TestCase(numRows: 2, expected: [[1], [1, 1]], name: "Two Rows"),
+    TestCase(numRows: 3, expected: [[1], [1, 1], [1, 2, 1]], name: "Three Rows"),
+    TestCase(numRows: 10, expected: [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1], [1, 9, 36, 84, 126, 126, 84, 36, 9, 1]], name: "Ten Rows"),
+    TestCase(numRows: 30, expected: [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1], [1, 9, 36, 84, 126, 126, 84, 36, 9, 1], [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1], [1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1], [1, 12, 66, 220, 495, 792, 924, 792, 495, 220, 66, 12, 1], [1, 13, 78, 286, 715, 1287, 1716, 1716, 1287, 715, 286, 78, 13, 1], [1, 14, 91, 364, 1001, 2002, 3003, 3432, 3003, 2002, 1001, 364, 91, 14, 1], [1, 15, 105, 455, 1365, 3003, 5005, 6435, 6435, 5005, 3003, 1365, 455, 105, 15, 1], [1, 16, 120, 560, 1820, 4368, 8008, 11440, 12870, 11440, 8008, 4368, 1820, 560, 120, 16, 1], [1, 17, 136, 680, 2380, 6188, 12376, 19448, 24310, 24310, 19448, 12376, 6188, 2380, 680, 136, 17, 1], [1, 18, 153, 816, 3060, 8568, 18564, 31824, 43758, 48620, 43758, 31824, 18564, 8568, 3060, 816, 153, 18, 1], [1, 19, 171, 969, 3876, 11628, 27132, 50388, 75582, 92378, 92378, 75582, 50388, 27132, 11628, 3876, 969, 171, 19, 1], [1, 20, 190, 1140, 4845, 15504, 38760, 77520, 125970, 167960, 184756, 167960, 125970, 77520, 38760, 15504, 4845, 1140, 190, 20, 1], [1, 21, 210, 1330, 5985, 20349, 54264, 116280, 203490, 293930, 352716, 352716, 293930, 203490, 116280, 54264, 20349, 5985, 1330, 210, 21, 1], [1, 22, 231, 1540, 7315, 26334, 74613, 170544, 319770, 497420, 646646, 705432, 646646, 497420, 319770, 170544, 74613, 26334, 7315, 1540, 231, 22, 1], [1, 23, 253, 1771, 8855, 33649, 100947, 245157, 490314, 817190, 1144066, 1352078, 1352078, 1144066, 817190, 490314, 245157, 100947, 33649, 8855, 1771, 253, 23, 1], [1, 24, 276, 2024, 10626, 42504, 134596, 346104, 735471, 1307504, 1961256, 2496144, 2704156, 2496144, 1961256, 1307504, 735471, 346104, 134596, 42504, 10626, 2024, 276, 24, 1], [1, 25, 300, 2300, 12650, 53130, 177100, 480700, 1081575, 2042975, 3268760, 4457400, 5200300, 5200300, 4457400, 3268760, 2042975, 1081575, 480700, 177100, 53130, 12650, 2300, 300, 25, 1], [1, 26, 325, 2600, 14950, 65780, 230230, 657800, 1562275, 3124550, 5311735, 7726160, 9657700, 10400600, 9657700, 7726160, 5311735, 3124550, 1562275, 657800, 230230, 65780, 14950, 2600, 325, 26, 1], [1, 27, 351, 2925, 17550, 80730, 296010, 888030, 2220075, 4686825, 8436285, 13037895, 17383860, 20058300, 20058300, 17383860, 13037895, 8436285, 4686825, 2220075, 888030, 296010, 80730, 17550, 2925, 351, 27, 1], [1, 28, 378, 3276, 20475, 98280, 376740, 1184040, 3108105, 6906900, 13123110, 21474180, 30421755, 37442160, 40116600, 37442160, 30421755, 21474180, 13123110, 6906900, 3108105, 1184040, 376740, 98280, 20475, 3276, 378, 28, 1], [1, 29, 406, 3654, 23751, 118755, 475020, 1560780, 4292145, 10015005, 20030010, 34597290, 51895935, 67863915, 77558760, 77558760, 67863915, 51895935, 34597290, 20030010, 10015005, 4292145, 1560780, 475020, 118755, 23751, 3654, 406, 29, 1]], name: "Maximum Constraint (30 Rows)"),
+    TestCase(numRows: 6, expected: [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1]], name: "Six Rows"),
+    TestCase(numRows: 15, expected: [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1], [1, 6, 15, 20, 15, 6, 1], [1, 7, 21, 35, 35, 21, 7, 1], [1, 8, 28, 56, 70, 56, 28, 8, 1], [1, 9, 36, 84, 126, 126, 84, 36, 9, 1], [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1], [1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1], [1, 12, 66, 220, 495, 792, 924, 792, 495, 220, 66, 12, 1], [1, 13, 78, 286, 715, 1287, 1716, 1716, 1287, 715, 286, 78, 13, 1], [1, 14, 91, 364, 1001, 2002, 3003, 3432, 3003, 2002, 1001, 364, 91, 14, 1]], name: "Fifteen Rows"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.generate(tc.numRows)
     let endTime = DispatchTime.now()
     let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
     let timeInterval = Double(nanoTime) / 1_000_000.0
@@ -3288,177 +4691,6 @@ print("=================================")
                 testHarness: ""
             ),
             Question(
-                id: "snake_case_converter",
-                title: "Snake Case Converter",
-                category: "swiftPractice",
-                difficulty: "Easy",
-                topics: ["String", "Parsing"],
-                description: "Write a function that takes a string and returns it in snake_case, where each word is lowercased and separated from adjacent words by a single underscore. The input may contain letters and any combination of delimiter punctuation between words.",
-                templateCode: """
-import Foundation
-
-func toSnakeCase(_ str: String) -> String {
-    // TODO: Write your solution here
-    return str
-}
-
-print(toSnakeCase("cats AND*Dogs-are Awesome"))
-print(toSnakeCase("a b c d-e-f%g"))
-""",
-                solutionCode: """
-import Foundation
-
-func toSnakeCase(_ str: String) -> String {
-    var words: [String] = []
-    var current = ""
-    for char in str {
-        if char.isLetter {
-            current.append(char)
-        } else if !current.isEmpty {
-            words.append(current.lowercased())
-            current = ""
-        }
-    }
-    if !current.isEmpty {
-        words.append(current.lowercased())
-    }
-    return words.joined(separator: "_")
-}
-
-print(toSnakeCase("cats AND*Dogs-are Awesome"))
-print(toSnakeCase("a b c d-e-f%g"))
-print(toSnakeCase("BOB loves-coding"))
-""",
-                testHarness: ""
-            ),
-            Question(
-                id: "ios_local_cache",
-                title: "iOS Local Cache",
-                category: "swiftPractice",
-                difficulty: "Medium",
-                topics: ["Data Structures", "Dictionary"],
-                description: "Implement a simple key-value cache class with add, get, and size functions. add(key, value) returns \"added\" for a new key or \"overwritten\" if the key already existed. get(key) returns the stored value or \"miss\" if absent. size() returns the number of stored items.",
-                templateCode: """
-import Foundation
-
-class Cache {
-    // TODO: implement add, get, and size
-
-    func add(_ key: String, _ value: String) -> String {
-        return ""
-    }
-
-    func get(_ key: String) -> String {
-        return ""
-    }
-
-    func size() -> Int {
-        return 0
-    }
-}
-
-let cache = Cache()
-var results: [String] = []
-results.append(cache.add("a", "value1"))
-results.append(cache.add("b", "value2"))
-results.append(cache.add("b", "value2"))
-results.append(cache.add("rrrrr", "nothing"))
-results.append(cache.get("hello"))
-results.append(cache.get("world"))
-results.append(cache.get("b"))
-results.append(cache.get("rrrrr"))
-results.append("\\(cache.size())")
-print(results.joined(separator: " "))
-""",
-                solutionCode: """
-import Foundation
-
-class Cache {
-    private var storage: [String: String] = [:]
-
-    func add(_ key: String, _ value: String) -> String {
-        let existed = storage[key] != nil
-        storage[key] = value
-        return existed ? "overwritten" : "added"
-    }
-
-    func get(_ key: String) -> String {
-        return storage[key] ?? "miss"
-    }
-
-    func size() -> Int {
-        return storage.count
-    }
-}
-
-let cache = Cache()
-var results: [String] = []
-results.append(cache.add("a", "value1"))
-results.append(cache.add("b", "value2"))
-results.append(cache.add("b", "value2"))
-results.append(cache.add("rrrrr", "nothing"))
-results.append(cache.get("hello"))
-results.append(cache.get("world"))
-results.append(cache.get("b"))
-results.append(cache.get("rrrrr"))
-results.append("\\(cache.size())")
-print(results.joined(separator: " "))
-""",
-                testHarness: ""
-            ),
-            Question(
-                id: "packed_age_counter",
-                title: "Count Ages From a Packed Key-Value String",
-                category: "swiftPractice",
-                difficulty: "Medium",
-                topics: ["Codable", "String Parsing"],
-                description: "Decode a JSON object with a single \"data\" key whose value is a string containing repeated \"key=STRING, age=INTEGER\" entries. Count how many entries have an age greater than or equal to 50 and print the result.",
-                templateCode: """
-import Foundation
-
-struct DataObject: Decodable {
-    let data: String
-}
-
-func countAgesAtLeast50(_ raw: String) -> Int {
-    // TODO: Write your solution here
-    return 0
-}
-
-let json = "{\\"data\\": \\"key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47\\"}"
-let jsonData = json.data(using: .utf8)!
-let dataObject = try! JSONDecoder().decode(DataObject.self, from: jsonData)
-print(countAgesAtLeast50(dataObject.data))
-""",
-                solutionCode: """
-import Foundation
-
-struct DataObject: Decodable {
-    let data: String
-}
-
-func countAgesAtLeast50(_ raw: String) -> Int {
-    let tokens = raw.components(separatedBy: ", ")
-    var count = 0
-    for token in tokens {
-        if token.hasPrefix("age=") {
-            let numberPart = token.replacingOccurrences(of: "age=", with: "")
-            if let age = Int(numberPart), age >= 50 {
-                count += 1
-            }
-        }
-    }
-    return count
-}
-
-let json = "{\\"data\\": \\"key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47\\"}"
-let jsonData = json.data(using: .utf8)!
-let dataObject = try! JSONDecoder().decode(DataObject.self, from: jsonData)
-print(countAgesAtLeast50(dataObject.data))
-""",
-                testHarness: ""
-            ),
-            Question(
                 id: "github_repository_model",
                 title: "GitHub Repository Model (Codable + Identifiable)",
                 category: "swiftPractice",
@@ -3843,256 +5075,6 @@ robot.sayGoodbye()
 """,
                 testHarness: ""
             ),
-            Question(
-                id: "ebay_github_repo_viewer_machine_coding",
-                title: "Machine Coding Round: GitHub Repository Viewer (4-Tier Assessment)",
-                category: "swiftPractice",
-                difficulty: "Hard",
-                topics: ["Machine Coding", "Networking", "SwiftUI", "Codable", "Concurrency"],
-                description: """
-This is a real 4-tier iOS take-home "Machine Coding Round" assessment (eBay-style): build a GitHub Repository Viewer in SwiftUI, one tier at a time. Each tier is gradeable independently — a real assessment like this scores your highest submission across attempts and gives partial credit, so an incomplete Tier 3/4 attempt with a solid Tier 1/2 still earns real points. You do not need fully "runnable" UI code to get credit for the later tiers — demonstrating correct Swift/SwiftUI/networking patterns is what's graded, and in fact this app's own console runner can't execute SwiftUI view code or make real network calls either, so — matching the real assessment's own grading model — only Tier 1 (JSON decoding) actually executes in the console below; Tiers 2-4 are graded by reading correct, idiomatic code, not by running it.
-
-TIER 1 — Data Modeling & Basic UI
-Create a Swift struct named Repository conforming to both Codable and Identifiable, with:
-  • id (Int)
-  • name (String)
-  • language (String?) — optional
-  • description (String?) — optional
-  • stargazersCount (Int) — note the JSON key is "stargazers_count", not "stargazersCount"
-Then decode the sample JSON below into [Repository] and display it in a List: repository name, description (if present), language, and star count with a ★ icon.
-
-Sample JSON:
-[
-  { "id": 1, "name": "AwesomeProject", "language": "Swift", "description": "An awesome Swift project.", "stargazers_count": 42 },
-  { "id": 2, "name": "MissingLanguage", "description": "No language provided.", "stargazers_count": 10 },
-  { "id": 3, "name": "NoDescription", "language": "Objective-C", "stargazers_count": 15 }
-]
-
-TIER 2 — Networking Service Implementation
-Create NetworkingService.swift with:
-  func fetchRepositories(for username: String) async throws -> [Repository]
-Use URLSession + async/await against https://api.github.com/users/{username}/repos. Handle invalid URLs, network errors, non-2xx HTTP responses, and decoding failures as distinct, clearly-reported error cases — not a single generic catch-all. Update ContentView to call it and show a loading indicator while the request is in flight.
-
-TIER 3 — Caching & Retries
-Enhance the networking service with:
-  • An in-memory cache keyed by username — a repeated fetch for the same username returns the cached array instead of making a new network call.
-  • A retry mechanism: if the first attempt fails, retry exactly once before propagating the error.
-Keep using async/await throughout.
-
-TIER 4 — Dynamic Search & State Management
-Update the view to add a TextField ("Enter GitHub username") and a "Fetch" button, and handle all of: idle, loading (ProgressView), success (the list), and error (a clear message) states, with correct transitions between them as the user searches for different usernames.
-
-EXPECTED UI LAYOUT
-  • Header: large title "Repositories".
-  • Search bar: TextField placeholder "Enter GitHub username" + a "Fetch" button next to it.
-  • Each list cell: bold repository name, description below it, then a footer row with "Language: [Name]" on the left and "★ [Count]" on the right (language shows "N/A" when absent; the description line is simply omitted when absent, as in "NoDescription" above).
-
-TIER 4 REFERENCE IMPLEMENTATION (SwiftUI — not part of the editable/runnable file; see above for why)
-
-    enum LoadState {
-        case idle
-        case loading
-        case success([Repository])
-        case failure(String)
-    }
-
-    struct ContentView: View {
-        @State private var username: String = ""
-        @State private var state: LoadState = .idle
-
-        var body: some View {
-            NavigationView {
-                VStack(spacing: 0) {
-                    HStack {
-                        TextField("Enter GitHub username", text: $username)
-                            .textFieldStyle(.roundedBorder)
-                        Button("Fetch") { fetch() }
-                            .disabled(username.trimmingCharacters(in: .whitespaces).isEmpty)
-                    }
-                    .padding()
-
-                    switch state {
-                    case .idle:
-                        Spacer()
-                        Text("Enter a username and tap Fetch.").foregroundColor(.secondary)
-                        Spacer()
-                    case .loading:
-                        Spacer()
-                        ProgressView("Loading...")
-                        Spacer()
-                    case .success(let repos):
-                        List(repos) { repo in
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(repo.name).font(.headline)
-                                if let description = repo.description {
-                                    Text(description).font(.subheadline)
-                                }
-                                HStack {
-                                    Text("Language: \\(repo.language ?? "N/A")")
-                                        .font(.caption).foregroundColor(.secondary)
-                                    Spacer()
-                                    Text("★ \\(repo.stargazersCount)").font(.caption)
-                                }
-                            }
-                        }
-                    case .failure(let message):
-                        Spacer()
-                        Text(message).foregroundColor(.red).padding()
-                        Spacer()
-                    }
-                }
-                .navigationTitle("Repositories")
-            }
-        }
-
-        private func fetch() {
-            state = .loading
-            let requestedUsername = username
-            Task {
-                do {
-                    let repos = try await NetworkingService.shared.fetchRepositories(for: requestedUsername)
-                    state = .success(repos)
-                } catch {
-                    state = .failure(error.localizedDescription)
-                }
-            }
-        }
-    }
-""",
-                templateCode: """
-import Foundation
-
-// MARK: - Tier 1: Data Model
-// TODO: Create a Repository struct conforming to Codable and Identifiable.
-// Properties: id (Int), name (String), language (String? optional),
-// description (String? optional), stargazersCount (Int, JSON key "stargazers_count")
-struct Repository {
-    // TODO: implement your solution here
-}
-
-// MARK: - Tier 2 & 3: Networking Service
-// TODO: Implement fetchRepositories(for:) using async/await against
-// https://api.github.com/users/{username}/repos, with:
-//  - proper error handling (invalid URL, network errors, HTTP errors, decoding errors)
-//  - an in-memory cache keyed by username
-//  - exactly one retry before propagating a failure
-//
-// Tier 4 (the SwiftUI view: a TextField + "Fetch" button, and
-// idle/loading/success/error states) is described in the PROBLEM
-// DESCRIPTION above along with a complete reference implementation to
-// compare against — it's not part of this file, since this app's console
-// runner has no way to execute SwiftUI view code either way.
-class NetworkingService {
-    static let shared = NetworkingService()
-    // TODO: implement your solution here
-}
-
-// MARK: - Runnable demo — decode the sample JSON and print each repository
-// in the format: Name | Description | Language: X | ★ Count
-let sampleJSON = "[{\\"id\\": 1, \\"name\\": \\"AwesomeProject\\", \\"language\\": \\"Swift\\", \\"description\\": \\"An awesome Swift project.\\", \\"stargazers_count\\": 42}, {\\"id\\": 2, \\"name\\": \\"MissingLanguage\\", \\"description\\": \\"No language provided.\\", \\"stargazers_count\\": 10}, {\\"id\\": 3, \\"name\\": \\"NoDescription\\", \\"language\\": \\"Objective-C\\", \\"stargazers_count\\": 15}]"
-// TODO: decode sampleJSON into [Repository] and print each one
-""",
-                solutionCode: """
-import Foundation
-
-// MARK: - Tier 1: Data Model
-
-struct Repository: Codable, Identifiable {
-    let id: Int
-    let name: String
-    let language: String?
-    let description: String?
-    let stargazersCount: Int
-
-    enum CodingKeys: String, CodingKey {
-        case id, name, language, description
-        case stargazersCount = "stargazers_count"
-    }
-}
-
-// MARK: - Tier 2 & 3: Networking Service (async/await, in-memory cache, single retry)
-
-enum NetworkingError: Error {
-    case invalidURL
-    case invalidResponse
-    case httpError(Int)
-    case decodingError(Error)
-}
-
-func describe(_ error: NetworkingError) -> String {
-    switch error {
-    case .invalidURL: return "Invalid URL."
-    case .invalidResponse: return "Invalid server response."
-    case .httpError(let code): return "Server returned HTTP \\(code)."
-    case .decodingError(let err): return "Failed to decode response: \\(err)"
-    }
-}
-
-actor NetworkingService {
-    static let shared = NetworkingService()
-
-    private var cache: [String: [Repository]] = [:]
-
-    func fetchRepositories(for username: String) async throws -> [Repository] {
-        if let cached = cache[username] {
-            return cached
-        }
-        do {
-            let repos = try await performFetch(for: username)
-            cache[username] = repos
-            return repos
-        } catch {
-            // Exactly one retry before propagating the error.
-            let repos = try await performFetch(for: username)
-            cache[username] = repos
-            return repos
-        }
-    }
-
-    private func performFetch(for username: String) async throws -> [Repository] {
-        guard let url = URL(string: "https://api.github.com/users/\\(username)/repos") else {
-            throw NetworkingError.invalidURL
-        }
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw NetworkingError.invalidResponse
-        }
-        guard (200..<300).contains(httpResponse.statusCode) else {
-            throw NetworkingError.httpError(httpResponse.statusCode)
-        }
-        do {
-            return try JSONDecoder().decode([Repository].self, from: data)
-        } catch {
-            throw NetworkingError.decodingError(error)
-        }
-    }
-}
-
-// MARK: - Runnable demo (Tier 1 decode, console-verifiable)
-//
-// NetworkingService above is real, correct Tier 2/3 reference code — read it
-// to see the async/await + cache + single-retry implementation — but it
-// deliberately isn't CALLED from this executable section. This app's runner
-// transpiles console-style Swift to JS to execute it, and that JS engine has
-// no real networking at all (every URLSession call anywhere in this app is a
-// hardcoded canned response, never an actual HTTP request), so a "live"
-// fetch here could only ever print fake, meaningless data — not a
-// meaningful demonstration either way. Tier 4's SwiftUI view is likewise not
-// part of this executable file, for the same reason SwiftUI's View
-// protocol/property wrappers have no JS representation at all. Both are
-// fully shown above/in the PROBLEM DESCRIPTION as correct reference code to
-// read and compare against — matching the real assessment this is modeled
-// on, which never executes ANY of your code either, only reviews it.
-
-print("=== Tier 1: Decoding sample JSON ===")
-let sampleJSON = "[{\\"id\\": 1, \\"name\\": \\"AwesomeProject\\", \\"language\\": \\"Swift\\", \\"description\\": \\"An awesome Swift project.\\", \\"stargazers_count\\": 42}, {\\"id\\": 2, \\"name\\": \\"MissingLanguage\\", \\"description\\": \\"No language provided.\\", \\"stargazers_count\\": 10}, {\\"id\\": 3, \\"name\\": \\"NoDescription\\", \\"language\\": \\"Objective-C\\", \\"stargazers_count\\": 15}]"
-let decodedRepos = try! JSONDecoder().decode([Repository].self, from: sampleJSON.data(using: .utf8)!)
-for repo in decodedRepos {
-    print("\\(repo.name) | \\(repo.description ?? "(no description)") | Language: \\(repo.language ?? "N/A") | \\u{2605} \\(repo.stargazersCount)")
-}
-""",
-                testHarness: ""
-            )
         ]
     }
     // MARK: - Resilient Fallback MCQ Questions
@@ -4311,6 +5293,6820 @@ for repo in decodedRepos {
         ]
     }
 
+    // MARK: - Resilient Fallback Q&A Items
+    private var fallbackQAItems: [QAItem] {
+        return [
+            QAItem(
+                id: "lazy_properties_in_swift",
+                question: "What is a `lazy` property in Swift? Explain with a practical example.",
+                topics: ["Properties", "Lazy Initialization", "Memory Management"],
+                explanation: """
+A `lazy` property is a stored property whose initial value is not computed until the FIRST time it is actually accessed — not when the enclosing instance is created.
+
+You declare one by prefixing a stored property with the `lazy` keyword and giving it an initializer expression (often a closure that runs immediately, `{ ... }()`):
+
+    lazy var propertyName: Type = <expression or closure>
+
+Three things fall directly out of that one rule, and all three are commonly asked about together:
+
+1. No initial value until first access. Until some code actually reads `object.propertyName`, the property genuinely has no value sitting in memory — Swift has not run the initializer expression at all. The moment you first touch the property, Swift runs the expression exactly once, stores the result, and returns it. Every later access just reads that already-computed, cached value — the expression never runs again.
+
+2. No memory is allocated for it until it's used. Because the initializer hasn't run, there is nothing to store yet. If you create an object and never touch its lazy property, that property's storage genuinely stays empty for the object's entire lifetime — you pay zero cost (CPU or memory) for a lazy property you never use. This is the main reason to reach for `lazy`: deferring an expensive computation (e.g. parsing a large file, building a complex data structure, opening a network connection) until — and unless — it's actually needed.
+
+3. It can reference `self`. A normal stored property's default value is computed as part of building the object and CANNOT read other properties or call instance methods, because at that point in initialization `self` isn't fully formed yet. A `lazy` property's initializer runs strictly AFTER `init` has already finished and the object fully exists — so it's allowed to reference `self`, read sibling properties, and call instance methods. This is frequently the actual reason `lazy` gets reached for, not just performance.
+
+One important caveat worth knowing for interviews: `lazy` is NOT thread-safe. Apple's own documentation states plainly that if a lazy property is accessed from multiple threads at the same time before it has been initialized, there is no guarantee it will be initialized only once — two threads could both see "not yet initialized" and both run the initializer expression concurrently. If you need a lazy value that's safe under concurrent first access, you must add your own synchronization (a lock, a serial queue, or an actor).
+""",
+                example: """
+class ReportGenerator {
+    let username: String
+
+    // The initializer closure below is NOT run here. Nothing happens yet.
+    lazy var summaryReport: String = {
+        print("Building the summary report for \\(username)...")
+        // Imagine this is an expensive operation: reading a file,
+        // querying a database, formatting thousands of rows, etc.
+        return "Report for \\(username): 42 tasks completed this week."
+    }()
+
+    init(username: String) {
+        self.username = username
+        print("ReportGenerator created for \\(username) - no report built yet.")
+    }
+}
+
+let generator = ReportGenerator(username: "Sachin")
+// Prints: "ReportGenerator created for Sachin - no report built yet."
+// Note: "Building the summary report..." has NOT printed. No memory has
+// been allocated for `summaryReport` yet - the closure hasn't run.
+
+print(generator.summaryReport)
+// NOW, on this first access, Swift finally runs the closure:
+// Prints: "Building the summary report for Sachin..."
+// Prints: "Report for Sachin: 42 tasks completed this week."
+
+print(generator.summaryReport)
+// Prints ONLY: "Report for Sachin: 42 tasks completed this week."
+// The closure does NOT run again - the value computed on the first
+// access was stored, and every later read just returns that cached value.
+""",
+                keyTakeaways: [
+                    "`lazy var x: T = expr` defers running `expr` until the first read of `x` - not until the object is created.",
+                    "Until that first access, no memory is allocated for the property's value at all.",
+                    "A lazy initializer runs after `init` completes, so - unlike a normal property's default value - it CAN reference `self` and other instance properties.",
+                    "The computed value is cached: it's calculated exactly once, then every subsequent access just returns the stored result.",
+                    "`lazy` is not thread-safe by default - concurrent first-access from multiple threads can run the initializer more than once."
+                ]
+            ),
+            QAItem(
+                id: "access_modifiers_and_encapsulation",
+                question: "What are all the access modifiers in Swift? Which OOP concept do they implement? Explain with a practical example.",
+                topics: ["Access Control", "OOP", "Encapsulation"],
+                explanation: """
+Swift has five access levels, ordered here from most restrictive to least restrictive:
+
+1. `private` - visible only inside the enclosing declaration itself (and, since Swift 4, inside extensions of that same type that live in the same file). Nothing outside that type can see it at all.
+2. `fileprivate` - visible anywhere in the same source file, even to other, unrelated types declared in that file, but invisible to any other file.
+3. `internal` (the default - you get this automatically if you write no modifier at all) - visible anywhere inside the same module (the same app target or the same framework), but invisible once that module is imported elsewhere.
+4. `public` - visible to any other module that imports this one, so external code can use the type/member - but external code (outside the defining module) cannot subclass a public class or override a public member. It can only be subclassed/overridden from WITHIN the defining module.
+5. `open` - the least restrictive. Everything `public` allows, PLUS external modules ARE allowed to subclass the class or override the member. `open` only makes sense on classes and class members (overriding requires inheritance, which only classes support) - it's meaningless on a struct, enum, or a `final` class.
+
+Which OOP concept do these implement? Encapsulation - one of the four pillars of OOP (alongside abstraction, inheritance, and polymorphism). Encapsulation means bundling data with the code that operates on it, and hiding that data's internal representation from the outside world, exposing only a controlled, intentional interface. Access modifiers are the literal Swift language mechanism for enforcing that: you mark internal state `private`, and only expose the handful of methods/computed properties you actually want callers to use. Nothing about it is optional or advisory - the compiler rejects code that tries to reach past these boundaries.
+""",
+                example: """
+public class BankAccount {
+    // Encapsulated: the raw balance is nobody else's business. No code
+    // outside this type - not even a subclass in another file - can read
+    // or write `balance` directly.
+    private var balance: Double
+
+    public init(openingBalance: Double) {
+        self.balance = max(0, openingBalance)
+    }
+
+    // The only way to increase the balance - validated, and it's the
+    // sole owner of what "depositing" actually means.
+    public func deposit(_ amount: Double) {
+        guard amount > 0 else { return }
+        balance += amount
+    }
+
+    // The only way to decrease it - also validated (can't overdraw).
+    @discardableResult
+    public func withdraw(_ amount: Double) -> Bool {
+        guard amount > 0, amount <= balance else { return false }
+        balance -= amount
+        return true
+    }
+
+    // Controlled READ-ONLY window into the private state - callers can
+    // see the balance, but only this type can ever change it.
+    public var currentBalance: Double {
+        balance
+    }
+}
+
+let account = BankAccount(openingBalance: 100)
+account.deposit(50)
+account.withdraw(30)
+print(account.currentBalance)   // 120
+
+// account.balance = 1_000_000
+// ^ Compile error: 'balance' is inaccessible due to 'private' protection
+// level. This line is IMPOSSIBLE to write from outside BankAccount - that
+// is encapsulation being enforced by the compiler, not just a convention.
+""",
+                keyTakeaways: [
+                    "Five levels, most-to-least restrictive: private -> fileprivate -> internal (default) -> public -> open.",
+                    "private: only the declaring type (+ same-file extensions of it). fileprivate: the whole file. internal: the whole module. public: any importing module, but not subclassable/overridable from outside. open: any importing module, AND subclassable/overridable from outside.",
+                    "`open` only applies to classes/class members - overriding requires inheritance, so it's meaningless for structs/enums or `final` classes.",
+                    "These modifiers are Swift's mechanism for Encapsulation: hiding internal state and exposing only an intentional, validated interface.",
+                    "The compiler enforces this at compile time - violating it isn't a lint warning, it's a build error."
+                ]
+            ),
+            QAItem(
+                id: "lazy_with_let_not_allowed",
+                question: "Can you declare a `lazy` property using the `let` keyword?",
+                topics: ["Properties", "Lazy Initialization", "Compiler Rules"],
+                explanation: """
+No - `lazy` can only be applied to a `var`, never to a `let`. Writing `lazy let x: Int = 5` fails to compile with the error "'lazy' cannot be used on a let" (worded as "'lazy' must be used with a 'var'" in some compiler versions).
+
+There are two independent reasons this restriction exists, and both are worth being able to explain:
+
+1. Definite initialization. Swift's `let` guarantees that by the time ANY code can observe the constant, it has been assigned a value exactly once - that's the whole contract of a constant. But the entire point of `lazy` is that its initializer might NEVER run at all, if the property is never accessed during the object's lifetime. There is no way to reconcile "guaranteed to have a value" with "might never be computed" - so the language simply disallows the combination.
+
+2. First access is a hidden mutation. The first time you read a lazy property, Swift has to actually WRITE the freshly-computed value into the property's backing storage so it can be cached and returned instantly on every later read. Writing to a property's storage requires that storage be mutable - i.e. a `var`. A `let` is immutable by definition; you cannot perform a hidden write into something the language has promised will never change after its single assignment.
+
+A related, often-linked fact: because that first access is a mutation, if a lazy property lives on a struct, the struct's own instance must be held in a `var`, not a `let` - accessing `someStruct.someLazyProperty` for the first time is itself a mutating operation on `someStruct`, exactly like calling a `mutating func`.
+""",
+                example: """
+struct Config {
+    // Does not compile:
+    // lazy let cachedValue: Int = computeExpensiveValue()
+    // error: 'lazy' cannot be used on a let
+
+    // This is the only legal form - lazy always pairs with var:
+    lazy var cachedValue: Int = Config.computeExpensiveValue()
+
+    static func computeExpensiveValue() -> Int {
+        print("Computing...")
+        return 42
+    }
+}
+
+var config = Config()          // must be `var` - see below
+print(config.cachedValue)      // prints "Computing..." then 42
+
+// If `config` above were declared with `let` instead of `var`, even
+// THIS line would fail to compile:
+// let config2 = Config()
+// print(config2.cachedValue)
+// error: cannot use mutating getter on immutable value 'config2'
+// - because reading a lazy property on a struct performs a hidden
+// write into that struct's storage the first time, which is exactly
+// what `mutating` means.
+""",
+                keyTakeaways: [
+                    "`lazy` requires `var` - `lazy let` is a straight compiler error, never valid Swift.",
+                    "Reason 1: `let` promises a value is set exactly once before anyone can see it; `lazy`'s value might never be computed at all if never accessed - those two guarantees are incompatible.",
+                    "Reason 2: the first read of a lazy property performs a hidden WRITE (caching the computed result), and writing requires mutable storage.",
+                    "Corollary: a lazy property on a struct also requires the struct's own instance to be a `var`, since first-access mutates it."
+                ]
+            ),
+            QAItem(
+                id: "computed_properties_explanation",
+                question: "What is a computed property in Swift? Explain with an example.",
+                topics: ["Properties", "Computed Properties"],
+                explanation: """
+A computed property does not store a value at all. Instead of holding data in memory, it provides a getter (and, optionally, a setter) that CALCULATES its value from other properties every single time it is accessed. There is no backing storage whatsoever - the value simply doesn't exist until you ask for it, and it is thrown away again immediately after.
+
+Syntax-wise, a computed property is always declared with `var` (never `let` - there is no stored slot to make constant, so `let` doesn't even parse here) and a body in braces:
+
+    var propertyName: Type {
+        get { /* return a computed value */ }
+        set { /* optionally handle `newValue` being assigned */ }
+    }
+
+If you only need a getter (read-only, the overwhelmingly common case), you can drop the `get` keyword entirely and just write the return expression directly inside the braces.
+
+The defining difference from a stored property - and especially from a `lazy` property - is that a computed property's getter runs EVERY time it's read, with no caching at all. If the values it depends on change, the very next read reflects that change automatically, because it's recalculated from scratch.
+""",
+                example: """
+struct Rectangle {
+    var width: Double
+    var height: Double
+
+    // Read-only computed property: recalculated from width/height
+    // on every single access - nothing is ever stored for `area` itself.
+    var area: Double {
+        width * height
+    }
+
+    // Computed property WITH a setter: reading `perimeter` computes it;
+    // assigning to it works backward to adjust width/height.
+    var perimeter: Double {
+        get {
+            2 * (width + height)
+        }
+        set {
+            let scale = newValue / perimeter
+            width *= scale
+            height *= scale
+        }
+    }
+}
+
+var rect = Rectangle(width: 4, height: 5)
+print(rect.area)        // 20  (4 * 5, computed right now)
+
+rect.width = 10
+print(rect.area)        // 50  (recomputed from the NEW width - no stale cache)
+
+rect.perimeter = 60     // uses the setter to scale width & height up
+print(rect.width, rect.height)   // 16.666..., 8.333...  (perimeter is now 60)
+""",
+                keyTakeaways: [
+                    "A computed property stores nothing - its getter recalculates the value from other state on every access.",
+                    "Always `var`, and the getter body can be written bare (just the return expression) when there's no setter.",
+                    "Add a `set { }` block (using the implicit `newValue`) to make it writable - the setter typically updates the underlying stored properties it's derived from.",
+                    "No caching, ever - if the dependencies change, the next read immediately reflects that; contrast this with `lazy`, which computes once and then caches."
+                ]
+            ),
+            QAItem(
+                id: "lazy_stored_or_computed",
+                question: "Are `lazy` properties stored properties or computed properties?",
+                topics: ["Properties", "Lazy Initialization", "Computed Properties"],
+                explanation: """
+`lazy` properties are STORED properties - not computed properties - even though they're initialized by running an expression, which can make them look computed-property-shaped at a glance. The distinguishing question is simply: does a value get cached in memory after the first calculation, or does every access re-run the calculation?
+
+- A stored property (including a `lazy` one) holds an actual value in memory. For a `lazy var`, that value just happens to be computed lazily - deferred until first access - but the moment it IS computed, it is written into storage and stays there. Every subsequent read is a plain memory read; the initializer expression is never invoked again.
+- A computed property never stores anything. Its getter reruns in full on every single access, with no caching step at all.
+
+So the honest one-line answer is: `lazy` properties are stored properties with deferred (one-time) initialization - they behave like a computed property only for their very first access, and like an ordinary stored property for every access after that.
+""",
+                example: """
+class Demo {
+    lazy var lazyValue: Int = {
+        print("lazy: computing...")
+        return Int.random(in: 1...1000)
+    }()
+
+    var computedValue: Int {
+        print("computed: computing...")
+        return Int.random(in: 1...1000)
+    }
+}
+
+let d = Demo()
+
+print(d.lazyValue)   // prints "lazy: computing..." then e.g. 517
+print(d.lazyValue)   // prints ONLY 517 - no "computing..." log at all,
+                      // and the SAME number both times: it was stored.
+
+print(d.computedValue)   // prints "computed: computing..." then e.g. 42
+print(d.computedValue)   // prints "computed: computing..." AGAIN,
+                          // then a DIFFERENT number, e.g. 883 - nothing
+                          // was ever cached; the getter ran from scratch.
+""",
+                keyTakeaways: [
+                    "`lazy` properties ARE stored properties - they hold a real value in memory once computed.",
+                    "The 'lazy' part only affects WHEN that one-time computation happens (deferred to first access), not WHETHER the result is stored.",
+                    "Computed properties are the opposite: they store nothing and rerun their getter on every access.",
+                    "Rule of thumb: if a second access can return a DIFFERENT answer without you changing anything, it's computed. If a second access always returns exactly what the first access produced, it's stored (lazy or otherwise)."
+                ]
+            ),
+            QAItem(
+                id: "swift_vs_objc_memory_management",
+                question: "What is the difference between Swift and Objective-C in terms of memory management and performance? When would you choose one over the other?",
+                topics: ["Memory Management", "ARC", "Objective-C", "Performance"],
+                explanation: """
+Both languages use the same underlying mechanism - Automatic Reference Counting (ARC) - but they expose it very differently, and that difference is the whole story here.
+
+Objective-C started with Manual Retain-Release (MRC): every object carries a retain count, and YOU are responsible for calling `retain`/`release`/`autorelease` at exactly the right points. Forget a `release` and the object leaks forever; call `release` one time too many and you get a dangling pointer / use-after-free crash. Apple added ARC to Objective-C in 2011 - the compiler now inserts those retain/release calls for you at compile time by analyzing ownership, but you can still drop down to manual control with `__unsafe_unretained`, bridging casts (`__bridge`, `__bridge_transfer`), and manual `CFRetain`/`CFRelease` for Core Foundation types, which don't participate in ARC at all.
+
+Swift is ARC-only from day one - there is no manual retain/release API exposed anywhere in the language. The compiler still does the exact same reference-counting insertion work under the hood (Swift's ARC and Objective-C's ARC are literally the same runtime reference-counting mechanism on Apple platforms), but Swift never gives you the manual escape hatches Objective-C keeps around. The tradeoff you actually manage yourself in BOTH languages is the same: retain cycles. Two objects strongly referencing each other (most commonly a closure capturing `self`, or a delegate held strongly both ways) will never reach a retain count of zero, and ARC - being pure reference counting, not a cycle-detecting garbage collector - will never notice or clean it up. You break cycles with `weak` or `unowned` references, in both languages.
+
+Performance-wise, they're much closer than people assume, because it's the same reference-counting engine. Swift gets a real, measurable edge in practice for two separate reasons that have nothing to do with ARC itself: (1) value types. `struct`/`enum` in Swift don't participate in reference counting AT ALL - no retain/release traffic, no heap allocation, copy-on-write semantics only kick in when actually needed. Objective-C has no value-type model to reach for; nearly everything of consequence is a class instance living on the heap. Every Objective-C object graph pays retain/release traffic that an equivalent Swift value-type design can skip entirely. (2) the Swift compiler can statically prove ownership in far more cases (whole-module optimization, `final` classes) and elide retain/release pairs the Objective-C runtime can't, because Objective-C's fully dynamic messaging (`objc_msgSend`) has to stay conservative about what any given call might do to an object's lifetime.
+
+When would you actually choose one over the other today? In practice you're rarely choosing for a whole new project - Objective-C's role now is almost entirely: maintaining a large pre-existing Objective-C codebase, or needing to call very low-level/legacy C-based Apple or third-party APIs that predate Swift's interop story. For anything new, Swift is the right default: safer by construction (no manual memory bugs, optionals instead of nil-messaging surprises), value types give you both performance and easier-to-reason-about state, and it's clearly Apple's investment going forward.
+""",
+                example: """
+// Objective-C, pre-ARC (manual retain/release) - the bug class ARC exists to eliminate:
+- (void)oldSchoolLeak {
+    NSString *name = [[NSString alloc] initWithString:@"Sachin"]; // retain count 1
+    NSLog(@"%@", name);
+    // Forgot [name release]; -> LEAKED. This object never gets deallocated.
+}
+
+// Objective-C with ARC - the compiler inserts the release for you now:
+- (void)modernARC {
+    NSString *name = [[NSString alloc] initWithString:@"Sachin"];
+    NSLog(@"%@", name);
+    // Compiler automatically inserts the release at the end of scope.
+}
+
+// Swift - same ARC engine underneath, but you can NEVER write a manual
+// retain/release at all; the language doesn't expose that API surface:
+final class Greeter {
+    let name: String
+    init(name: String) { self.name = name }
+}
+
+func modernSwift() {
+    let greeter = Greeter(name: "Sachin")
+    print(greeter.name)
+    // greeter's retain count drops to 0 and it's deallocated automatically
+    // when this function returns - identical guarantee to the ARC
+    // Objective-C case above, just with zero manual API surface at all.
+}
+
+// The retain-cycle trap that exists in BOTH languages identically:
+final class ViewModel {
+    var onUpdate: (() -> Void)?
+
+    func start() {
+        onUpdate = {
+            self.refresh()   // strong capture of `self` inside a closure.
+                              // `self` owns `onUpdate`, and `onUpdate` (via
+                              // this closure) now owns `self` right back -
+                              // a retain cycle. Neither side's count ever
+                              // reaches 0. ARC cannot detect this; it isn't
+                              // a garbage collector.
+        }
+    }
+
+    func refresh() { print("refreshing") }
+}
+
+// Fixed with a capture list:
+final class FixedViewModel {
+    var onUpdate: (() -> Void)?
+
+    func start() {
+        onUpdate = { [weak self] in
+            self?.refresh()   // breaks the cycle - the closure no longer
+                              // keeps `self` alive by itself
+        }
+    }
+
+    func refresh() { print("refreshing") }
+}
+""",
+                keyTakeaways: [
+                    "Both languages use ARC on Apple platforms today - the difference is exposure, not mechanism: Objective-C still lets you drop to manual retain/release/CFRetain; Swift never exposes any manual memory API at all.",
+                    "Swift's real performance edge comes from value types (structs/enums never touch the retain-count machinery at all) and more aggressive compile-time ownership optimization, not from a fundamentally different memory model.",
+                    "Retain cycles are the one memory bug ARC can never catch in either language - break them with `weak`/`unowned`, most commonly in closures that capture `self`.",
+                    "Pick Objective-C today only for maintaining legacy codebases or interop with very low-level/legacy C APIs; default to Swift for anything new."
+                ]
+            ),
+            QAItem(
+                id: "thread_coalescing_performance_optimization",
+                question: "How would you identify and fix a real performance bottleneck in an iOS app - for example, an app that spawns a separate thread for every periodic background task?",
+                topics: ["Performance", "GCD", "Concurrency", "Optimization"],
+                explanation: """
+The methodology matters more than any single fix: you MEASURE first (Instruments/Xcode's own gauges), you form a hypothesis about the actual bottleneck, you fix ONLY that, and you re-measure to confirm it actually helped. Guessing and "optimizing" blind is how you spend a week and make nothing faster.
+
+For CPU/thread-explosion problems specifically - the exact shape asked about here: an app that has, say, 100 independent background jobs, each needing to run on its own repeating schedule (job A every 2 minutes, job B every 5, job C every 15, etc.) - the naive implementation spins up one dedicated Timer/Thread per job. That is a real, common anti-pattern, and it's expensive for two compounding reasons: (1) every OS thread costs real memory just for its stack (roughly half a megabyte or more reserved per thread) whether or not it's doing anything, and (2) the OS scheduler has to context-switch between all of them, which burns CPU cycles purely on bookkeeping, not on your actual work - you pay this tax constantly, even while every single job is idle waiting for its next interval.
+
+The fix is to decouple "how many independent schedules exist" from "how many OS threads exist." Concretely: use ONE GCD DispatchQueue (or a small, fixed-size pool of them) as the actual execution engine, and represent each job's own schedule as pure data (a due-time) that gets checked against a single shared, coalesced timer - not as its own live thread. A min-heap/priority-queue keyed by "next run time" scales beautifully here: on every tick you only need to look at the job with the soonest due time, not scan or wake up all 100.
+
+A second, complementary GCD-native technique for this exact scenario is DispatchSourceTimer's built-in leeway parameter - instead of firing at millisecond-exact intervals (which forces the OS to wake the CPU out of a low-power state at each job's own precise moment), you give the system a tolerance window ("run this roughly every 5 minutes, plus or minus 30 seconds is fine") so the OS can batch/coalesce multiple timers' wakeups together and let the CPU stay asleep longer between batches - directly reducing energy usage, which is often the OTHER half of the bottleneck this exact scenario runs into (excessive battery drain from constant wakeups).
+
+For diagnosing this kind of issue in the first place (not just fixing it once you already know the cause): open Instruments and use the Time Profiler template to see exactly which functions/threads are burning CPU, and the Threads track in Instruments to literally see the thread count explode in real time. For a live production issue that isn't reproducible locally, MetricKit is the right tool - it collects on-device CPU, memory, disk, network, and hang/crash telemetry from real users' devices with no debugger attached at all, and you can wrap MXSignposts around suspect code sections to get much more targeted telemetry back.
+""",
+                example: """
+// THE ANTI-PATTERN: one Timer/Thread per independent periodic job.
+// With 100 jobs, this creates 100 live timers that are ALL alive and
+// being scheduled by the OS even while completely idle.
+struct NaiveJob { let interval: TimeInterval; let work: () -> Void }
+
+func scheduleNaively(_ jobs: [NaiveJob]) {
+    for job in jobs {
+        Timer.scheduledTimer(withTimeInterval: job.interval, repeats: true) { _ in
+            job.work()
+        }
+        // 100 jobs => 100 live Timers, each with its own RunLoop
+        // bookkeeping overhead, all firing independently.
+    }
+}
+
+// THE FIX: one shared queue + a list of "next due time", driven by a
+// SINGLE coalesced DispatchSourceTimer with leeway.
+final class JobScheduler {
+    private struct ScheduledJob {
+        let interval: TimeInterval
+        let work: () -> Void
+        var nextDueDate: Date
+    }
+
+    private var jobs: [ScheduledJob] = []
+    private let queue = DispatchQueue(label: "com.app.job-scheduler")
+    private var timer: DispatchSourceTimer?
+
+    func addJob(interval: TimeInterval, work: @escaping () -> Void) {
+        queue.async {
+            self.jobs.append(ScheduledJob(interval: interval, work: work, nextDueDate: Date().addingTimeInterval(interval)))
+        }
+    }
+
+    func start() {
+        let timer = DispatchSource.makeTimerSource(queue: queue)
+        // Single shared tick, checked once per second - NOT one timer per
+        // job. 2s leeway lets the OS batch/coalesce this wakeup with other
+        // system timers instead of forcing an exact-millisecond wake.
+        timer.schedule(deadline: .now(), repeating: 1.0, leeway: .seconds(2))
+        timer.setEventHandler { [weak self] in
+            self?.runDueJobs()
+        }
+        timer.resume()
+        self.timer = timer
+    }
+
+    private func runDueJobs() {
+        let now = Date()
+        for i in jobs.indices where jobs[i].nextDueDate <= now {
+            jobs[i].work()
+            jobs[i].nextDueDate = now.addingTimeInterval(jobs[i].interval)
+        }
+        // A production implementation would use a min-heap keyed by
+        // nextDueDate instead of scanning the whole array - O(log n) per
+        // tick instead of O(n) - but the key architectural win (ONE timer
+        // driving ALL 100 jobs) is already fully captured above.
+    }
+}
+
+// Usage: still 100 independent schedules, but now backed by exactly
+// ONE timer and ONE queue instead of 100.
+let scheduler = JobScheduler()
+scheduler.addJob(interval: 120) { print("job A ran") }   // every 2 min
+scheduler.addJob(interval: 300) { print("job B ran") }   // every 5 min
+scheduler.addJob(interval: 900) { print("job C ran") }   // every 15 min
+scheduler.start()
+""",
+                keyTakeaways: [
+                    "Always measure before optimizing: Instruments' Time Profiler for CPU hotspots, Allocations for memory, and MetricKit for real-world production telemetry you can't reproduce locally.",
+                    "One-thread/timer-per-independent-job is a classic anti-pattern: N idle threads still cost N stack allocations and N scheduler context-switches, even doing zero work.",
+                    "Fix: decouple 'number of schedules' from 'number of threads' - drive every job off ONE shared DispatchQueue/timer, keyed by each job's own next-due-time (ideally in a min-heap for O(log n) lookups).",
+                    "DispatchSourceTimer's `leeway` parameter lets the OS batch/coalesce wakeups instead of firing at exact millisecond boundaries - a direct, easy battery-life win for periodic background work."
+                ]
+            ),
+            QAItem(
+                id: "core_data_concurrency_dirty_reads",
+                question: "What are the most common Core Data concurrency challenges (e.g. dirty reads/writes), and how do you solve them?",
+                topics: ["Core Data", "Concurrency", "Persistence"],
+                explanation: """
+Core Data's central concurrency rule is: an NSManagedObjectContext and every NSManagedObject fetched through it are confined to ONE queue - you must never touch them from any other queue directly. Every NSManagedObjectContext is created with a concurrencyType: .mainQueueConcurrencyType (must only be touched from the main thread - this is the one your UI should read from) or .privateQueueConcurrencyType (has its own private background queue). Regardless of which type, you never call methods on that context or its objects directly from an arbitrary thread - you always go through context.perform { ... } (asynchronous, schedules the block on the context's own queue and returns immediately) or context.performAndWait { ... } (synchronous, blocks the calling thread until the block finishes). This is the actual fix for the "dirty read/write" scenario: the race isn't really about Core Data itself corrupting data, it's about code on the wrong queue touching a context/object concurrently with the context's own queue - perform/performAndWait is what serializes that access correctly.
+
+For the classic "reading stale/old data while a write is in flight" problem specifically, the standard, Apple-recommended architecture is a context hierarchy: a main-queue viewContext for UI reads, plus one or more private background contexts for writes (created via container.newBackgroundContext(), or as a genuine parent/child pair for more advanced setups). Background work happens on its own private context; when a context saves, NSManagedObjectContext.save() only pushes changes to whatever it's directly attached to - a parent context, or straight to the persistent store coordinator if it isn't a child context. For the common NSPersistentContainer setup (background context and viewContext both pointing directly at the same coordinator, as siblings), you listen for NSManagedObjectContextDidSave and call viewContext.mergeChanges(fromContextDidSave:) - or simply set container.viewContext.automaticallyMergesChangesFromParent = true, which does exactly this for you automatically. That's what makes a background write show up in the UI's context without the UI context re-fetching from disk itself.
+
+Two remaining pieces genuinely matter for correctness under concurrent writes: (1) merge policy - if the SAME object was changed in two different contexts before either saved, you need context.mergePolicy set explicitly (NSMergeByPropertyObjectTrumpMergePolicy is the sane default for most apps: for each conflicting property, the context calling save wins, on a property-by-property basis, not an all-or-nothing whole-object overwrite). (2) never pass an NSManagedObject itself across a queue boundary - hand over its thread-safe NSManagedObjectID instead, and re-fetch the object on the destination context via context.object(with:) or context.existingObject(with:).
+""",
+                example: """
+// Setup: one shared persistent container. viewContext (main queue) is
+// for UI reads/binding. Background WRITES get their own private context.
+let container = NSPersistentContainer(name: "Model")
+container.loadPersistentStores { _, _ in }
+
+// Merge background saves into the UI context automatically - this is
+// what solves "UI shows stale data after a background write."
+container.viewContext.automaticallyMergesChangesFromParent = true
+container.viewContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+
+func saveTaskInBackground(title: String) {
+    // A private-queue context, safe to use from a background thread.
+    let backgroundContext = container.newBackgroundContext()
+    backgroundContext.mergePolicy = NSMergeByPropertyObjectTrumpMergePolicy
+
+    // MUST go through perform{} - never touch backgroundContext directly
+    // from this calling thread, even though we're already off the main
+    // thread here; `perform` is what guarantees serialized, safe access.
+    backgroundContext.perform {
+        let task = Task_(context: backgroundContext)   // NSManagedObject subclass
+        task.title = title
+        task.createdAt = Date()
+
+        do {
+            try backgroundContext.save()
+            // viewContext picks this up automatically via
+            // automaticallyMergesChangesFromParent - no manual
+            // NotificationCenter/mergeChanges(fromContextDidSave:)
+            // wiring needed for this common case.
+        } catch {
+            print("Background save failed: \\(error)")
+        }
+    }
+}
+
+// Reading on the main thread - always via viewContext, always assumed
+// to already be on the main queue (SwiftUI/UIKit call this for you).
+func readAllTasks() -> [Task_] {
+    let request = Task_.fetchRequest()
+    return (try? container.viewContext.fetch(request)) ?? []
+}
+
+// Passing a managed object ACROSS a queue boundary safely: hand over
+// the thread-safe NSManagedObjectID, never the NSManagedObject itself.
+func updateTask(id: NSManagedObjectID, newTitle: String) {
+    let backgroundContext = container.newBackgroundContext()
+    backgroundContext.perform {
+        guard let task = try? backgroundContext.existingObject(with: id) as? Task_ else { return }
+        task.title = newTitle
+        try? backgroundContext.save()
+    }
+}
+""",
+                keyTakeaways: [
+                    "A context and its objects are confined to ONE queue - never touch them from elsewhere directly; always go through `context.perform` (async) or `context.performAndWait` (sync).",
+                    "Standard architecture: a main-queue `viewContext` for UI reads, plus one or more private background contexts for writes - `automaticallyMergesChangesFromParent = true` propagates background saves into the UI context automatically.",
+                    "Set an explicit `mergePolicy` (`NSMergeByPropertyObjectTrumpMergePolicy` is the sane default) so concurrent edits to the same object resolve predictably instead of throwing or silently overwriting.",
+                    "Never pass an `NSManagedObject` across a queue/context boundary - pass its thread-safe `NSManagedObjectID` and re-fetch via `context.object(with:)`/`existingObject(with:)` on the destination context."
+                ]
+            ),
+            QAItem(
+                id: "ios_secure_authentication",
+                question: "How would you implement secure authentication in an iOS app? What steps ensure the data stays secure?",
+                topics: ["Security", "Authentication", "Keychain", "Networking"],
+                explanation: """
+Secure iOS authentication rests on three separate layers, and a real implementation needs all three, not just one:
+
+1. Transport security: every request carrying credentials or tokens must go over HTTPS/TLS - non-negotiable. iOS's App Transport Security (ATS) actually blocks plain HTTP by default; don't add an ATS exception unless you have no other choice, and never for an auth endpoint.
+
+2. The actual login flow: for a first-party username/password form, send credentials directly over TLS to your own backend and receive a token back - never invent your own crypto for this part, TLS already does it. For third-party sign-in (OAuth/OpenID Connect against Google, GitHub, your own IdP, etc.), the modern, Apple-recommended approach is ASWebAuthenticationSession, NOT an embedded WKWebView. It's a real, isolated system browser sheet: it can share cookies/session state with Safari for a genuine single-sign-on experience, and - crucially - your app's process never sees the user's raw password at all, only the final redirect containing an authorization code. The flow to use is OAuth 2.0 Authorization Code + PKCE (Proof Key for Code Exchange) - PKCE exists specifically because a mobile app is a "public client" that cannot keep a client secret confidential (anyone can decompile the app and extract a hardcoded secret), so PKCE replaces the client secret with a per-request, dynamically generated verifier/challenge pair instead.
+
+3. Storing what you get back: once you have a session token, access token, or refresh token, it must go in the Keychain - never UserDefaults, never a plist, never a plain file. UserDefaults and plain files are not encrypted at rest by anything beyond the device's own whole-disk encryption, and (worse) they're routinely included in unencrypted app backups; the Keychain is a dedicated, hardware-backed secure store (AES-256-GCM under the hood, backed by the Secure Enclave on devices that have one) designed for exactly this. Pick the right accessibility level too: kSecAttrAccessibleWhenUnlockedThisDeviceOnly for anything sensitive - the "ThisDeviceOnly" suffix specifically prevents that Keychain item from ever being included in an iCloud Keychain sync or an encrypted backup restored to a DIFFERENT device, which matters a lot for a refresh token you don't want silently cloned onto a device the user never approved.
+
+Beyond those three, two more practical things separate a "secure" implementation from a merely functional one: keep access tokens short-lived (minutes to hours) and rotate them via the refresh token rather than issuing one token valid for weeks - this shrinks the exposure window if a token is ever exfiltrated. And add a biometric gate (LocalAuthentication's LAContext, Face ID/Touch ID) in front of reading the stored token back out for particularly sensitive actions (re-authenticating before a payment, for instance) - this protects against the specific threat of someone with physical access to an already-unlocked device.
+""",
+                example: """
+import LocalAuthentication
+import Security
+
+// 1) Storing a token in the Keychain (never UserDefaults/plist/plain file):
+func storeToken(_ token: String, account: String) {
+    let data = Data(token.utf8)
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrAccount as String: account,
+        kSecValueData as String: data,
+        // ThisDeviceOnly: never synced to iCloud Keychain or restored
+        // to a different physical device from an encrypted backup.
+        kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+    ]
+    SecItemDelete(query as CFDictionary)  // clear any previous value first
+    SecItemAdd(query as CFDictionary, nil)
+}
+
+func readToken(account: String) -> String? {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrAccount as String: account,
+        kSecReturnData as String: true,
+        kSecMatchLimit as String: kSecMatchLimitOne
+    ]
+    var result: AnyObject?
+    guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
+          let data = result as? Data else { return nil }
+    return String(data: data, encoding: .utf8)
+}
+
+// 2) Gate reading a sensitive token behind Face ID / Touch ID:
+func readTokenWithBiometrics(account: String, completion: @escaping (String?) -> Void) {
+    let context = LAContext()
+    var error: NSError?
+
+    guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
+        completion(nil)
+        return
+    }
+
+    context.evaluatePolicy(
+        .deviceOwnerAuthenticationWithBiometrics,
+        localizedReason: "Confirm it's you before continuing"
+    ) { success, _ in
+        DispatchQueue.main.async {
+            completion(success ? readToken(account: account) : nil)
+        }
+    }
+}
+
+// 3) OAuth login via ASWebAuthenticationSession (system-isolated, NOT a
+// WKWebView your app's process can inspect) - simplified sketch:
+import AuthenticationServices
+
+func startOAuthLogin(presenting anchor: ASWebAuthenticationPresentationContextProviding) {
+    let authURL = URL(string: "https://auth.example.com/authorize?response_type=code&client_id=...&code_challenge=...")!
+
+    let session = ASWebAuthenticationSession(
+        url: authURL,
+        callbackURLScheme: "myapp"
+    ) { callbackURL, error in
+        guard let callbackURL, error == nil,
+              let code = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
+                  .queryItems?.first(where: { $0.name == "code" })?.value
+        else { return }
+        // Exchange `code` (+ the PKCE verifier you generated earlier)
+        // for an access/refresh token over HTTPS, then store via
+        // storeToken(_:account:) above.
+    }
+    session.presentationContextProvider = anchor
+    session.start()
+}
+""",
+                keyTakeaways: [
+                    "Three layers, all required: TLS in transit, ASWebAuthenticationSession + OAuth 2.0 Authorization Code + PKCE for the login flow, and Keychain (never UserDefaults/plist) for storing what you get back.",
+                    "PKCE exists specifically because a mobile app can't keep a client secret confidential - it replaces the secret with a per-request verifier/challenge pair.",
+                    "Use `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` for sensitive Keychain items so they never sync via iCloud Keychain or ride along in a backup restored to a different device.",
+                    "Keep access tokens short-lived and refresh them rather than issuing one long-lived token - it shrinks the exposure window if a token is ever exfiltrated.",
+                    "Gate especially sensitive actions (re-reading a stored token, confirming a payment) behind Face ID/Touch ID via LocalAuthentication."
+                ]
+            ),
+            QAItem(
+                id: "ios_networking_json_xml_parsing",
+                question: "How do you handle networking and data parsing (JSON/XML) in iOS, especially around special characters and error handling?",
+                topics: ["Networking", "URLSession", "Codable", "Error Handling"],
+                explanation: """
+For the transport layer itself, URLSession is the right default on iOS today - it's Apple's native, actively developed networking stack, and its modern async/await API (URLSession.shared.data(for:)) removes almost all the reasons people used to reach for a third-party library like Alamofire (which mostly just wrapped URLSession with a friendlier completion-handler/chaining API before async/await existed). Reach for a third-party library today only for something URLSession genuinely doesn't do out of the box, not as a default.
+
+For JSON, Codable (the combination of Encodable + Decodable) is the built-in, compiler-synthesized solution - for the common case where your Swift property names already match the JSON keys, you don't write any parsing code at all, JSONDecoder().decode(MyType.self, from: data) does the whole thing. For the mismatches that come up in real APIs: CodingKeys maps a differently-named JSON key to your Swift property name; keyDecodingStrategy = .convertFromSnakeCase handles an entire API that uses snake_case automatically instead of a manual CodingKeys case per property; and for a field the API might genuinely omit sometimes, make the Swift property Optional - decodeIfPresent (which is what synthesis uses automatically for Optional properties) simply returns nil instead of throwing when the key is missing.
+
+XML is a real, occasionally-required exception to "always reach for Codable" - iOS's native XML support is XMLParser, an event-driven (SAX-style) parser: it calls delegate methods as it streams through the document (didStartElement, foundCharacters, didEndElement) rather than handing you a full parsed tree the way JSONDecoder does - meaning you build up your own model incrementally in those delegate callbacks. It has no Codable-style declarative mapping built in at all, which is exactly why third-party XML libraries (that DO offer a more declarative, tree-based API) remain genuinely useful for XML specifically, unlike for JSON where Codable already covers nearly everything.
+
+The special-characters issue is real and worth understanding precisely, because it's actually TWO distinct problems that get conflated: (1) URL percent-encoding - characters that are meaningful IN a URL itself (spaces, &, ?, #, non-ASCII text) must be percent-encoded before being placed into a URL's query string or path, via addingPercentEncoding(withAllowedCharacters:) with an appropriate CharacterSet (e.g. .urlQueryAllowed) - get this wrong and the URL itself is malformed or truncated before your request even reaches the server. (2) XML-reserved characters IN THE PAYLOAD - <, >, &, ', " are structurally meaningful to an XML parser (they open/close tags or start entity references), so literal occurrences of these characters inside actual data must be escaped as XML entities (&lt;, &gt;, &amp;, &apos;, &quot;) by whoever PRODUCES the XML - this is a server-side responsibility as much as a client one; a common workaround some APIs use for this exact fragility is Base64-encoding the risky field's value so it round-trips as plain alphanumeric text with no reserved characters in it at all, at the cost of the payload being unreadable without decoding it back.
+
+For error handling: never let a parsing/network failure crash the app or silently show nothing. Model your own error type, check the HTTP status code explicitly (a 200 with an unexpected body and a 404/500 are both "the request technically completed" as far as URLSession's happy path is concerned - you have to check the status code yourself), and surface something actionable to the user (retry button, explicit error message) rather than a spinner that never resolves.
+""",
+                example: """
+import Foundation
+
+struct Repository: Codable {
+    let id: Int
+    let fullName: String        // Swift camelCase...
+    let stargazersCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case fullName = "full_name"              // ...mapped from JSON snake_case
+        case stargazersCount = "stargazers_count"
+    }
+}
+
+enum NetworkError: Error {
+    case invalidURL
+    case invalidResponse
+    case httpError(Int)
+    case decodingFailed(Error)
+}
+
+func fetchRepositories(for username: String) async throws -> [Repository] {
+    // 1) Percent-encode anything going into the URL itself - a username
+    // with a space or "&" would otherwise corrupt the URL's structure.
+    guard let encodedUsername = username.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+          let url = URL(string: "https://api.example.com/users/\\(encodedUsername)/repos")
+    else {
+        throw NetworkError.invalidURL
+    }
+
+    let (data, response) = try await URLSession.shared.data(from: url)
+
+    // 2) ALWAYS check the actual HTTP status - a completed request is
+    // not the same thing as a successful one.
+    guard let httpResponse = response as? HTTPURLResponse else {
+        throw NetworkError.invalidResponse
+    }
+    guard (200..<300).contains(httpResponse.statusCode) else {
+        throw NetworkError.httpError(httpResponse.statusCode)
+    }
+
+    do {
+        return try JSONDecoder().decode([Repository].self, from: data)
+    } catch {
+        // Wrap the underlying DecodingError so callers get a stable,
+        // app-level error type instead of leaking Foundation's error shape.
+        throw NetworkError.decodingFailed(error)
+    }
+}
+
+// Calling it with real error handling - never a silent failure:
+func loadRepos(username: String) async {
+    do {
+        let repos = try await fetchRepositories(for: username)
+        print("Loaded \\(repos.count) repos")
+    } catch NetworkError.httpError(let code) {
+        print("Server returned HTTP \\(code) - show a retry button")
+    } catch NetworkError.decodingFailed(let underlying) {
+        print("Response shape didn't match our model: \\(underlying)")
+    } catch {
+        print("Network request failed: \\(error)")
+    }
+}
+""",
+                keyTakeaways: [
+                    "URLSession + async/await is the native, sufficient default for almost all networking today; reach for a third-party library only for something it genuinely doesn't do.",
+                    "Codable + CodingKeys + keyDecodingStrategy (.convertFromSnakeCase) covers nearly every JSON shape declaratively - no manual parsing code needed for the common case.",
+                    "XML has no Codable-style built-in - XMLParser is event-driven (SAX-style), which is exactly why third-party XML libraries still earn their keep, unlike for JSON.",
+                    "Special characters are two separate problems: percent-encode anything going INTO a URL (addingPercentEncoding), and XML-reserved characters (<, >, &, quotes) inside a payload must be escaped as entities by whoever produces the XML.",
+                    "Always check the actual HTTP status code explicitly - a response that 'completed' is not the same as one that succeeded - and model your own Error type instead of letting failures surface as an unexplained blank screen."
+                ]
+            ),
+            QAItem(
+                id: "designing_ios_app_from_scratch_architecture",
+                question: "How would you design a new iOS app from scratch, considering scalability, maintainability, and third-party dependencies?",
+                topics: ["Architecture", "MVVM", "System Design", "SPM"],
+                explanation: """
+Before any code: nail down the actual requirements and the non-functional ones specifically (expected scale, team size, offline support needed or not, how often the app will need new features shipped) - architecture choices you make are really answers to THOSE questions, not abstract "best practice" picks made in a vacuum.
+
+For the architecture pattern itself, MVVM (Model-View-ViewModel) is the practical default for a modern SwiftUI (or even UIKit) app, for a very concrete reason: SwiftUI's own @Published/@StateObject/@ObservedObject machinery IS a binding system built to pair naturally with an MVVM ViewModel - the View observes a ViewModel's published state and re-renders automatically; you're not fighting the framework, you're using it as designed. MVC (Apple's older default) tends to degenerate into "Massive View Controller" as an app grows, because the framework gives you no natural seam to push logic OUT of the view controller. VIPER (View-Interactor-Presenter-Entity-Router) is real and used in some larger teams, but it's meaningfully more ceremony per feature (five distinct types instead of two) - worth it mainly at real enterprise scale with many engineers working in parallel on isolated features; for most apps it's more boilerplate than the problem justifies. Whichever you pick, the actual goal is separation of concerns: Views should contain layout/presentation logic ONLY, never business logic, networking calls, or persistence code directly.
+
+Layer the app in the direction dependencies should flow: a Models/domain layer (plain data types, no framework dependencies), a Services/Repository layer (networking, persistence - talks to the outside world, returns domain models), a ViewModel layer (per-screen state + orchestration, depends on Services), and a Views layer (depends on ViewModels, nothing depends on Views). Depending on a PROTOCOL for each Service (not a concrete class) is what actually buys you testability - a ViewModel's unit test can inject a fake/mock implementing that same protocol instead of hitting a real network or database.
+
+For dependencies specifically: Swift Package Manager (SPM) is Apple's own, native package manager - it's integrated directly into Xcode with no separate tool to install (unlike CocoaPods, which needs Ruby + a separate CLI, or Carthage), and it's clearly where Apple's own investment is. But the more important principle than "which package manager" is: don't reach for a third-party dependency by default. Every dependency you add is a maintenance liability you don't fully control - it can go unmaintained, introduce a supply-chain security risk, or block you from adopting a new Swift/SDK version until IT updates. If something is small and well-scoped enough to implement yourselves in a day, that's very often the better call than a dependency your whole team is now permanently coupled to.
+
+Modularization is the piece that actually delivers on "scalability" as the team and codebase grow: splitting the app into multiple Swift Package targets (a NetworkingKit, a DesignSystem, a Feature-Profile package, etc.) gives you real compiler-enforced boundaries between areas of the app, and - very concretely - dramatically faster incremental build times, since Xcode only has to rebuild the module that actually changed, not the entire app target.
+""",
+                example: """
+// A concrete MVVM layering sketch - dependencies flow strictly
+// downward: Views -> ViewModels -> Services (protocols) -> Models.
+// Nothing above a layer knows about a CONCRETE type below it, only
+// the protocol - this is what makes each layer independently testable.
+
+// MARK: - Models (plain data, zero framework/network knowledge)
+struct Profile: Codable, Identifiable {
+    let id: String
+    let displayName: String
+    let bio: String
+}
+
+// MARK: - Services (talks to the outside world, returns domain models)
+protocol ProfileServicing {
+    func fetchProfile(id: String) async throws -> Profile
+}
+
+final class ProfileService: ProfileServicing {
+    func fetchProfile(id: String) async throws -> Profile {
+        let url = URL(string: "https://api.example.com/profiles/\\(id)")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        return try JSONDecoder().decode(Profile.self, from: data)
+    }
+}
+
+// A fake conforming to the SAME protocol - this is the entire reason
+// the ViewModel depends on `ProfileServicing`, not `ProfileService`.
+final class FakeProfileService: ProfileServicing {
+    var stubbedProfile = Profile(id: "1", displayName: "Test User", bio: "Hello")
+    func fetchProfile(id: String) async throws -> Profile { stubbedProfile }
+}
+
+// MARK: - ViewModel (per-screen state + orchestration; depends on the
+// PROTOCOL, so it's fully unit-testable with FakeProfileService above)
+@MainActor
+final class ProfileViewModel: ObservableObject {
+    @Published private(set) var profile: Profile?
+    @Published private(set) var errorMessage: String?
+
+    private let service: ProfileServicing
+
+    init(service: ProfileServicing = ProfileService()) {
+        self.service = service
+    }
+
+    func load(id: String) async {
+        do {
+            profile = try await service.fetchProfile(id: id)
+        } catch {
+            errorMessage = "Couldn't load profile."
+        }
+    }
+}
+
+// MARK: - View (layout only - no networking, no business logic here)
+struct ProfileView: View {
+    @StateObject var viewModel: ProfileViewModel
+
+    var body: some View {
+        Group {
+            if let profile = viewModel.profile {
+                Text(profile.displayName)
+            } else if let error = viewModel.errorMessage {
+                Text(error)
+            } else {
+                ProgressView()
+            }
+        }
+        .task { await viewModel.load(id: "1") }
+    }
+}
+
+// Unit test - depends on the fake, never touches the network:
+func testProfileViewModelLoadsSuccessfully() async {
+    let viewModel = ProfileViewModel(service: FakeProfileService())
+    await viewModel.load(id: "1")
+    assert(viewModel.profile?.displayName == "Test User")
+}
+""",
+                keyTakeaways: [
+                    "Architecture decisions answer specific non-functional requirements (team size, scale, offline needs) - don't pick a pattern in the abstract.",
+                    "MVVM is the practical default for SwiftUI specifically because @Published/@StateObject IS a binding system built for it; VIPER's extra ceremony (5 types per feature) earns its keep mainly at large multi-team scale.",
+                    "Depend on a protocol for each Service, not a concrete type - that's the single decision that makes ViewModels unit-testable with a fake instead of a real network/database.",
+                    "Prefer SPM (native, Xcode-integrated) over CocoaPods/Carthage, but the bigger principle is: don't add a third-party dependency you could reasonably build yourselves - every dependency is a maintenance and security liability you don't fully control.",
+                    "Modularize into separate Swift Package targets as the app grows - it buys compiler-enforced boundaries AND dramatically faster incremental builds, since only the changed module needs rebuilding."
+                ]
+            ),
+            QAItem(
+                id: "ios_developer_self_introduction",
+                question: "How should you introduce yourself in an iOS developer interview, highlighting relevant experience with Swift, Objective-C, and the frameworks in a job description?",
+                topics: ["Interview Skills", "Career", "Communication"],
+                explanation: """
+A strong technical self-introduction is NOT a chronological resume readout - it's a tight, 60-90 second pitch built around four things, in order: Present, Past, Proof, Pitch.
+
+1. Present: your current role and years of relevant experience, stated concretely (not "some years" - say exactly how long and in what capacity).
+
+2. Past: your trajectory to here, briefly - how you got into this stack, any meaningful transition (intern to full-time, a team/project switch), kept short.
+
+3. Proof: your core technical stack, matched EXPLICITLY to what's in the job description - if they list Swift, UIKit, Core Data, Combine, mention those exact ones by name, since the interviewer is literally checking for a match - backed by one concrete, memorable achievement (a specific project, feature, or measurable outcome you shipped), not a vague "I'm good with X" claim.
+
+4. Pitch: close by connecting your trajectory to why THIS specific role interests you - this is what actually differentiates a generic intro from one genuinely tailored to this interview.
+
+Common mistakes: rambling without this structure worked out in your own head first; giving vague timelines instead of exact ones; listing tech-stack keywords in a random order that doesn't match the job description (making it look like you didn't read it closely); and stopping after "I'm good with X, Y, Z" without ever giving one concrete example that proves it. An interviewer listening to this answer is checking for three signals: do you actually have the depth/years you claim, do you genuinely match the specific stack they need, and can you communicate clearly and concisely - since day-to-day engineering work also means explaining technical decisions to non-engineers.
+""",
+                example: """
+Here's a well-structured ~70-second answer using the Present -> Past -> Proof -> Pitch structure:
+
+"I'm currently a Senior iOS Developer at [Company], where I've spent the last 3 years building and maintaining our flagship consumer app in Swift and SwiftUI, with UIKit still powering our older screens during an ongoing migration.
+
+I started as an iOS intern here in 2023, converted to full-time after 5 months, and have been full-time for just under 3 years now - so it's really been one continuous codebase I've grown with, not several short stints.
+
+The project I'm proudest of: our app's networking layer was making redundant duplicate API calls under poor connectivity, showing up as both slow load times and unnecessary battery drain. I redesigned it around a single actor-isolated caching layer with request de-duplication - concurrent callers requesting the same in-flight resource now share one network call instead of firing N separate ones. That cut our average screen load time by about 40% in our internal metrics, and directly reduced our reported battery-usage complaints.
+
+I saw this role lists Swift, Combine, and Core Data specifically, which lines up closely with what I use daily. What draws me to this position specifically is [a genuine, specific reason tied to the company's product domain, team size, or a technical challenge mentioned in the job description]."
+
+Notice what this does NOT do: it doesn't list every technology ever touched, it doesn't give a vague "I've worked on many projects," and it doesn't end without connecting back to THIS role.
+""",
+                keyTakeaways: [
+                    "Structure: Present (current role) -> Past (brief trajectory) -> Proof (one concrete, measurable achievement) -> Pitch (why this role specifically) - not a chronological resume readout.",
+                    "Match your named tech stack explicitly to the job description's own wording - it signals you actually read it and genuinely overlap with what they need.",
+                    "Give exact numbers (years of experience, measurable impact of your proof point) instead of vague qualifiers like 'a while' or 'pretty good with'.",
+                    "Keep it to roughly 60-90 seconds - long enough for substance, short enough that it doesn't read as rambling or unprepared."
+                ]
+            ),
+            QAItem(
+                id: "ios_ux_designer_collaboration",
+                question: "How do you collaborate with UX/UI designers to ensure interfaces are both functional and intuitive?",
+                topics: ["Collaboration", "UX/UI", "Design Systems", "Accessibility"],
+                explanation: """
+Real design-developer collaboration happens at three distinct points, not just at "handoff" - the most common failure mode is treating it as a single one-way delivery.
+
+1. Early involvement, before pixels are final: bring an engineering perspective in during wireframing, not after final mockups arrive - a designer's clean layout can be technically expensive or outright impossible in a given navigation stack/animation system, and it's far cheaper to flag that against a wireframe than a finished design file. This is the single highest-leverage collaboration point, and also the most commonly skipped one.
+
+2. The handoff itself, done through structured, spec'd artifacts rather than a screenshot and a guess: exact spacing/typography/color tokens (not "make it look about like this"), light/dark mode variants, and a real component library rather than one-off screens. Modern tooling makes this a genuine shared source of truth rather than a one-time export: Figma's Dev Mode plus Code Connect maps a Figma component directly to the actual component in your codebase, so you see the real prop/component names your code uses instead of a generic style dump - and if the design system has real design tokens (spacing, color, type scale) that flow into code, a designer changing a token propagates automatically without a developer re-implementing anything by hand.
+
+3. Ongoing dialogue during implementation, not a one-shot Q&A: designers should be reachable for the inevitable edge cases a static mockup can't show - what does this list look like empty, with one item, with 200 items on a slow network, or with a name three lines long? These edge states are exactly where "functional AND intuitive" actually gets decided, and they're almost never fully specified in the original mockup.
+
+Accessibility deserves to be called out specifically, because it's the thing most likely to get silently dropped in a design-to-code handoff if nobody owns it explicitly: VoiceOver labels, Dynamic Type support (text that actually scales, not a hardcoded font size), sufficient color contrast, and correct focus order for keyboard/switch-control navigation. Apple's Human Interface Guidelines exist specifically to keep an app feeling native and predictable to iOS users (standard navigation patterns, standard gestures, respecting safe areas) - use them as the shared reference both sides argue FROM, not something the developer silently reinterprets alone after the designer moves on to the next screen.
+""",
+                example: """
+A concrete collaboration workflow that puts these three points into practice:
+
+1. WIREFRAME REVIEW (before final visuals): designer shares a rough wireframe of a new "activity feed" screen. Developer flags early: "This design assumes every activity has an avatar image - what's the layout when a user has no avatar set, or the image fails to load?" This gets answered at the wireframe stage, not discovered as a bug during QA three weeks later.
+
+2. STRUCTURED HANDOFF: designer delivers the final screen via Figma with Dev Mode enabled - developer can inspect exact spacing (8pt/16pt grid), the design system's actual color token (accentPrimary, not a raw hex value that'll drift from the rest of the app), both light and dark mode variants, and Dynamic Type behavior at the largest accessibility text size. If Code Connect is set up, Dev Mode literally shows the real SwiftUI component and its actual parameter names - AvatarView(size: .large, style: .rounded) - not a generic CSS-style export.
+
+3. EDGE CASES resolved together in a quick sync, not guessed at solo:
+   - Empty state ("no activity yet") -> designer provides an actual empty-state illustration/copy, not left to the developer's own judgment
+   - Extremely long user names -> agree on truncation with an ellipsis plus a way to see the full name (long-press, tooltip)
+   - Slow/failed network -> a skeleton loading state and a retry affordance, not a silent spinner forever
+
+4. ACCESSIBILITY, explicitly verified, not assumed: developer runs the screen with VoiceOver on and Dynamic Type set to the largest accessibility size before calling the feature done - if the layout breaks or a control has no meaningful VoiceOver label, that's fixed before merge, not filed as a "nice to have" ticket for later.
+""",
+                keyTakeaways: [
+                    "The highest-leverage collaboration point is EARLY - flag technical constraints against a wireframe, not a finished mockup, where changes are far more expensive.",
+                    "Structured handoff beats ad-hoc screenshots: real design tokens/component libraries (Figma Dev Mode + Code Connect) give both sides one shared source of truth instead of a developer's best guess.",
+                    "Edge cases (empty/error/loading/overflow states) are where 'intuitive' actually gets decided, and they're almost never in the original mockup - resolve them together, not solo.",
+                    "Accessibility (VoiceOver, Dynamic Type, contrast) needs to be explicitly verified before a feature is 'done', not assumed to have survived the handoff - it's the thing most likely to silently get dropped.",
+                    "Apple's Human Interface Guidelines are the shared reference to argue FROM when a design pattern conflicts with iOS platform conventions, not something the developer quietly overrides alone."
+                ]
+            ),
+            QAItem(
+                id: "assessing_swiftui_framework_updates",
+                question: "Given a major SwiftUI update, how would you assess its impact on existing projects and safely incorporate the changes?",
+                topics: ["SwiftUI", "API Availability", "Migration", "Best Practices"],
+                explanation: """
+The right process is deliberately conservative, in this order: isolate, evaluate, then integrate - never touch the existing codebase first.
+
+1. Isolate and play with the new APIs in a throwaway/separate project (or a scratch SwiftUI Preview target), NOT inside the real app. This lets you actually learn the new syntax/behavior and its rough edges with zero risk to anything shipping.
+
+2. Evaluate backward compatibility BEFORE writing a single line in the real project. Concretely: check the new API's minimum OS version against your app's actual deployment target. If the new API requires a newer OS version than your minimum supported target, it must be wrapped in an availability check - if #available(iOS 18, *) { use new API } else { existing fallback } (or #unavailable for the inverted case, added in Swift 5.6) - so the same binary runs correctly on both old and new OS versions, rather than forcing you to bump your deployment target and cut off users on older devices. The generally-recommended pattern is to NOT scatter raw #available checks all through business logic/view code directly - isolate them behind a small number of clearly-named helper functions or a dedicated compatibility layer, so the rest of the codebase just calls the helper without needing to know or care which code path executed underneath.
+
+3. Integrate incrementally and behind real testing, not as one large sweeping refactor: adopt the new API in ONE non-critical screen or feature first, verify it thoroughly (including on your actual minimum-supported OS version, not just the newest simulator), then expand adoption once it's proven out. Watch specifically for silent BEHAVIOR changes even where the API signature is unchanged - SwiftUI has genuinely shipped layout/animation timing changes across major versions that don't show up as a compiler error at all, only as a visual regression - so this step needs real device testing across OS versions, not just "it compiled."
+
+4. Only raise your minimum deployment target (dropping support for older OS versions entirely) once you have real usage data showing negligible traffic from below that new floor - a decision that has to be made deliberately, weighing exactly how many current users you'd be cutting off, not a side-effect of "adopting new APIs became annoying otherwise."
+""",
+                example: """
+// A helper that isolates the availability check in ONE place, instead
+// of scattering `if #available` through every call site.
+extension View {
+    @ViewBuilder
+    func adaptiveScrollBounceBehavior() -> some View {
+        if #available(iOS 16.4, *) {
+            // New API - only exists from iOS 16.4 onward
+            self.scrollBounceBehavior(.basedOnSize)
+        } else {
+            // Fallback: existing behavior on older OS versions.
+            // Callers never need to know this branch exists.
+            self
+        }
+    }
+}
+
+struct ContentListView: View {
+    var body: some View {
+        ScrollView {
+            // Every call site just uses the helper - the availability
+            // check itself is isolated to one place in the codebase.
+            Text("Content")
+        }
+        .adaptiveScrollBounceBehavior()
+    }
+}
+
+// The inverted case (Swift 5.6+): #unavailable reads more naturally
+// than `if #available(...) {} else { ... }` when the OLDER path is
+// what you actually want to highlight/handle first.
+func logIfRunningOnLegacyOS() {
+    if #unavailable(iOS 17) {
+        print("Running on iOS 16 or earlier - some new SwiftUI APIs are gated off.")
+    }
+}
+
+// Real staged-rollout pattern: gate a WHOLE new feature (not just one
+// API call) behind an isolated flag until it's proven on real devices
+// across the OS versions you still support.
+struct FeatureFlags {
+    // Adopt the redesigned settings screen (built with newer SwiftUI
+    // APIs) only where it's actually been verified end-to-end.
+    static let useNewSettingsScreen = true
+}
+
+struct RootView: View {
+    var body: some View {
+        if FeatureFlags.useNewSettingsScreen, #available(iOS 17, *) {
+            NewSettingsScreen()
+        } else {
+            LegacySettingsScreen()
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "Order matters: isolate and experiment in a throwaway project first, evaluate backward compatibility against your ACTUAL deployment target second, integrate incrementally third - never edit the real codebase as your first step.",
+                    "Wrap anything newer than your minimum deployment target in `#available`/`#unavailable` (Swift 5.6+) checks, and isolate those checks behind a small number of named helpers rather than scattering them through business logic.",
+                    "Watch for silent BEHAVIOR changes (layout, animation timing) that don't show up as a compiler error - this requires real device testing on your oldest supported OS version, not just 'it compiled.'",
+                    "Only raise your minimum deployment target with real usage data showing negligible traffic below the new floor - it's a deliberate user-impact decision, not a side effect of new APIs being inconvenient to gate."
+                ]
+            ),
+            QAItem(
+                id: "production_performance_debugging_without_disrupting_ux",
+                question: "Imagine you're debugging a complex performance issue in a production iOS app that has already shipped. How would you identify and resolve it without affecting the user experience?",
+                topics: ["Performance", "Debugging", "Instruments", "MetricKit", "Production", "Logging"],
+                explanation: """
+This is a fundamentally different problem from debugging locally: there's no debugger attached, you often can't reproduce the exact conditions (a specific device model, OS version, network state, or data shape) that triggered the issue on a real user's device, and you obviously can't ship a debug build to every user just to investigate. So the whole methodology has to work backward from telemetry that was already being collected before the issue happened, or that the OS collects on your behalf. That means "instrumentation" is a decision you make ahead of time, as part of what ships, not a step you improvise once you're already trying to investigate.
+
+The proactive layer is structured logging via os.Logger/OSLog - a Logger is created with a subsystem and category (e.g. Logger(subsystem: "com.app.id", category: "codeRunner")), and every message is written at the log level that matches its actual importance: .debug for noisy detail you only want while attached to a live console/Instruments session, .info/.default for events worth persisting (Apple's unified logging system persists .default/.error/.fault to the on-disk store even in Release builds, without you writing a custom log file at all), and .fault for a state that is definitively a bug. It's worth calling out explicitly, because it's a genuinely common trap: excessive or overly-frequent logging is not a neutral diagnostic tool - writing to disk very often, or building a large formatted string on every single call regardless of whether that level is even enabled, both cost real CPU, I/O, and battery. The logging can become the very performance problem you were trying to catch. OSLog's own privacy-aware string interpolation (e.g. "\\(value, privacy: .public)") already defers the actual formatting work until a log line is genuinely viewed - prefer that over pre-building a String yourself on every call.
+
+Instruments is the primary tool for turning "something is slow" into "this specific function/allocation/request is slow", and different tabs map to different resources: Time Profiler samples the call stack across every thread at a fixed interval and shows exactly which functions are consuming CPU time; Allocations and Leaks track the app's memory footprint over time, catching both genuine leaks and memory that simply keeps growing until the OS jetsam-kills the app for excessive memory use; the Network instrument shows every request/response with its size and timing, which is how you spot redundant duplicate calls or unexpectedly large payloads. Always profile a build that closely matches what actually ships - Release configuration, not Debug - since compiler optimizations can make a Debug-build "problem" disappear entirely, or hide a real one that only appears once optimizations are applied.
+
+For an issue you genuinely can't reproduce locally - the exact scenario this question describes, a bug already out in production - MetricKit is the right tool. It's a system framework that silently collects CPU/memory/disk/network usage plus hang, crash, and CPU-exception diagnostics from real users' devices, batches them, and delivers a payload to your app (by conforming to MXMetricManagerSubscriber) roughly once a day, entirely in the background, with no debugger involved and negligible overhead on the user's device - the OS itself does the sampling, your app isn't doing extra work to collect it. This is the real answer to "without affecting the user experience": the collection mechanism Apple built is already low-overhead and asynchronous by design, so you don't have to invent your own polling/sampling system that could itself become a burden. You can additionally wrap suspect code in signposts (os.signpost / the newer OSSignposter API) to mark a named interval - these show up directly in Instruments and give you a precise, reproducible marker instead of guessing which of several nearby operations was actually the slow one.
+
+Put together, it's a loop: collect real signal (MetricKit payloads, and/or your own logs correlated with a session/device identifier) -> form a hypothesis about the specific operation responsible -> ideally reproduce it locally against a Release-configuration Instruments profile that matches the reported device/OS version -> fix it -> re-measure the SAME signal, not just "seems faster on my machine" -> ship the fix as a normal release, then confirm the production metric (MetricKit's own aggregated hang-rate/CPU numbers, or your own dashboard) actually moves back down for real users before calling the investigation closed. If the metric doesn't move, the fix didn't address the actual bottleneck, and the loop continues.
+""",
+                example: """
+import os
+import MetricKit
+
+// 1) Structured, level-appropriate logging - .default/.error/.fault are
+// persisted by the OS's unified logging system even in Release builds,
+// with no custom log file needed.
+enum AppLog {
+    static let codeRunner = Logger(subsystem: "com.swiftforge.app", category: "codeRunner")
+    static let network = Logger(subsystem: "com.swiftforge.app", category: "network")
+}
+
+// 2) Signposts mark a named interval that shows up directly in
+// Instruments' Time Profiler / Points of Interest track - a precise,
+// reproducible marker instead of guessing which nearby call was slow.
+let signposter = OSSignposter(subsystem: "com.swiftforge.app", category: "codeRunner")
+
+func runUserCode(_ code: String) {
+    let state = signposter.beginInterval("RunUserCode")
+    defer { signposter.endInterval("RunUserCode", state) }
+
+    // .debug: cheap, stripped from Release console output, safe to leave in.
+    AppLog.codeRunner.debug("Starting run, \\(code.count) chars")
+    // ... actual work ...
+    // .info/.default: persisted to disk, safe to leave in production.
+    AppLog.codeRunner.info("Run finished")
+}
+
+// 3) Guard against logging BECOMING the bottleneck: don't format an
+// expensive string on every call regardless of whether anyone reads it.
+func logExpensiveDiagnostics(_ payload: [String: Any]) {
+    // BAD: serializes `payload` on every single call, even if this log
+    // line is never actually inspected - the instrumentation itself now
+    // costs real CPU on every run, which is exactly the trap to avoid.
+    // AppLog.codeRunner.debug("\\(String(describing: payload))")
+
+    // GOOD: cheap to call - OSLog defers the actual formatting work,
+    // and `.public` only affects what's visible in Console, not cost.
+    AppLog.codeRunner.debug("payload keys: \\(payload.keys.count, privacy: .public)")
+}
+
+// 4) MetricKit: real, on-device diagnostics from actual users, with zero
+// debugger attached and negligible overhead - this is what makes
+// production debugging possible when you can't reproduce the issue
+// locally at all.
+final class DiagnosticsCollector: NSObject, MXMetricManagerSubscriber {
+    static let shared = DiagnosticsCollector()
+
+    func start() {
+        MXMetricManager.shared.add(self)
+    }
+
+    // Delivered roughly once a day, in the background, per device.
+    func didReceive(_ payloads: [MXMetricPayload]) {
+        for payload in payloads {
+            if let cpu = payload.cpuMetrics {
+                AppLog.codeRunner.info("Avg CPU time: \\(cpu.cumulativeCPUTime.description, privacy: .public)")
+            }
+        }
+    }
+
+    // Hang/crash/CPU-exception diagnostics - the piece that actually
+    // answers "why was THIS specific production session slow", not
+    // just an aggregate number.
+    func didReceive(_ payloads: [MXDiagnosticPayload]) {
+        for payload in payloads {
+            payload.hangDiagnostics?.forEach { hang in
+                AppLog.codeRunner.fault("Hang detected: \\(hang.callStackTree.description, privacy: .public)")
+            }
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "Production debugging works backward from telemetry collected BEFORE the issue happened, not a live debugger - structured OSLog logging, signposts, and MetricKit are decisions made ahead of shipping, not steps improvised at investigation time.",
+                    "Use the right OSLog level per message (.debug for noisy local-only detail, .info/.default/.error/.fault for what actually persists to the on-disk unified log even in Release) and let OSLog's own privacy-aware interpolation defer formatting instead of pre-building expensive strings on every call.",
+                    "Excessive or overly-frequent logging is not a neutral diagnostic - writing to disk or formatting large strings on every call can itself become the very performance/battery bottleneck under investigation.",
+                    "Instruments' Time Profiler, Allocations/Leaks, and Network panels map directly to CPU, memory footprint, and network footprint - always profile a Release-configuration build, since Debug-build performance can mislead in either direction.",
+                    "MetricKit (MXMetricManagerSubscriber) collects CPU/memory/hang/crash diagnostics from real users' devices with the OS itself doing the sampling - the actual mechanism that debugs 'without affecting the user experience', since it's low-overhead and asynchronous by design rather than something you build yourself."
+                ]
+            ),
+            QAItem(
+                id: "mvvm_data_binding_methods",
+                question: "What are the different methods of data binding in MVVM, and how do they differ between UIKit and SwiftUI?",
+                topics: ["MVVM", "Data Binding", "Combine", "SwiftUI", "UIKit"],
+                explanation: """
+Data binding is the mechanism that keeps a View automatically in sync with a ViewModel's state, without the View manually polling for changes or the ViewModel reaching into the View to update it directly. The exact toolset differs sharply between UIKit-based MVVM and SwiftUI-based MVVM, because only one of the two frameworks was actually built around binding.
+
+In UIKit, there is no native binding system, so MVVM in a UIKit app has to be assembled from general-purpose Foundation/Cocoa tools, and different teams reach for different combinations:
+
+1. Closures/callbacks - the simplest option. The ViewModel exposes a closure property (e.g. `var onStateChange: (() -> Void)?`), the View Controller sets that closure in `viewDidLoad`, and the ViewModel calls it whenever its state changes. Simple and dependency-free, but only supports one observer at a time unless you build your own multi-listener wrapper, and it's easy to create a retain cycle if the closure captures `self` (the View Controller) strongly while the ViewModel also outlives it.
+
+2. KVO (Key-Value Observing) - Objective-C runtime machinery that lets you observe changes to any `@objc dynamic` property. Verbose (requires `NSObject` inheritance, `@objc dynamic`, and either the old `addObserver` API or Swift's safer `observe(\\.property) { ... }` closure API), and mostly considered legacy today, but still shows up in older UIKit codebases.
+
+3. NotificationCenter - a global publish/subscribe bus. Decouples sender and observer completely, but that decoupling is also its biggest weakness for tight ViewModel-to-View binding: it's untyped (payloads travel as `[AnyHashable: Any]` in `userInfo`), there's no compile-time guarantee anyone is even listening, and it's easy to create subtle bugs from forgetting to remove an observer.
+
+4. Combine - Apple's reactive framework, and the closest UIKit gets to SwiftUI-style binding. A ViewModel exposes `@Published var state: SomeState`, and the View Controller subscribes with `.sink { ... }` and stores the resulting `AnyCancellable` in a `Set<AnyCancellable>` (so the subscription is torn down automatically when the View Controller deallocates). This gives you a typed, composable, multi-observer binding system without inventing your own.
+
+In SwiftUI, binding is not something you assemble - it's the framework's actual foundation. A ViewModel conforms to `ObservableObject` and marks its state with `@Published`; the View holds that ViewModel with `@StateObject` (if the View owns/creates it) or `@ObservedObject` (if it's passed in from a parent), and SwiftUI automatically re-invokes the View's `body` whenever a `@Published` property changes - this is ONE-WAY binding (ViewModel -> View). For TWO-WAY binding - where the View can also write back into the ViewModel's state, most commonly for a `TextField` or `Toggle` - SwiftUI provides the `Binding<T>` property wrapper, typically created via a computed property with a `get`/`set` pair, or the `$` projected-value syntax on an `@Published`/`@State` property (`$viewModel.username` produces a `Binding<String>` automatically).
+""",
+                example: """
+// ---------- UIKit MVVM: Combine-based binding ----------
+import Combine
+
+final class LoginViewModel {
+    @Published var isLoginEnabled: Bool = false
+    @Published var errorMessage: String?
+
+    private var cancellables = Set<AnyCancellable>()
+
+    var username: String = "" { didSet { validate() } }
+    var password: String = "" { didSet { validate() } }
+
+    private func validate() {
+        isLoginEnabled = !username.isEmpty && password.count >= 6
+    }
+}
+
+final class LoginViewController: UIViewController {
+    private let viewModel = LoginViewModel()
+    private var cancellables = Set<AnyCancellable>()
+    private let loginButton = UIButton()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        // Combine-based one-way binding: ViewModel -> View.
+        viewModel.$isLoginEnabled
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] enabled in
+                self?.loginButton.isEnabled = enabled
+            }
+            .store(in: &cancellables)
+    }
+}
+
+// ---------- SwiftUI MVVM: native binding, no extra plumbing ----------
+final class SwiftUILoginViewModel: ObservableObject {
+    @Published var username: String = ""
+    @Published var password: String = ""
+
+    var isLoginEnabled: Bool {
+        !username.isEmpty && password.count >= 6
+    }
+}
+
+struct LoginView: View {
+    // Owns the ViewModel - use @StateObject here, never @ObservedObject,
+    // so SwiftUI doesn't recreate it on every parent re-render.
+    @StateObject private var viewModel = SwiftUILoginViewModel()
+
+    var body: some View {
+        VStack {
+            // Two-way binding via the `$` projected value - typing in the
+            // TextField writes straight back into viewModel.username.
+            TextField("Username", text: $viewModel.username)
+            SecureField("Password", text: $viewModel.password)
+
+            // One-way binding: body re-evaluates automatically whenever
+            // any @Published property this view reads actually changes.
+            Button("Log In") { }
+                .disabled(!viewModel.isLoginEnabled)
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "UIKit has no native binding system - MVVM there is assembled from closures, KVO, NotificationCenter, or Combine, each with real tradeoffs (retain cycles, verbosity, type-safety, respectively).",
+                    "Combine (@Published + .sink, storing the AnyCancellable) is the closest UIKit equivalent to SwiftUI's own binding system, and is the modern default choice for UIKit MVVM today.",
+                    "SwiftUI has native binding built in: @Published on the ViewModel + @StateObject/@ObservedObject on the View gives automatic ONE-WAY binding (state change -> re-render) with zero extra plumbing.",
+                    "TWO-WAY binding in SwiftUI specifically requires Binding<T> - most commonly via the `$` projected-value syntax (`$viewModel.username`) passed into a control like TextField or Toggle.",
+                    "Use @StateObject when the View creates/owns the ViewModel, and @ObservedObject when it's passed in from a parent - getting this backwards causes the ViewModel to be recreated on every re-render."
+                ]
+            ),
+            QAItem(
+                id: "solid_principles_in_mvvm",
+                question: "How would you implement SOLID principles within an MVVM architecture?",
+                topics: ["MVVM", "SOLID", "Architecture", "Design Principles"],
+                explanation: """
+MVVM already gives you a head start on SOLID simply by having three separated layers (Model, View, ViewModel), but genuinely honoring SOLID requires deliberate discipline within each layer, not just the layer split itself. Here's how each of the five principles maps onto MVVM specifically:
+
+**S - Single Responsibility Principle.** Each layer should have exactly one reason to change. The View's only job is layout/presentation - it should never contain business logic, networking calls, or persistence code. The ViewModel's only job is exposing UI-ready state and handling user-triggered actions - it should never know about `UIKit`/`SwiftUI` types like `UIColor` or `Font` (that's presentation, the View's job), and it shouldn't perform networking/persistence directly either - it should ask a Service for that (see D below). The Model is just plain data. A ViewModel that ALSO parses JSON, ALSO formats dates for display, AND ALSO handles navigation is violating SRP three times over, and the usual name for the resulting mess is "Massive ViewModel" - the same failure mode MVVM was originally meant to fix relative to "Massive View Controller."
+
+**O - Open/Closed Principle.** A ViewModel/Service should be open for extension but closed for modification. Concretely: if you need to add a new payment method, you shouldn't have to edit an existing `switch` statement inside `PaymentViewModel` that already handles five other payment types - you should be able to add a new type conforming to a `PaymentProcessing` protocol and register it, without touching the existing code paths at all.
+
+**L - Liskov Substitution Principle.** Any concrete implementation of a ViewModel's dependency protocols must be fully substitutable for another without breaking behavior. If `ProfileViewModel` depends on `UserServicing`, then `RealUserService`, `CachedUserService`, and `FakeUserService` (used in unit tests) must all honor the exact same contract - none of them should throw for a case another one handles silently, or return a differently-shaped error.
+
+**I - Interface Segregation Principle.** Don't force a ViewModel to depend on a giant protocol when it only needs one method from it. Instead of one `NetworkServicing` protocol with 20 methods covering the whole app, split it into small, focused protocols (`ProfileFetching`, `OrderSubmitting`, etc.) so a ViewModel's dependency list honestly reflects what it actually uses - and its unit test fakes stay small too.
+
+**D - Dependency Inversion Principle.** This is the principle that makes MVVM's own testability promise actually work: a ViewModel should depend on a PROTOCOL abstraction for each of its services (networking, persistence, analytics), injected through its initializer - never construct a concrete `URLSessionNetworkService()` directly inside the ViewModel itself. This is what lets a unit test inject a fake/mock implementing the same protocol, with zero network/database access, and it's the single biggest lever for making MVVM code genuinely unit-testable rather than just structurally separated.
+""",
+                example: """
+// S - Single Responsibility: ViewModel only orchestrates; parsing and
+// networking live in a Service; formatting/layout stays in the View.
+protocol ProfileServicing {
+    func fetchProfile(id: String) async throws -> Profile
+}
+
+// D - Dependency Inversion: depend on the PROTOCOL, injected - never
+// construct a concrete network type directly inside the ViewModel.
+@MainActor
+final class ProfileViewModel: ObservableObject {
+    @Published private(set) var displayName: String = ""
+    @Published private(set) var errorMessage: String?
+
+    private let service: ProfileServicing
+
+    init(service: ProfileServicing) {
+        self.service = service
+    }
+
+    func load(id: String) async {
+        do {
+            let profile = try await service.fetchProfile(id: id)
+            // Presentation-only formatting stays in the ViewModel/View,
+            // never networking/parsing logic mixed back in here.
+            displayName = profile.fullName.uppercased()
+        } catch {
+            errorMessage = "Couldn't load profile."
+        }
+    }
+}
+
+// O - Open/Closed: add a new payment method by conforming to the
+// protocol, not by editing an existing switch statement.
+protocol PaymentProcessing {
+    func pay(amount: Double) async throws
+}
+
+struct CreditCardPayment: PaymentProcessing {
+    func pay(amount: Double) async throws { /* ... */ }
+}
+
+struct ApplePayPayment: PaymentProcessing {
+    func pay(amount: Double) async throws { /* ... */ }
+}
+
+// I - Interface Segregation: a small, focused protocol instead of one
+// giant NetworkServicing protocol the ViewModel would only use 1/20th of.
+protocol ProfileFetching {
+    func fetchProfile(id: String) async throws -> Profile
+}
+
+// L - Liskov Substitution: the fake used in tests must behave like a
+// real service for every case ProfileViewModel actually relies on.
+final class FakeProfileService: ProfileServicing {
+    var stubbedProfile = Profile(id: "1", fullName: "Sachin Kumar")
+    func fetchProfile(id: String) async throws -> Profile { stubbedProfile }
+}
+
+// Unit test: no network, no database - only possible because of D.
+func testProfileViewModelLoadsAndFormatsName() async {
+    let viewModel = ProfileViewModel(service: FakeProfileService())
+    await viewModel.load(id: "1")
+    assert(viewModel.displayName == "SACHIN KUMAR")
+}
+
+struct Profile {
+    let id: String
+    let fullName: String
+}
+""",
+                keyTakeaways: [
+                    "SRP: the View only presents, the ViewModel only orchestrates UI-ready state, the Model is only data - a ViewModel that also parses JSON or formats dates is doing someone else's job (\"Massive ViewModel\").",
+                    "DIP is the principle that actually makes MVVM testable: a ViewModel depends on a PROTOCOL for each service, injected through init - never constructs a concrete networking/persistence type itself.",
+                    "OCP: add new behavior (a new payment type, a new analytics backend) by conforming to an existing protocol, not by editing a switch statement inside an already-shipping ViewModel.",
+                    "ISP: split one giant service protocol into several small, focused ones so each ViewModel's dependencies - and its test fakes - stay minimal and honest about what's actually used.",
+                    "LSP: every concrete implementation of a dependency protocol (real service, cached service, test fake) must behave identically from the ViewModel's point of view, or substituting one for another silently breaks behavior."
+                ]
+            ),
+            QAItem(
+                id: "weak_vs_strong_properties_arc",
+                question: "What is the difference between a weak and a strong property in Swift? Explain with code.",
+                topics: ["Memory Management", "ARC", "weak", "unowned"],
+                explanation: """
+Every reference-type (class instance) property in Swift is either `strong` (the default - you get this automatically if you write no keyword at all), `weak`, or `unowned`, and the difference is entirely about how each one interacts with ARC's reference counting.
+
+A **strong** reference increments the referenced object's retain count by one for as long as the reference exists, and decrements it when the reference is cleared or its owner deallocates. As long as ANY strong reference to an object exists anywhere, ARC keeps that object alive. This is what you want for ownership - the thing that should actually be responsible for keeping another object alive.
+
+A **weak** reference does NOT increment the retain count at all - it's purely an observation, not an ownership claim. Because of that, a weak reference must always be an `Optional var` (`weak var delegate: SomeDelegate?`) - `weak let` and non-optional weak references are both compiler errors - because ARC needs to be able to set it to `nil` automatically the instant the object it points to is deallocated (this is called "zeroing weak references"). This automatic nil-ing is what makes `weak` fundamentally safe to use even after the underlying object is gone: reading a weak reference after its target has deallocated just gives you `nil`, never a dangling pointer.
+
+`unowned` is a second non-owning option, used less often: like `weak`, it doesn't increment the retain count, but UNLIKE `weak` it does not require Optional and is not automatically nil-ed - it assumes the referenced object will always outlive the reference itself. If that assumption is ever wrong, accessing an `unowned` reference after its target has deallocated is a runtime crash (a "dangling reference" trap), not a graceful `nil`. Use `unowned` only when you can prove the lifetimes are tied together (a `Node` referencing its own `parent`, which by construction must outlive the child) - `weak` is the safer default whenever there's any doubt.
+
+The classic reason to reach for `weak` at all is breaking a **retain cycle**: if object A holds a strong reference to object B, and B ALSO holds a strong reference back to A, neither one's retain count can ever reach zero, and ARC - being pure reference counting, not a garbage collector - never notices or cleans this up; it's a permanent memory leak. The fix is to make ONE side of that mutual relationship `weak` (or `unowned`), most commonly the "child pointing back up to its owner" side: a delegate property, or a closure that captures `self`.
+""",
+                example: """
+// STRONG (default): the array genuinely owns each Task - as long as
+// `tasks` holds them, they stay alive, which is exactly what you want.
+final class TaskList {
+    var tasks: [Task] = []   // strong by default
+}
+
+final class Task {
+    let title: String
+    init(title: String) { self.title = title }
+}
+
+// WEAK: a classic delegate pattern. If `delegate` were STRONG instead,
+// and the delegate (often a parent View Controller) also held a strong
+// reference back to this object, you'd have a permanent retain cycle.
+protocol DownloadDelegate: AnyObject {
+    func downloadDidFinish()
+}
+
+final class Downloader {
+    weak var delegate: DownloadDelegate?   // must be `var` + Optional
+
+    func finish() {
+        delegate?.downloadDidFinish()      // safely nil if delegate is gone
+    }
+}
+
+// The classic closure retain cycle, and the `weak self` fix:
+final class ViewModel {
+    var onUpdate: (() -> Void)?
+
+    func startBroken() {
+        // BAD: this closure captures `self` STRONGLY. `self` owns
+        // `onUpdate`, and this closure (via `onUpdate`) now owns `self`
+        // right back - neither retain count ever reaches zero.
+        onUpdate = {
+            self.refresh()
+        }
+    }
+
+    func startFixed() {
+        // GOOD: [weak self] breaks the cycle - the closure no longer
+        // keeps `self` alive by itself, and `self?` handles the case
+        // where `self` has already deallocated by the time this runs.
+        onUpdate = { [weak self] in
+            self?.refresh()
+        }
+    }
+
+    func refresh() { print("refreshing") }
+}
+
+// UNOWNED: only when the referenced object is GUARANTEED to outlive
+// this one - here, a customer's own credit card can't outlive the
+// customer, so `unowned` (no Optional, no nil-check needed) is safe.
+final class CreditCard {
+    unowned let customer: Customer
+    init(customer: Customer) { self.customer = customer }
+}
+
+final class Customer {
+    var card: CreditCard?
+}
+""",
+                keyTakeaways: [
+                    "strong (default) increments the retain count - it's genuine ownership; weak and unowned both do NOT increment it - they're observation, not ownership.",
+                    "weak must always be `var` + Optional (`weak var x: T?`) because ARC automatically nils it out the instant the referenced object deallocates - this is what makes it safe to read even after the target is gone.",
+                    "unowned skips the Optional/nil-safety - it assumes the target always outlives the reference; if that assumption is wrong, accessing it after deallocation is a runtime crash, not a graceful nil.",
+                    "The reason to reach for weak/unowned at all: breaking a retain cycle, where two objects hold strong references to each other and neither's count can ever reach zero - ARC never detects or cleans this up on its own.",
+                    "The most common real-world cases: `weak var delegate` in a delegate pattern, and `[weak self]` in a closure that captures self and is itself stored as a property (so the closure would otherwise outlive and be owned mutually with self)."
+                ]
+            ),
+            QAItem(
+                id: "retain_cycle_cyclic_dependency",
+                question: "What is a cyclic dependency, and how does it cause a retain cycle? How do you detect and fix it?",
+                topics: ["Memory Management", "ARC", "Retain Cycle", "Instruments"],
+                explanation: """
+A cyclic dependency, in the memory-management sense, is exactly what it sounds like: two (or more) objects end up holding strong references to each other, forming a cycle of ownership with no external entry point that can ever break it. The direct consequence of that cycle is a **retain cycle**: since Swift's ARC (Automatic Reference Counting) only deallocates an object once its retain count reaches zero, and each object in the cycle is being kept alive by another object INSIDE the same cycle, none of their retain counts can ever reach zero - even if every reference from OUTSIDE the cycle is gone. The objects are unreachable from anywhere useful in your app, yet never freed: a genuine, permanent memory leak for as long as the app keeps running.
+
+This is a fundamental blind spot of pure reference counting, not a bug you can rely on ARC to eventually catch - unlike a tracing garbage collector (used by languages like Java or Go), which can walk the whole object graph and identify "unreachable" cycles and collect them, ARC only ever asks "is my retain count zero?" It has no concept of a group of objects being unreachable as a whole; it only ever sees each object's own count, which a cycle keeps artificially above zero forever.
+
+The two most common real-world shapes this takes in Swift/iOS code:
+
+1. **Delegate cycles** - object A holds a strong `var delegate: SomeDelegate` pointing at object B, and B ALSO holds a strong reference back to A (e.g. B created A and holds onto it as a property). This is why the near-universal convention is `weak var delegate: SomeDelegate?` - making the delegate side of the relationship non-owning breaks the cycle.
+
+2. **Closure capture cycles** - a closure stored as a property on `self` (e.g. `var onComplete: (() -> Void)?`) that internally references `self` (to call a method or read a property) captures `self` STRONGLY by default. Now `self` owns the closure (via the property), and the closure owns `self` right back (via the capture) - a two-object cycle exactly as described above. The fix is a capture list: `{ [weak self] in self?.doSomething() }`.
+
+**Detecting** a retain cycle: Xcode's **Memory Graph Debugger** (the button that looks like three connected circles, next to the debug navigator) captures a live snapshot of every object currently alive and every reference between them, and specifically flags objects it suspects are leaked with a purple exclamation mark - clicking one shows you the exact reference chain keeping it alive, which is usually enough to spot the cycle by eye. **Instruments'** Leaks and Allocations templates are the tool for confirming it over time in a running app: Leaks specifically looks for exactly this "no external references but never deallocated" pattern; Allocations shows you the "Persistent" object count for a given type climbing steadily across repeated actions (e.g. pushing and popping the same screen 20 times) that should have returned to zero.
+""",
+                example: """
+// THE BUG: a delegate cycle.
+final class ParentViewController {
+    // Strong reference DOWN to the child.
+    var child: ChildViewController?
+
+    func presentChild() {
+        let child = ChildViewController()
+        child.delegate = self   // if `delegate` were strong, this closes
+                                 // the loop: Parent -> child -> (delegate) -> Parent
+        self.child = child
+    }
+
+    func childDidFinish() {
+        child = nil
+    }
+}
+
+protocol ChildDelegate: AnyObject {
+    func childDidFinish()
+}
+
+final class ChildViewController {
+    // FIX: weak breaks the cycle. The child observes its parent via the
+    // delegate but does not OWN it - only the parent owns the child.
+    weak var delegate: ChildDelegate?
+}
+
+// THE BUG: a closure capture cycle.
+final class ReportGenerator {
+    var onReportReady: (() -> Void)?
+
+    func startBroken() {
+        // `self` owns `onReportReady`; this closure captures `self`
+        // strongly to call `self.publish()` - `self` is now also owned
+        // BY the closure it itself owns. Neither side's count reaches 0.
+        onReportReady = {
+            self.publish()
+        }
+    }
+
+    func startFixed() {
+        // [weak self] means the closure does not keep `self` alive on
+        // its own - the cycle is broken.
+        onReportReady = { [weak self] in
+            self?.publish()
+        }
+    }
+
+    func publish() { print("Report published") }
+}
+
+// Detecting it programmatically in a unit test, using `weak` to assert
+// deallocation actually happened (a common pattern for catching a
+// regression before it ever reaches Instruments):
+func testChildDeallocatesAfterDismiss() {
+    var child: ChildViewController? = ChildViewController()
+    weak var weakChild = child   // does NOT keep it alive
+
+    child = nil   // the only strong reference is gone
+
+    // If a retain cycle existed, weakChild would still be non-nil here.
+    assert(weakChild == nil, "ChildViewController leaked - check for a retain cycle")
+}
+""",
+                keyTakeaways: [
+                    "A cyclic dependency is two or more objects holding strong references to each other; the direct consequence is a retain cycle - none of their retain counts can ever reach zero, so ARC never deallocates any of them.",
+                    "ARC only checks each object's own retain count - it has no concept of a whole group being unreachable, unlike a tracing garbage collector, so it can never detect or break a cycle on its own.",
+                    "The two classic shapes: a delegate held strongly both ways (fixed with `weak var delegate`), and a closure stored as a property that captures `self` strongly (fixed with `[weak self]` in the capture list).",
+                    "Detect it with Xcode's Memory Graph Debugger (flags suspected leaks directly, with the full reference chain) or Instruments' Leaks/Allocations templates (watch the Persistent object count for a type that should return to zero after repeated actions).",
+                    "A `weak` reference in a unit test is a cheap, deliberate way to assert deallocation actually happened - if a retain cycle exists, the weak reference stays non-nil even after every strong reference you hold is cleared."
+                ]
+            ),
+            QAItem(
+                id: "ios_provisioning_profile_device_registration",
+                question: "Do you need to add a device's UUID to a development certificate? Explain the full lifecycle of a provisioning profile and what happens when a certificate expires.",
+                topics: ["Code Signing", "Provisioning Profile", "Apple Developer Portal", "Certificates"],
+                explanation: """
+It's a common phrasing mix-up worth untangling first: the device's UDID is never added to a CERTIFICATE - it's registered on the Apple Developer Portal and then included in a PROVISIONING PROFILE. A certificate and a provisioning profile are two different objects that get bundled together at build/install time, and understanding the difference is the whole answer here.
+
+**Certificate** - proves WHO is signing the build. It's a public/private key pair: Apple issues the public half (visible in the portal, tied to your Apple Developer account/team), and the private half lives only in your Mac's Keychain (generated locally via a Certificate Signing Request, which is why a certificate can't just be copied between Macs the way a provisioning profile can - the private key has to either already exist on that Mac or be exported/imported through Keychain Access). There are two categories: Development certificates (for running on your own registered test devices, and for the personal-team "Sign to Run Locally" case which needs no portal certificate at all) and Distribution certificates (App Store or Ad Hoc distribution, used at archive/export time). Development certificates are valid for 1 year; Distribution certificates for 1 year as well (Apple periodically adjusts exact durations, but a year is the practical figure to know).
+
+**Provisioning profile** - the actual object that ties everything together for a specific build configuration: it bundles the App ID (bundle identifier), the certificate(s) allowed to sign with it, the entitlements the app is permitted to use, and - ONLY for Development and Ad Hoc profiles, never for App Store or TestFlight - an explicit list of registered device UDIDs the app is allowed to install and run on. This device list is exactly why a NEW physical test device has to be registered in the portal (Devices section, by UDID) AND the profile has to be regenerated/re-downloaded to include it - an app can only launch on a device whose UDID appears in the profile it was signed with, for Development/Ad Hoc distribution. App Store distribution has no device list at all - once Apple approves the build, it runs on any customer's device, since App Store review is the actual gate, not a device whitelist.
+
+**Certificate expiry**, specifically: since a provisioning profile embeds a reference to the certificate(s) it trusts, once that certificate expires, every profile built against it becomes invalid too - existing installed builds on devices generally keep running until their own embedded profile's expiry is checked again (this varies; Ad Hoc/Development builds can eventually refuse to launch), but you can no longer build or archive a NEW app with the expired certificate/profile pair. The fix is: generate a new certificate (a new CSR + private key, or renew via the portal), then regenerate every provisioning profile that referenced the old one (they don't auto-update), then re-download and re-embed those new profiles wherever they're needed (Xcode, CI signing assets, etc.). In practice, "Automatically manage signing" in Xcode's Signing & Capabilities tab handles almost this entire lifecycle for you - creating/renewing certificates, registering the current device, and regenerating profiles - which is exactly why most iOS developers rarely interact with the raw portal UI at all until something (usually an expired certificate on a CI machine, or a device that was never registered) breaks that automation.
+""",
+                example: """
+// This is a workflow/tooling topic more than a code topic, but here's
+// the shape of what "automatic signing" is doing on your behalf, and
+// what you'd otherwise have to do manually via the Apple Developer Portal
+// and `security`/`xcodebuild` CLI tools:
+
+// 1) Registering a new test device's UDID (find it via Xcode's
+//    Devices & Simulators window, or `Finder > About This Mac` on
+//    Apple Silicon Macs used as a device):
+//    Portal path: Certificates, Identifiers & Profiles > Devices > (+)
+
+// 2) Manually checking a build's embedded provisioning profile and its
+//    expiry / allowed device list, from the command line:
+/*
+security cms -D -i /path/to/embedded.mobileprovision
+// prints the profile's plist: look for `ExpirationDate`,
+// `ProvisionedDevices` (the UDID allowlist - absent entirely for
+// App Store profiles), and `DeveloperCertificates`.
+*/
+
+// 3) What "Automatically manage signing" does behind the scenes, in
+// order, whenever you build for a new device or after a cert expires:
+//   a. Checks Keychain for a valid, non-expired Development certificate
+//      for your team; generates a new CSR + private key and requests one
+//      from the portal if none exists or the current one expired.
+//   b. Registers the currently connected device's UDID with the portal,
+//      if it isn't already registered.
+//   c. Regenerates the app's provisioning profile to include the new
+//      certificate and/or the newly registered device.
+//   d. Downloads and installs the fresh profile into Xcode automatically.
+
+// 4) In CI (no Xcode UI, no "automatic" magic), this is usually done
+// explicitly with fastlane match, which stores certs/profiles in a
+// private encrypted git repo shared across the team/CI so every machine
+// signs with the SAME certificate instead of each generating its own:
+/*
+match(type: "development")
+match(type: "appstore")
+*/
+""",
+                keyTakeaways: [
+                    "A device UDID is registered on the Developer Portal and embedded in a PROVISIONING PROFILE, not added directly to a certificate - the certificate only proves who signed the build.",
+                    "Development/Ad Hoc profiles carry an explicit device UDID allowlist; App Store/TestFlight profiles carry none at all - App Store review is the actual gate for those, not a device whitelist.",
+                    "A certificate has an expiry (~1 year); once it expires, every provisioning profile built against it is invalid for NEW builds, and each profile has to be manually regenerated - it doesn't auto-renew.",
+                    "Xcode's 'Automatically manage signing' handles the entire lifecycle (certificate creation/renewal, device registration, profile regeneration) - which is why most iOS devs rarely touch the raw portal UI until that automation breaks.",
+                    "In CI/team settings without Xcode's automation, `fastlane match` is the standard tool - it shares one certificate/profile set across the whole team via an encrypted git repo instead of each machine generating its own."
+                ]
+            ),
+            QAItem(
+                id: "stored_or_lazy_property_in_extension",
+                question: "Can you add a new stored property, or a lazy property, in a Swift extension? Explain why or why not.",
+                topics: ["Extensions", "Properties", "Lazy Initialization", "Compiler Rules"],
+                explanation: """
+No to both, and for the same underlying reason: an extension can only add COMPUTED properties (and other computed-only members like methods, initializers under certain rules, subscripts, and nested types) - it can never add a STORED property, and a `lazy` property counts as a stored property for this purpose, so it's disallowed too.
+
+The reason traces back to how memory layout works. When a type (`struct`/`class`/`enum`) is originally declared, the compiler fixes its exact memory layout at that point - every stored property gets an assigned offset within the instance's allocated memory, and that layout is baked in wherever the type is compiled and used. An extension is compiled separately (often in a completely different file, and for types like `Int`/`String`/`Array` that you don't even own the source of, it's compiled in a different MODULE entirely) - by the time an extension's code runs, the type's layout is already fixed and instances of it may already exist in memory. There is no way to retroactively widen every already-allocated instance of that type to make room for a new field - so the language simply forbids it outright, as a compile-time error ("extensions must not contain stored properties"), rather than allowing something that could silently corrupt memory layout.
+
+`lazy` specifically fails for exactly this reason, not a separate one: as covered elsewhere, a `lazy var` IS a stored property under the hood - it needs a real memory slot to cache its computed value after the first access (that's the whole mechanism that makes lazy work: compute once, then just read stored memory on every later access). Since extensions can't add ANY stored property, they can't add a lazy one either - the compiler error you get for `lazy var x: Int = 5` inside an extension is exactly the same "extensions must not contain stored properties" error, just triggered by the `lazy` keyword instead of a bare `var`.
+
+What extensions CAN add, and why these don't have the same problem: a COMPUTED property has no backing storage at all - its getter/setter just runs code against properties that already exist, so adding one to an extension doesn't change the type's memory layout in any way. Similarly, extensions can add methods, convenience initializers (for a class - a DESIGNATED initializer still can't be added via extension, since it's responsible for initializing every stored property, and those must all be set in the type's original declaration), subscripts, and even conform the type to a new protocol.
+""",
+                example: """
+struct Temperature {
+    var celsius: Double   // the type's ONE stored property, fixed at
+                           // declaration time - this is the entire
+                           // memory layout of a Temperature instance.
+}
+
+extension Temperature {
+    // COMPUTED property - fine. No new storage: `fahrenheit` is derived
+    // from the already-existing `celsius` on every access.
+    var fahrenheit: Double {
+        get { celsius * 9 / 5 + 32 }
+        set { celsius = (newValue - 32) * 5 / 9 }
+    }
+
+    // Does NOT compile:
+    // var readingCount: Int = 0
+    // error: extensions must not contain stored properties
+
+    // Also does NOT compile, for the identical underlying reason -
+    // `lazy` still needs a real memory slot to cache into:
+    // lazy var expensiveDescription: String = {
+    //     return "Temperature: \\(celsius)C"
+    // }()
+    // error: extensions must not contain stored properties
+
+    // Methods ARE fine - they don't need new storage either.
+    func isFreezing() -> Bool {
+        celsius <= 0
+    }
+}
+
+// The workaround when you genuinely need extension-added "storage":
+// associated objects (Objective-C runtime trick, classes only) or,
+// far more commonly in modern Swift, a wrapper/composition type that
+// actually owns the extra state instead of trying to bolt it onto the
+// original type after the fact:
+final class TemperatureLogger {
+    private var readings: [Temperature] = []   // the storage lives HERE,
+                                                 // not smuggled into an
+                                                 // extension on Temperature.
+
+    func log(_ reading: Temperature) {
+        readings.append(reading)
+    }
+}
+""",
+                keyTakeaways: [
+                    "Extensions can only add COMPUTED members (properties, methods, subscripts) - never STORED properties, because the type's memory layout is fixed at its original declaration and can't be retroactively widened.",
+                    "`lazy` fails for the identical reason, not a separate one: a lazy property IS a stored property under the hood (it needs real memory to cache its value after first access), so it's just as disallowed in an extension as any other stored property.",
+                    "The compiler error for both is literally the same message - 'extensions must not contain stored properties' - whether triggered by a plain `var` or a `lazy var`.",
+                    "A computed property added via extension has zero storage impact - its getter/setter just reads/writes properties that already existed in the type's original layout, which is exactly why it's allowed.",
+                    "If you genuinely need extra state 'attached' to a type you can't modify, the idiomatic fix is a separate wrapper/composition type that owns that state itself, not trying to smuggle storage into an extension."
+                ]
+            ),
+            QAItem(
+                id: "swift_generics_explained",
+                question: "What are generics in Swift? Explain with an example.",
+                topics: ["Generics", "Type Safety", "Protocols"],
+                explanation: """
+Generics let you write a single function, type, or method that works with ANY type, subject to constraints you choose, instead of writing near-duplicate code for each concrete type you need to support. Swift itself is built on generics almost everywhere under the hood - `Array<Element>`, `Dictionary<Key, Value>`, and `Optional<Wrapped>` are all generic types, which is exactly why `Array<Int>` and `Array<String>` behave identically despite holding completely different element types.
+
+The core motivation is avoiding the alternative, which is one of two bad options: (1) duplicate a function/type once per concrete type (`swapInts`, `swapStrings`, `swapDoubles`...), which is a maintenance nightmare and violates the Single Responsibility/DRY spirit outright, or (2) use `Any`/`AnyObject` to accept literally anything, which throws away compile-time type safety entirely - you'd need runtime casting (`as?`) everywhere, and typos/type mismatches that generics would catch at compile time instead surface as crashes at runtime.
+
+A generic function/type introduces a PLACEHOLDER type name (conventionally `T`, `U`, `Element`, `Key`/`Value`, etc.), written in angle brackets right after the function/type name: `func swapValues<T>(_ a: inout T, _ b: inout T)`. The compiler then generates a SPECIALIZED version for each concrete type actually used at each call site (this is called generic specialization) - so calling `swapValues(&intA, &intB)` and `swapValues(&stringA, &stringB)` both type-check independently and safely, with zero runtime casting, while still being written as one function body.
+
+Generics become genuinely powerful once combined with CONSTRAINTS - restricting the placeholder type to only types conforming to a specific protocol, via a `where` clause or inline (`<T: Equatable>`). This lets your generic code actually USE capabilities of the constrained protocol (like `==` for `Equatable`, or `<` for `Comparable`) that a fully unconstrained `<T>` wouldn't have access to at all, while still working with ANY type that satisfies the constraint - your own custom types included, as long as they conform.
+""",
+                example: """
+// Without generics: near-duplicate code per type - exactly the
+// maintenance problem generics exist to eliminate.
+func swapInts(_ a: inout Int, _ b: inout Int) {
+    let temp = a; a = b; b = temp
+}
+func swapStrings(_ a: inout String, _ b: inout String) {
+    let temp = a; a = b; b = temp
+}
+
+// WITH generics: one function, works for ANY type `T`, fully type-safe
+// at compile time - no `Any`, no runtime casting.
+func swapValues<T>(_ a: inout T, _ b: inout T) {
+    let temp = a
+    a = b
+    b = temp
+}
+
+var x = 5, y = 10
+swapValues(&x, &y)          // T inferred as Int
+
+var name1 = "Alice", name2 = "Bob"
+swapValues(&name1, &name2)  // T inferred as String - SAME function body
+
+// A generic TYPE - Swift's own Array/Dictionary/Optional work exactly
+// this way. `Stack<Element>` works identically for any element type.
+struct Stack<Element> {
+    private var items: [Element] = []
+
+    mutating func push(_ item: Element) {
+        items.append(item)
+    }
+
+    mutating func pop() -> Element? {
+        items.popLast()
+    }
+}
+
+var intStack = Stack<Int>()
+intStack.push(1)
+intStack.push(2)
+
+var stringStack = Stack<String>()
+stringStack.push("hello")
+
+// CONSTRAINED generics - `<T: Equatable>` lets the function body use
+// `==`, which a fully unconstrained `<T>` would have no access to at
+// all (the compiler can't assume every possible type supports `==`).
+func findFirstIndex<T: Equatable>(of value: T, in array: [T]) -> Int? {
+    for (index, element) in array.enumerated() {
+        if element == value {
+            return index
+        }
+    }
+    return nil
+}
+
+print(findFirstIndex(of: 3, in: [1, 2, 3, 4]))          // Optional(2)
+print(findFirstIndex(of: "b", in: ["a", "b", "c"]))     // Optional(1)
+
+// Works with any CUSTOM type too, as long as it conforms to the
+// constraint - this is the real payoff: generic code + your own types.
+struct Point: Equatable {
+    let x: Int, y: Int
+}
+print(findFirstIndex(of: Point(x: 1, y: 1), in: [Point(x: 0, y: 0), Point(x: 1, y: 1)]))  // Optional(1)
+""",
+                keyTakeaways: [
+                    "Generics let one function/type work with any type via a placeholder (`<T>`) instead of duplicating code per concrete type or falling back to `Any` and losing compile-time type safety.",
+                    "The compiler generates a specialized version per concrete type actually used at each call site (generic specialization) - one function body, but each call is still fully type-checked with zero runtime casting.",
+                    "Swift's own Array, Dictionary, and Optional are generic types themselves - `Stack<Element>` in the example works exactly the same way they do.",
+                    "Constraints (`<T: Equatable>`, or a `where` clause) let generic code use capabilities of the constrained protocol (`==`, `<`, etc.) that an unconstrained `<T>` has no access to - while still working with any conforming type, including your own custom ones.",
+                    "Reach for generics whenever you'd otherwise write the same logic twice for two different concrete types, or reach for `Any` just to avoid that duplication."
+                ]
+            ),
+            QAItem(
+                id: "xctest_setup_teardown_lifecycle",
+                question: "What are setUp() and tearDown() in XCTest, and how do they fit into unit testing?",
+                topics: ["Unit Testing", "XCTest", "Testing"],
+                explanation: """
+`setUp()` and `tearDown()` are lifecycle methods on `XCTestCase` that run automatically around EVERY test method in a test class - they exist so each test starts from a known, clean state and doesn't leak state into (or depend on state left behind by) any other test.
+
+`setUp()` runs immediately BEFORE each individual test method executes. It's where you construct the "system under test" and any fixtures/dependencies it needs - typically creating a fresh instance of the ViewModel/service being tested and any fakes/mocks it depends on, assigning them to instance properties the test methods then use. Because `setUp()` reruns before EVERY test, each test method gets its own brand-new instance - test A can't accidentally see state that test B's run happened to leave behind, which is what makes tests safe to run in any order (including Xcode's own randomized test-order option, which exists specifically to catch tests that were secretly depending on shared/leftover state).
+
+`tearDown()` runs immediately AFTER each individual test method finishes (whether it passed or failed). It's for cleanup: nil-ing out references so ARC can deallocate them promptly, closing files/connections a test opened, resetting global/shared singletons a test may have mutated, or removing test data from disk. It's easy to underestimate how much this matters - a test that mutates `UserDefaults` or a shared singleton and never resets it in `tearDown()` can make a LATER, completely unrelated test fail for reasons that have nothing to do with that later test's own logic, which is a notoriously confusing category of bug to track down.
+
+Both also have throwing variants - `setUpWithError() throws` and `tearDownWithError() throws` - useful when constructing a fixture can itself fail (e.g. loading a fixture file from disk) and you want that failure to cleanly fail the test with a clear error rather than crash.
+
+There's also a CLASS-level pair, `class func setUp()` / `class func tearDown()` (or the `static` equivalents), which run exactly ONCE per test class - before the very first test method and after the very last one - rather than once per individual test. These are for genuinely expensive, class-wide setup that's safe to share across all tests in the class (e.g. spinning up an in-memory test database once), NOT for per-test fixtures - sharing mutable state across tests via class-level setup reintroduces the exact test-order-dependency problem instance-level `setUp()`/`tearDown()` exists to prevent.
+""",
+                example: """
+import XCTest
+@testable import MyApp
+
+final class TaskListViewModelTests: XCTestCase {
+    // Instance properties the fixture lives in - reassigned fresh
+    // before every single test method by setUp().
+    private var viewModel: TaskListViewModel!
+    private var fakeService: FakeTaskService!
+
+    override func setUp() {
+        super.setUp()
+        // Runs BEFORE every test method: fresh instances every time,
+        // so test order and prior test state never leak into this one.
+        fakeService = FakeTaskService()
+        viewModel = TaskListViewModel(service: fakeService)
+    }
+
+    override func tearDown() {
+        // Runs AFTER every test method: release references promptly,
+        // and reset any shared/global state this test may have touched.
+        viewModel = nil
+        fakeService = nil
+        super.tearDown()
+    }
+
+    func testLoadingPopulatesTasks() async {
+        fakeService.stubbedTasks = [Task(title: "Buy milk")]
+
+        await viewModel.load()
+
+        XCTAssertEqual(viewModel.tasks.count, 1)
+        XCTAssertEqual(viewModel.tasks.first?.title, "Buy milk")
+    }
+
+    func testLoadingWithNoTasksShowsEmptyState() async {
+        fakeService.stubbedTasks = []   // note: relies on a FRESH fakeService
+                                          // from setUp(), not leftover state
+                                          // from testLoadingPopulatesTasks above
+        await viewModel.load()
+
+        XCTAssertTrue(viewModel.tasks.isEmpty)
+        XCTAssertTrue(viewModel.isShowingEmptyState)
+    }
+
+    // Runs exactly ONCE for the whole class - before the first test,
+    // not before each one. Only for genuinely class-wide, expensive,
+    // read-only setup - never per-test mutable fixtures.
+    override class func setUp() {
+        super.setUp()
+        print("TaskListViewModelTests suite starting")
+    }
+}
+
+final class FakeTaskService: TaskServicing {
+    var stubbedTasks: [Task] = []
+    func fetchTasks() async -> [Task] { stubbedTasks }
+}
+""",
+                keyTakeaways: [
+                    "setUp() runs BEFORE every individual test method - use it to build a fresh system-under-test and its fakes/mocks so no test can see another test's leftover state.",
+                    "tearDown() runs AFTER every individual test method (pass or fail) - use it to nil out references and reset any shared/global state (UserDefaults, singletons) the test touched.",
+                    "Instance-level setUp()/tearDown() run once PER TEST METHOD; class-level `class func setUp()`/`tearDown()` run exactly once for the WHOLE class - reserve the class-level pair for expensive, read-only, class-wide setup only.",
+                    "Fresh fixtures per test via setUp() are what make tests safe to run in any order - including Xcode's randomized test-order option, which exists specifically to catch hidden shared-state dependencies.",
+                    "setUpWithError()/tearDownWithError() are throwing variants, useful when constructing a fixture can itself fail and you want a clean test failure instead of a crash."
+                ]
+            ),
+            QAItem(
+                id: "concurrent_api_calls_async_await",
+                question: "How do you make multiple API calls concurrently using async/await in Swift?",
+                topics: ["Concurrency", "async/await", "TaskGroup", "async let"],
+                explanation: """
+Plain `await` on its own is SEQUENTIAL - if you write `let a = await fetchA(); let b = await fetchB()`, the second call doesn't even START until the first one has fully finished, even though the two requests have nothing to do with each other and could easily run at the same time. Making them genuinely concurrent needs one of two specific tools, chosen based on whether the number of concurrent calls is fixed and known at compile time, or dynamic/variable.
+
+**`async let`** - for a small, FIXED number of concurrent operations, known by name at the call site. Writing `async let a = fetchA()` immediately starts `fetchA()` running in the background and returns right away without waiting - the actual suspension only happens later, at the point you write `await a` to read its result. So the pattern is: declare every `async let` first (which kicks all of them off concurrently), and only THEN `await` each one - by the time you reach the awaits, they've already been running in parallel since their `async let` line. This is the natural fit for "I need to fetch these 3 specific, differently-typed things at once" - e.g. a user's profile, their settings, and their notification count, each from a different endpoint returning a different type.
+
+**`TaskGroup`** (via `withTaskGroup`/`withThrowingTaskGroup`) - for a DYNAMIC number of concurrent operations, where the count isn't known until runtime (e.g. fetching details for however many items are in an array you were just handed). You create a task group, add one child task per item inside a loop, and then iterate over the group to collect each result as it completes - this scales to any number of concurrent operations, unlike `async let` which requires writing out one named `async let` line per operation.
+
+A critical safety note for `TaskGroup` specifically: every child task added to the group must return the SAME type (the group is generic over one result type, `ChildTaskResult`), and results arrive in COMPLETION order, not the order you added them in - if you need to preserve the original order (e.g. results indexed to their original array position), pair each result with its original index inside the task and re-sort/re-place after collecting, rather than assuming array order is preserved.
+
+Both tools structurally guarantee that ALL child tasks complete (or are cancelled) before the enclosing scope returns - this is Swift's "structured concurrency": unlike a bare unstructured `Task { }`, you can never accidentally leak a task that outlives the function that started it.
+""",
+                example: """
+// SEQUENTIAL (the thing to avoid when the calls are independent):
+// fetchB() doesn't even start until fetchA() has fully finished.
+func loadSequential() async throws -> (Profile, Settings) {
+    let profile = try await fetchProfile()
+    let settings = try await fetchSettings()   // waits for profile first
+    return (profile, settings)
+}
+
+// CONCURRENT with `async let` - fixed, known number of calls, possibly
+// different result types. Both fetches start running the instant their
+// `async let` line executes; the `await`s below just wait for whichever
+// isn't done yet.
+func loadConcurrent() async throws -> (Profile, Settings, Int) {
+    async let profile = fetchProfile()
+    async let settings = fetchSettings()
+    async let notificationCount = fetchNotificationCount()
+
+    // All three have been running concurrently since their `async let`
+    // line above - this just waits for whichever hasn't finished yet.
+    return try await (profile, settings, notificationCount)
+}
+
+// CONCURRENT with TaskGroup - dynamic number of calls, all the SAME
+// result type, count only known at runtime.
+func loadAllUserDetails(ids: [String]) async throws -> [String: UserDetail] {
+    try await withThrowingTaskGroup(of: (String, UserDetail).self) { group in
+        for id in ids {
+            group.addTask {
+                // Each child task runs concurrently with every other one.
+                let detail = try await fetchUserDetail(id: id)
+                return (id, detail)   // pair with its id since results
+                                       // arrive in COMPLETION order, not
+                                       // the order tasks were added
+            }
+        }
+
+        var results: [String: UserDetail] = [:]
+        for try await (id, detail) in group {
+            results[id] = detail
+        }
+        return results
+    }
+}
+
+// Placeholder declarations so the above type-checks in isolation:
+struct Profile {}
+struct Settings {}
+struct UserDetail {}
+func fetchProfile() async throws -> Profile { Profile() }
+func fetchSettings() async throws -> Settings { Settings() }
+func fetchNotificationCount() async throws -> Int { 0 }
+func fetchUserDetail(id: String) async throws -> UserDetail { UserDetail() }
+""",
+                keyTakeaways: [
+                    "Plain sequential `await` calls never overlap - each one blocks the next from even starting, regardless of whether the operations are actually independent of each other.",
+                    "`async let` starts an operation running immediately at its declaration line; the suspension only happens later at `await` - declare every `async let` first, then await them, so they all run concurrently.",
+                    "Use `async let` for a fixed, small, known-by-name set of concurrent calls (possibly different result types); use `TaskGroup` for a dynamic/runtime-determined number of calls that all share one result type.",
+                    "TaskGroup results arrive in COMPLETION order, not insertion order - pair each result with an identifier (like its source index or id) if you need to reconstruct the original order.",
+                    "Both are 'structured concurrency': the enclosing function can't return until every child task has completed or been cancelled, which is what prevents a task from silently leaking past the scope that started it."
+                ]
+            ),
+            QAItem(
+                id: "solid_principles_full",
+                question: "Explain all five SOLID principles with examples.",
+                topics: ["SOLID", "Design Principles", "Architecture", "OOP"],
+                explanation: """
+SOLID is an acronym for five object-oriented design principles (coined/popularized by Robert C. Martin) aimed at producing code that's easier to maintain, extend, and test as it grows. They're guidelines, not laws the compiler enforces - but violating them tends to produce the exact symptoms every developer recognizes: a class that's terrifying to touch, a bug fix in one place that breaks something unrelated, or a feature that's technically possible but requires editing five existing files to add.
+
+**S - Single Responsibility Principle.** A class/type should have exactly ONE reason to change. A `UserManager` that handles authentication, profile updates, AND analytics logging has three separate reasons to change (an auth API change, a profile schema change, an analytics vendor swap) - and a change to any one of those risks accidentally breaking the other two, since they're all tangled together in one type. Split it into `AuthService`, `ProfileService`, `AnalyticsService`, each with one job.
+
+**O - Open/Closed Principle.** A type should be OPEN for extension but CLOSED for modification - you should be able to add new behavior without editing code that already works and already shipped. The canonical smell is a `switch`/`if-else` chain over a type that keeps growing every time a new case is added (`if shape is Circle { ... } else if shape is Square { ... }`) - every new shape means editing this same function again, risking every EXISTING case along with it. The fix is polymorphism: define a protocol with the behavior each case needs, and let each new type implement it independently, with zero changes to existing code.
+
+**L - Liskov Substitution Principle.** Any subtype must be usable anywhere its supertype/protocol is expected, without breaking the caller's expectations. The classic violation example is `Square` inheriting from `Rectangle` and overriding `width`'s setter to also change `height` (to preserve "being a square") - code that generically sets a `Rectangle`'s width and expects height to stay unchanged now silently breaks when handed a `Square`, even though `Square` type-checks as a `Rectangle`. LSP is really about honoring the CONTRACT/expectations of the supertype, not just matching its method signatures.
+
+**I - Interface Segregation Principle.** Don't force a type to depend on (or implement) a fat interface/protocol containing methods it doesn't actually need. A `Worker` protocol with both `work()` and `eat()` forces a `RobotWorker` to implement a meaningless `eat()` just to conform. Split into smaller, focused protocols (`Workable`, `Eatable`) so each conforming type only takes on what it genuinely needs.
+
+**D - Dependency Inversion Principle.** High-level modules shouldn't depend on low-level, CONCRETE modules directly - both should depend on an ABSTRACTION (a protocol) instead. A `ViewModel` that directly instantiates `URLSessionNetworkService()` inside itself is tightly coupled to that one concrete implementation, and can never be unit-tested without a real network call. Depending on a `NetworkServicing` protocol instead, injected from outside, lets you swap in a fake for tests (or a different real implementation later) with zero changes to the ViewModel's own code.
+""",
+                example: """
+// S - Single Responsibility: one reason to change, per type.
+// BAD: three unrelated responsibilities tangled into one type.
+final class UserManagerBad {
+    func login(username: String, password: String) { /* auth */ }
+    func updateProfile(bio: String) { /* profile */ }
+    func logAnalyticsEvent(_ name: String) { /* analytics */ }
+}
+// GOOD: split by responsibility.
+final class AuthService { func login(username: String, password: String) { } }
+final class ProfileService { func updateProfile(bio: String) { } }
+final class AnalyticsService { func log(_ event: String) { } }
+
+// O - Open/Closed: add a new case by conforming, not by editing an
+// existing switch/if-else chain.
+protocol Shape { func area() -> Double }
+struct Circle: Shape {
+    let radius: Double
+    func area() -> Double { .pi * radius * radius }
+}
+struct Square: Shape {
+    let side: Double
+    func area() -> Double { side * side }
+}
+// Adding a Triangle later requires ZERO changes here:
+func totalArea(_ shapes: [Shape]) -> Double {
+    shapes.reduce(0) { $0 + $1.area() }
+}
+
+// L - Liskov Substitution: a Square that overrides Rectangle's setters
+// breaks the base contract - callers generically using `Rectangle`
+// silently get wrong behavior when handed a `Square`.
+class Rectangle {
+    var width: Double = 0
+    var height: Double = 0
+}
+class SquareBad: Rectangle {
+    override var width: Double {
+        didSet { height = width }   // VIOLATES LSP: caller expected
+    }                                // setting width to leave height alone
+}
+// Better: don't model Square as a Rectangle subclass at all if their
+// contracts genuinely differ - use a shared protocol instead.
+protocol HasArea { var area: Double { get } }
+
+// I - Interface Segregation: split a fat protocol so conforming types
+// only take on what they actually need.
+protocol Workable { func work() }
+protocol Eatable { func eat() }
+
+struct HumanWorker: Workable, Eatable {
+    func work() { }
+    func eat() { }
+}
+struct RobotWorker: Workable {   // no meaningless eat() forced on it
+    func work() { }
+}
+
+// D - Dependency Inversion: depend on a protocol, injected - not a
+// concrete type constructed internally.
+protocol NetworkServicing {
+    func fetchData() async throws -> Data
+}
+final class ProfileViewModel {
+    private let network: NetworkServicing   // abstraction, not concrete
+    init(network: NetworkServicing) {       // injected from outside
+        self.network = network
+    }
+}
+""",
+                keyTakeaways: [
+                    "S: one reason to change per type - split tangled responsibilities (auth + profile + analytics) into separate, focused types.",
+                    "O: add new behavior via a new conforming type, never by editing an existing switch/if-else chain that already works - that's the growing-conditional smell OCP targets directly.",
+                    "L: a subtype must honor its supertype's CONTRACT, not just its method signatures - Square overriding Rectangle's width setter to also change height is the canonical violation.",
+                    "I: split fat protocols into small, focused ones so a conforming type never has to implement a method it doesn't actually need.",
+                    "D: depend on a protocol abstraction, injected from outside, instead of constructing a concrete dependency internally - this single principle is what makes unit testing without a real network/database possible."
+                ]
+            ),
+            QAItem(
+                id: "dependency_injection_vs_inversion_of_control",
+                question: "What is the difference between Dependency Injection and Inversion of Control?",
+                topics: ["Dependency Injection", "Inversion of Control", "SOLID", "Architecture"],
+                explanation: """
+These two terms get used almost interchangeably in casual conversation, but they sit at different levels: Inversion of Control (IoC) is the general PRINCIPLE, and Dependency Injection (DI) is ONE specific TECHNIQUE for achieving it. Every DI setup is an example of IoC, but not every instance of IoC is DI - that's the precise relationship to know for an interview.
+
+**Inversion of Control** is the broad idea of flipping WHO is responsible for controlling a piece of behavior - traditionally, control flowed from your code (your code calls a library, decides what happens next, and constructs whatever it needs directly). IoC inverts that: some external entity now controls the flow or the construction instead of your code doing it internally. This shows up in several different concrete forms, DI being only one:
+
+- **Dependency Injection** - a class doesn't construct its own dependencies; they're handed to it from outside (via initializer, property, or method injection).
+- **The delegate pattern** - a `UITableView` doesn't decide what to display in each cell; it calls out to whatever `UITableViewDataSource` you handed it, inverting control of "what goes in this cell" to your code.
+- **A framework calling YOUR code** (the classic "Hollywood Principle": don't call us, we'll call you) - `UIApplicationDelegate`'s `application(_:didFinishLaunchingWithOptions:)`, or SwiftUI calling your View's `body` whenever it decides a re-render is needed - your code doesn't drive the control flow, the framework does, and it calls into your code at the moments IT decides matter.
+- **A service locator** - a class asks a central registry for its dependencies (`ServiceLocator.shared.resolve(NetworkServicing.self)`) rather than constructing them - control of WHICH concrete implementation you get is inverted to the locator, though (unlike DI) the class still actively reaches out to ask for it, rather than simply receiving it.
+
+**Dependency Injection**, specifically, is the technique of PASSING a dependency INTO a class from outside, rather than the class creating it internally with `SomeService()` or reaching out to fetch it itself. There are three common forms: initializer injection (passed into `init`, the most common and generally preferred - the dependency is guaranteed present from the moment the object exists, and it's immediately visible from the type signature what the class needs), property injection (set on a mutable property after construction - occasionally necessary, e.g. for `@IBOutlet`-style UIKit patterns where the object must exist before dependencies can be wired up), and method injection (passed as a parameter to the specific method that needs it, rather than stored at all).
+
+The practical reason this distinction is worth knowing precisely: DI is the specific, most common way iOS interview questions and codebases actually implement IoC, but being able to name the OTHER forms (delegation, framework callbacks, service locators) is what distinguishes actually understanding the principle from having memorized one technique's name.
+""",
+                example: """
+// WITHOUT IoC at all: the class controls its own dependency creation
+// directly - tightly coupled, and impossible to unit test without a
+// real network call, since there's no way to substitute anything.
+final class ProfileViewModelNoIoC {
+    private let network = URLSessionNetworkService()   // constructed
+                                                          // internally -
+                                                          // no inversion
+                                                          // of control here
+    func load() async { /* uses self.network directly */ }
+}
+
+// DEPENDENCY INJECTION (one specific technique for achieving IoC):
+// control of WHICH concrete NetworkServicing this class gets is
+// inverted to whoever constructs the ViewModel - not the ViewModel
+// itself.
+protocol NetworkServicing {
+    func fetchData() async throws -> Data
+}
+
+final class ProfileViewModel {
+    private let network: NetworkServicing
+
+    // Initializer injection - the preferred form: the dependency is
+    // guaranteed present the moment the object exists, and the type
+    // signature honestly documents what this class actually needs.
+    init(network: NetworkServicing) {
+        self.network = network
+    }
+}
+
+// Production code passes the real implementation in from outside:
+let viewModel = ProfileViewModel(network: URLSessionNetworkService())
+
+// A unit test passes a fake in instead - possible ONLY because control
+// of construction was inverted OUT of ProfileViewModel in the first place:
+final class FakeNetworkService: NetworkServicing {
+    func fetchData() async throws -> Data { Data() }
+}
+let testViewModel = ProfileViewModel(network: FakeNetworkService())
+
+// ANOTHER form of IoC that is NOT dependency injection: the delegate
+// pattern. UITableView doesn't construct its own data source - it
+// calls OUT to whatever you handed it, inverting control of "what
+// content goes here" to your code, without "injecting" anything into
+// UITableView's own initializer.
+final class MyDataSource: NSObject, UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        10
+    }
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        UITableViewCell()
+    }
+}
+
+final class URLSessionNetworkService: NetworkServicing {
+    func fetchData() async throws -> Data { Data() }
+}
+""",
+                keyTakeaways: [
+                    "IoC is the general principle (some external entity controls flow/construction instead of your code doing it internally); DI is ONE specific technique for achieving it - every DI setup is IoC, not every IoC example is DI.",
+                    "Other forms of IoC besides DI: the delegate pattern (UITableViewDataSource), a framework calling your code at moments it decides (UIApplicationDelegate, SwiftUI's body), and a service locator.",
+                    "DI has three forms: initializer injection (preferred - dependency guaranteed present from construction, visible in the type signature), property injection, and method injection.",
+                    "The practical payoff of DI specifically: a class that receives its dependencies as protocol abstractions from outside can be unit-tested with a fake, with zero real network/database access.",
+                    "Being able to name IoC's OTHER forms beyond DI (not just DI itself) is usually what separates a memorized answer from an interviewer's follow-up question they're actually hoping to ask."
+                ]
+            ),
+            QAItem(
+                id: "oop_four_pillars",
+                question: "Explain the four pillars of Object-Oriented Programming with Swift examples.",
+                topics: ["OOP", "Encapsulation", "Abstraction", "Inheritance", "Polymorphism"],
+                explanation: """
+The four pillars are the foundational ideas Object-Oriented Programming is built on; nearly every OOP interview question (access modifiers, protocols, class hierarchies) is really testing understanding of one of these four underneath the surface question.
+
+**1. Encapsulation** - bundling data together with the code that operates on it, and hiding that data's internal representation behind a controlled, intentional interface. In Swift, this is enforced directly by the compiler via access modifiers (`private`, `fileprivate`, `internal`, `public`, `open`): you mark internal state `private`, and expose only the specific methods/computed properties callers actually need. This isn't just a convention - the compiler REJECTS code that tries to reach past these boundaries, which is what makes it real encapsulation rather than a naming convention.
+
+**2. Abstraction** - exposing only the essential, relevant details of something and hiding its implementation complexity behind a simpler interface. In Swift, protocols are the primary abstraction tool: code that depends on a `NetworkServicing` protocol only needs to know "this can fetch data" - it doesn't need to know or care whether the concrete implementation uses `URLSession`, a third-party library, or a cached local file. Abstraction and encapsulation are closely related but distinct: encapsulation is about HIDING internal state; abstraction is about hiding implementation COMPLEXITY behind a simpler conceptual interface.
+
+**3. Inheritance** - a class (only classes in Swift - structs/enums can't inherit) acquiring the properties and methods of a parent (super) class, and optionally overriding or extending them. This models a genuine "is-a" relationship (a `Dog` IS an `Animal`) and lets shared behavior live in one place instead of being duplicated across every subclass. Swift is notably more restrained here than languages like Java/Objective-C: there's no multiple inheritance for classes at all (a class can only have ONE superclass), which is a large part of why Swift leans so heavily on protocols + protocol extensions (see Protocol-Oriented Programming) instead - a type CAN conform to many protocols, sidestepping the multiple-inheritance limitation entirely.
+
+**4. Polymorphism** - literally "many forms": code written against a common supertype or protocol can work with ANY of its subtypes/conforming types, each behaving according to its own specific implementation, without the calling code needing to know which concrete type it's actually holding. Swift gives you this in two different flavors: SUBTYPE polymorphism via class inheritance and method overriding (calling `animal.makeSound()` on an `[Animal]` array correctly calls each element's own overridden version), and PROTOCOL polymorphism via protocol conformance (a function accepting `any Shape` works with `Circle`, `Square`, or any future type that conforms, with zero changes to the function itself - this is also directly how the Open/Closed Principle gets implemented in practice).
+""",
+                example: """
+// 1. ENCAPSULATION - private state, controlled public interface,
+// enforced by the compiler, not just convention.
+final class BankAccount {
+    private var balance: Double   // hidden internal state
+
+    init(openingBalance: Double) {
+        balance = max(0, openingBalance)
+    }
+
+    func deposit(_ amount: Double) {
+        guard amount > 0 else { return }
+        balance += amount
+    }
+
+    var currentBalance: Double { balance }   // controlled, read-only window
+}
+// account.balance = 1_000_000   // COMPILE ERROR - balance is private
+
+// 2. ABSTRACTION - code depends on the protocol's simple interface,
+// not on how any specific implementation actually works internally.
+protocol NetworkServicing {
+    func fetchData() async throws -> Data
+}
+final class ProfileViewModel {
+    private let network: NetworkServicing   // doesn't know/care HOW
+    init(network: NetworkServicing) { self.network = network }
+}
+
+// 3. INHERITANCE - shared behavior lives once in the superclass;
+// subclasses extend/override it. Classes only - not structs/enums.
+class Animal {
+    let name: String
+    init(name: String) { self.name = name }
+    func makeSound() -> String { "..." }   // default, overridable
+}
+class Dog: Animal {
+    override func makeSound() -> String { "Woof!" }
+}
+class Cat: Animal {
+    override func makeSound() -> String { "Meow!" }
+}
+
+// 4. POLYMORPHISM - code written against the supertype works with any
+// subtype, each producing its own behavior, with zero per-type branching.
+let animals: [Animal] = [Dog(name: "Rex"), Cat(name: "Whiskers")]
+for animal in animals {
+    print("\\(animal.name): \\(animal.makeSound())")
+    // Rex: Woof!
+    // Whiskers: Meow!
+}
+
+// Protocol-based polymorphism - the same idea, without inheritance at
+// all, and works for structs too (which can never inherit):
+protocol Shape { func area() -> Double }
+struct Circle: Shape {
+    let radius: Double
+    func area() -> Double { .pi * radius * radius }
+}
+struct Square: Shape {
+    let side: Double
+    func area() -> Double { side * side }
+}
+func printArea(of shape: Shape) {
+    print(shape.area())   // works for ANY conforming type, unchanged
+}
+""",
+                keyTakeaways: [
+                    "Encapsulation hides internal STATE behind a controlled interface (access modifiers, enforced by the compiler); abstraction hides implementation COMPLEXITY behind a simpler conceptual interface (protocols) - related but distinct.",
+                    "Inheritance is class-only in Swift (structs/enums can't inherit), and Swift disallows multiple inheritance entirely - a class has exactly one superclass, which is why protocols + protocol extensions do so much of inheritance's job instead.",
+                    "Polymorphism comes in two flavors in Swift: subtype polymorphism (class inheritance + method overriding) and protocol polymorphism (any conforming type, including structs) - the second is generally preferred in modern Swift.",
+                    "Protocol polymorphism is the direct mechanism behind the Open/Closed Principle: a function written against a protocol works with any future conforming type, with zero changes to the function itself.",
+                    "Nearly every other OOP-adjacent interview question (access modifiers, protocol-oriented programming, MVC vs MVVM's testability argument) is really testing one of these four pillars from a different angle."
+                ]
+            ),
+            QAItem(
+                id: "mvc_vs_mvvm",
+                question: "What is the difference between MVC and MVVM?",
+                topics: ["MVC", "MVVM", "Architecture", "Testability"],
+                explanation: """
+Both are ways of splitting an app into layers with distinct responsibilities, and both share the same Model (plain data) and roughly the same View (what's on screen) - the real difference is what sits BETWEEN them, and how much responsibility that middle layer ends up holding.
+
+**MVC (Model-View-Controller)** is Apple's traditional default, structurally built into UIKit itself - `UIViewController` IS the Controller. In theory the Controller is a thin coordinator: it receives user input from the View, asks the Model for data, and updates the View. In practice, this thin-coordinator ideal breaks down for a specific structural reason: the Model has no concept of UI at all (correctly - it shouldn't), and the View is largely passive (`UILabel`, `UIButton` don't know what data means) - so ALL of the presentation logic (formatting a date for display, deciding whether a button should be enabled, transforming raw model data into what the view actually shows) has nowhere else to live except the Controller. Add networking calls, navigation logic, and view lifecycle handling on top, and the Controller balloons into what's commonly and only half-jokingly called "Massive View Controller" - a single class doing five jobs at once, and one of the most consistently cited real pain points of UIKit-based MVC at scale.
+
+**MVVM (Model-View-ViewModel)** inserts a fourth layer, the ViewModel, specifically to absorb that presentation logic OUT of the Controller/View. The ViewModel holds UI-ready state (already formatted, already decided) and responds to user actions, but - critically - has NO dependency on `UIKit`/`SwiftUI` types at all (no `UIColor`, no `UILabel`, no `View` conformance). The View BINDS to the ViewModel's published state (via Combine in UIKit, or natively via `@Published`/`@StateObject` in SwiftUI) instead of the ViewModel reaching into the View to update it directly.
+
+The concrete, practical payoff of that separation - and the reason MVVM is usually the actual answer an interviewer is looking for here - is TESTABILITY. A `UIViewController` is notoriously painful to unit test: it requires the full UIKit view lifecycle to even instantiate meaningfully, and its logic is entangled with view-updating code you don't actually want to exercise in a unit test. A ViewModel with zero UIKit/SwiftUI import is a plain Swift object - you can construct it directly in a test, call its methods, and assert against its published state, with no view lifecycle, no simulator, no UI framework involved at all.
+
+Worth being precise about scope: MVVM doesn't ELIMINATE MVC, it sits ALONGSIDE it - `UIViewController` (the "C" in MVC) still exists in a UIKit MVVM app; it just becomes a thin adapter whose only job is instantiating the ViewModel and wiring up the binding, with none of the actual presentation logic living inside it anymore. In SwiftUI, the View itself takes over that thin-adapter role, since there's no separate Controller type at all.
+""",
+                example: """
+// ---------- MVC: presentation logic has nowhere to live but the VC ----------
+final class ProfileViewControllerMVC: UIViewController {
+    private let nameLabel = UILabel()
+    private var user: User?
+
+    func loadUser() {
+        // Networking, formatting, AND view-updating all tangled
+        // together in the Controller - this is how "Massive View
+        // Controller" happens as more features get added over time.
+        APIClient.shared.fetchUser { [weak self] user in
+            self?.user = user
+            // Presentation logic (formatting) lives here because
+            // there's nowhere else for it to go in plain MVC.
+            self?.nameLabel.text = "\\(user.firstName) \\(user.lastName)".uppercased()
+        }
+    }
+}
+
+// ---------- MVVM: presentation logic moves OUT into a ViewModel ----------
+// Zero UIKit import - a plain Swift object, trivially unit-testable.
+import Combine
+
+final class ProfileViewModel {
+    @Published private(set) var displayName: String = ""
+
+    private let apiClient: APIClientProtocol
+    init(apiClient: APIClientProtocol) {
+        self.apiClient = apiClient
+    }
+
+    func loadUser() {
+        apiClient.fetchUser { [weak self] user in
+            // The formatting decision lives HERE now, fully testable
+            // without any UIKit view lifecycle involved at all.
+            self?.displayName = "\\(user.firstName) \\(user.lastName)".uppercased()
+        }
+    }
+}
+
+// The View Controller becomes a thin adapter: construct the
+// ViewModel, bind to it, done - no presentation logic left inside it.
+final class ProfileViewControllerMVVM: UIViewController {
+    private let viewModel = ProfileViewModel(apiClient: APIClient.shared)
+    private let nameLabel = UILabel()
+    private var cancellables = Set<AnyCancellable>()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        viewModel.$displayName
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] name in self?.nameLabel.text = name }
+            .store(in: &cancellables)
+        viewModel.loadUser()
+    }
+}
+
+// Unit test - only possible because ProfileViewModel has NO UIKit
+// dependency at all. No simulator, no view lifecycle needed.
+func testLoadUserFormatsDisplayName() {
+    let viewModel = ProfileViewModel(apiClient: FakeAPIClient())
+    viewModel.loadUser()
+    // assert viewModel.displayName == "JOHN SMITH" (synchronously, via a fake)
+}
+
+struct User { let firstName: String; let lastName: String }
+protocol APIClientProtocol { func fetchUser(completion: @escaping (User) -> Void) }
+final class APIClient: APIClientProtocol {
+    static let shared = APIClient()
+    func fetchUser(completion: @escaping (User) -> Void) { }
+}
+final class FakeAPIClient: APIClientProtocol {
+    func fetchUser(completion: @escaping (User) -> Void) {
+        completion(User(firstName: "John", lastName: "Smith"))
+    }
+}
+""",
+                keyTakeaways: [
+                    "In MVC, the Controller ends up holding ALL presentation logic by structural default - the Model has no UI concept and the View is passive, so formatting/state decisions have nowhere else to live, which is exactly how 'Massive View Controller' happens.",
+                    "MVVM adds a ViewModel specifically to absorb that presentation logic OUT of the Controller/View - the View binds to the ViewModel's published state instead of the ViewModel reaching into the View directly.",
+                    "The concrete payoff is testability: a ViewModel with zero UIKit/SwiftUI import is a plain Swift object you can construct and assert against directly in a unit test, unlike a UIViewController which needs the full view lifecycle to test meaningfully.",
+                    "MVVM doesn't replace MVC - in UIKit, the View Controller still exists, but becomes a thin adapter that just wires up binding, with none of the actual presentation logic left inside it.",
+                    "In SwiftUI there's no separate Controller type at all - the View itself takes over that thin-adapter role, binding directly to an ObservableObject ViewModel."
+                ]
+            ),
+            QAItem(
+                id: "singleton_private_init",
+                question: "When implementing the Singleton design pattern, should the initializer be private or non-private? What are the tradeoffs of using a Singleton?",
+                topics: ["Design Patterns", "Singleton", "Access Control", "Testability"],
+                explanation: """
+The initializer should be `private` - this is the detail that actually ENFORCES the Singleton pattern, rather than just suggesting it as a convention. Getting this specific question right (and being able to explain WHY) is usually what separates "knows the `static let shared` boilerplate" from "actually understands what a Singleton is guaranteeing."
+
+A Singleton's entire purpose is guaranteeing that EXACTLY ONE instance of a type exists for the whole app's lifetime, exposed through a single well-known access point (`static let shared`). `static let` alone gives you one CONVENIENT shared instance, but it does NOT stop anyone from also writing `let another = MyManager()` elsewhere and creating a second, completely independent instance - if the initializer is left at its default `internal` access level (or explicitly `public`), any code that can see the type can construct additional instances freely. At that point `shared` is just a popular convention, not an enforced guarantee - two parts of the app could easily end up holding two different instances with two different internal states, silently diverging, which defeats the entire reason to reach for a Singleton in the first place (a single, consistent, shared source of truth).
+
+Marking `init` (and any other initializers) `private` closes that gap at compile time: `MyManager()` from ANY other file becomes a straight compiler error ("'MyManager' initializer is inaccessible due to 'private' protection level"), and `static let shared = MyManager()` still works because it's declared INSIDE the type itself, where a `private` member is always visible. Now there is genuinely, compiler-enforced, exactly one way to obtain an instance.
+
+`static let` (rather than `static var`) also matters for a second reason worth knowing: Swift guarantees that a `static let`'s initializer runs exactly once, lazily, on first access, and that this initialization is thread-safe automatically - even if multiple threads access `MyManager.shared` for the very first time simultaneously, Swift's runtime guarantees the initializer still only executes once (this replaces what used to be manual `dispatch_once` boilerplate in Objective-C).
+
+The tradeoffs worth being able to name, since a good answer to "explain Singleton" always includes when NOT to reach for it: (1) **global mutable state** - any code anywhere can read/mutate `shared`'s state, which makes reasoning about the app's overall state harder as it grows, and can produce subtle bugs from one feature's unexpected mutation affecting an unrelated feature. (2) **hidden dependencies** - a class that reaches for `SomeManager.shared` internally doesn't reveal that dependency in its type signature at all (unlike a properly dependency-injected service), making the actual dependency graph of the app harder to see at a glance. (3) **testability** - this is the big one: a hardcoded `SomeManager.shared` reference inside a class can't be swapped for a fake/mock in a unit test, since it's not injected - the common fix is to still expose the Singleton behind a PROTOCOL and inject that protocol (defaulting to `.shared` in production code, but overridable in tests), rather than reaching for the concrete Singleton type directly everywhere it's used.
+""",
+                example: """
+// WITHOUT a private init: `shared` is just a popular convention,
+// not an enforced guarantee - nothing stops a second instance.
+final class LeakyManager {
+    static let shared = LeakyManager()
+    var cache: [String: String] = [:]
+    // No `private init` - this compiles fine, and now `another`
+    // silently has its OWN separate `cache`, diverging from `shared`.
+}
+let another = LeakyManager()   // allowed - defeats the whole point
+
+// WITH a private init: the compiler enforces exactly one instance.
+final class SessionManager {
+    static let shared = SessionManager()   // lazy, thread-safe by
+                                            // Swift's own runtime guarantee -
+                                            // initializes exactly once even
+                                            // under concurrent first access
+
+    private init() {}   // THIS is what actually enforces the Singleton -
+                         // any other file attempting `SessionManager()`
+                         // now fails to compile.
+
+    var currentUserID: String?
+}
+// let broken = SessionManager()
+// error: 'SessionManager' initializer is inaccessible due to
+// 'private' protection level
+
+// TESTABILITY fix: hide the Singleton behind a protocol, and inject
+// the protocol - production code defaults to `.shared`, but a test can
+// substitute a fake instead of being permanently stuck with the real one.
+protocol SessionProviding {
+    var currentUserID: String? { get }
+}
+extension SessionManager: SessionProviding {}
+
+final class ProfileViewModel {
+    private let session: SessionProviding
+
+    // Defaults to the real Singleton in production, but a test can
+    // pass a fake instead - impossible if this read `SessionManager.shared`
+    // directly inside the ViewModel's own body instead of taking it in.
+    init(session: SessionProviding = SessionManager.shared) {
+        self.session = session
+    }
+}
+
+final class FakeSession: SessionProviding {
+    var currentUserID: String? = "test-user-123"
+}
+let testViewModel = ProfileViewModel(session: FakeSession())
+""",
+                keyTakeaways: [
+                    "The initializer should be `private` - that's what actually ENFORCES exactly one instance at compile time, rather than `static let shared` just being a convention nothing else stops from being bypassed.",
+                    "Without `private init`, any other code can write `MyManager()` and get a second, independent instance with its own separate state, silently diverging from `shared` - defeating the entire reason to reach for a Singleton.",
+                    "`static let` (not `var`) gives you Swift's runtime guarantee that the initializer runs exactly once, lazily, and thread-safely even under concurrent first access - the modern replacement for manual dispatch_once.",
+                    "Tradeoffs to name unprompted: global mutable state, hidden dependencies (not visible in a type's signature the way injected dependencies are), and poor testability by default.",
+                    "The standard fix for the testability tradeoff: expose the Singleton behind a protocol and inject that protocol (defaulting to `.shared` in production) instead of reaching for the concrete Singleton type directly everywhere it's used."
+                ]
+            ),
+            QAItem(
+                id: "protocol_oriented_programming",
+                question: "What is Protocol-Oriented Programming (POP) in Swift?",
+                topics: ["Protocol-Oriented Programming", "Protocols", "Protocol Extensions", "Swift"],
+                explanation: """
+Protocol-Oriented Programming is Swift's own take on how to structure shared behavior across types - favoring composition through PROTOCOLS (plus protocol extensions supplying default implementations) over class inheritance as the primary way to share code. Apple explicitly positioned this as central to how Swift is meant to be written, most directly in the 2015 WWDC session literally titled "Protocol-Oriented Programming in Swift."
+
+The motivating problem is inheritance's real limitations, most of which trace back to one root cause: class inheritance only works for CLASSES. `struct`s and `enum`s - which Swift encourages using heavily, specifically because of their value-type semantics (no shared mutable state, no accidental aliasing, no retain-count overhead) - can never inherit from anything. If shared behavior is only expressible via a base class, that behavior is permanently unavailable to any struct or enum, forcing a choice between "use a class just to get this shared behavior" (giving up value semantics you may have wanted) or duplicating the logic. Beyond that structural gap, class inheritance has its own well-known problems even when you DO use classes: Swift disallows multiple inheritance entirely (a class has exactly one superclass, full stop), and deep inheritance hierarchies are notoriously fragile - the "fragile base class problem," where a change to a base class can unexpectedly break far-away subclasses that depend on its exact previous behavior in ways the author of the change didn't anticipate.
+
+Protocols sidestep both problems at once. Since ANY type - `class`, `struct`, or `enum` - can conform to a protocol, shared behavior expressed as a protocol is available to value types too, with no forced tradeoff against value semantics. And since a single type CAN conform to MANY protocols simultaneously (unlike inheriting from many superclasses, which Swift disallows), you get the practical benefit of "multiple inheritance" for behavior without the diamond-inheritance ambiguity problems that come with actual multiple class inheritance in languages that allow it.
+
+The piece that makes this genuinely competitive with inheritance, rather than just "protocols with no code" - **protocol extensions** - is what lets a protocol supply a DEFAULT implementation for one or more of its requirements, not just declare their signatures. A conforming type gets that default behavior for free the moment it conforms, but can still override it with its own implementation if it needs different behavior - this is functionally very similar to a base class providing a default method a subclass CAN override, but without requiring inheritance (or its single-superclass limitation) to get there. This is exactly how huge parts of the Swift standard library work: `Collection`, `Equatable`, `Comparable`, and friends provide extensive default behavior via protocol extensions (e.g. `Equatable` only strictly requires you implement `==`, and `!=` comes free via a protocol extension default), letting a tiny conformance unlock a large amount of ready-made functionality.
+""",
+                example: """
+// The inheritance-only limitation POP exists to route around:
+// shared behavior via a base class is permanently unavailable to
+// structs/enums, since they can never inherit from anything at all.
+class FlyingAnimal {
+    func fly() -> String { "Flying!" }
+}
+// struct Bird: FlyingAnimal { }
+// ERROR: structs can't inherit - this simply isn't expressible with
+// class inheritance if you want Bird to be a value type.
+
+// PROTOCOL-ORIENTED alternative: any type can conform, value types
+// included - no forced tradeoff against value semantics.
+protocol Flyable {
+    func fly() -> String
+}
+
+// A PROTOCOL EXTENSION supplies a DEFAULT implementation - conforming
+// types get this for free, but can still override it individually.
+extension Flyable {
+    func fly() -> String { "Flying with wings!" }
+}
+
+struct Bird: Flyable {}   // gets the default `fly()` for free - a struct,
+                          // impossible to achieve via class inheritance
+
+struct Airplane: Flyable {
+    // Overrides the default - different behavior, same protocol.
+    func fly() -> String { "Flying with jet engines!" }
+}
+
+enum Superhero: Flyable {
+    case superman
+    // Also gets the default `fly()` for free - an enum this time,
+    // again something class inheritance could never provide.
+}
+
+print(Bird().fly())         // "Flying with wings!" (the default)
+print(Airplane().fly())     // "Flying with jet engines!" (overridden)
+print(Superhero.superman.fly())  // "Flying with wings!" (the default)
+
+// MULTIPLE conformance - functionally like "multiple inheritance" for
+// behavior, without the diamond-inheritance ambiguity of true multiple
+// class inheritance (which Swift disallows outright for classes).
+protocol Swimmable {
+    func swim() -> String
+}
+extension Swimmable {
+    func swim() -> String { "Swimming!" }
+}
+
+struct Duck: Flyable, Swimmable {}   // conforms to BOTH - a single class
+                                      // can only ever have ONE superclass
+
+print(Duck().fly())    // "Flying with wings!"
+print(Duck().swim())   // "Swimming!"
+
+// This is exactly how the standard library's own Equatable works:
+// you implement ONLY `==`, and `!=` arrives for free via a protocol
+// extension default - a small conformance unlocking real functionality.
+struct Point: Equatable {
+    let x: Int, y: Int
+    static func == (lhs: Point, rhs: Point) -> Bool {
+        lhs.x == rhs.x && lhs.y == rhs.y
+    }
+}
+print(Point(x: 1, y: 2) != Point(x: 3, y: 4))   // true - `!=` was never
+                                                  // written by hand here
+""",
+                keyTakeaways: [
+                    "POP favors composing behavior via protocols + protocol extensions over class inheritance as the primary way to share code - explicitly positioned by Apple as central to idiomatic Swift (WWDC 2015, 'Protocol-Oriented Programming in Swift').",
+                    "The core motivation: class inheritance only works for classes - structs/enums (which Swift encourages for their value semantics) can never inherit, so behavior expressed only via a base class is permanently unavailable to them.",
+                    "Protocol extensions are what make this competitive with inheritance: they supply a DEFAULT implementation a conforming type gets for free, but can still override - not just a bare method signature.",
+                    "A single type can conform to MANY protocols at once (unlike inheriting from many superclasses, which Swift disallows entirely) - giving you the practical benefit of multiple inheritance for behavior without its ambiguity problems.",
+                    "Large parts of the standard library work exactly this way already - Equatable requires only `==` and gives you `!=` free via a protocol extension default, letting a tiny conformance unlock substantial ready-made functionality."
+                ]
+            ),
+            QAItem(
+                id: "struct_vs_class_practical_difference",
+                question: "What is the practical difference between a struct and a class in Swift, and when would you choose one over the other in iOS code?",
+                topics: ["Struct", "Class", "Value Types", "Reference Types"],
+                explanation: """
+The headline difference is value semantics versus reference semantics, and almost everything else follows from it.
+
+A struct is a VALUE type: when you assign it to a new variable, pass it to a function, or store it in a collection, Swift copies the entire value. The new copy and the original are now completely independent - mutating one never affects the other. A class is a REFERENCE type: assignment copies only a pointer (a reference) to a single shared instance living on the heap - multiple variables can point at the exact same object, and mutating it through ANY one of those variables is visible through all the others, since there's only ever one instance in play.
+
+This has several concrete, practical consequences worth being able to name individually:
+
+1. **Copy behavior.** `var a = Point(x: 1, y: 1); var b = a; b.x = 99` leaves `a.x` at 1 - `b` is an independent copy. The equivalent with a class (`var b = someObject; b.x = 99`) changes what `a` sees too, since `a` and `b` are the SAME object. (In practice, Swift's own Array/Dictionary/String are all structs internally optimized with copy-on-write - the actual buffer isn't duplicated until a mutation actually happens on one of the copies, which is why copying a huge array is cheap until you mutate it - but the OBSERVABLE behavior is exactly as if a full, independent copy happened immediately.)
+
+2. **Identity vs equality.** Classes have identity - the `===` operator answers "are these two references pointing at the literally same instance in memory?", which is meaningless for structs (there's no shared instance to compare). Structs only support equality (`==`, via `Equatable`) - "do these two values look the same?" - which classes can also implement, but identity is the concept unique to reference types.
+
+3. **Inheritance.** Only classes support inheritance (a class can have exactly one superclass). Structs cannot inherit from another struct at all - though they can conform to any number of protocols, including ones with default implementations via protocol extensions, which covers most of what inheritance is used for in modern Swift without its downsides (see Protocol-Oriented Programming).
+
+4. **Memory & ARC.** Classes are always heap-allocated and participate in Automatic Reference Counting - every copy of a reference increments/decrements a retain count, and there's a real (if usually small) cost to that bookkeeping, plus the possibility of a retain cycle. Structs that contain no reference-type properties never touch ARC at all, avoid heap allocation in the common case, and can never form a retain cycle by themselves - a real, measurable performance and correctness advantage at scale.
+
+5. **`deinit`.** Only classes can have a deinitializer, because only classes have a well-defined moment when "the last owner let go" - a struct's value just goes out of scope with its enclosing context; there's no shared ownership to release.
+
+6. **Mutability control.** A struct's mutability is governed entirely by whether its OWN binding is `let` or `var` - `let` genuinely freezes the whole value, including every property. A class's `let` only freezes WHICH object the variable points to; the object's own properties can still be mutated by anyone holding a reference to it, if those properties are themselves declared `var`. (This distinction is the entire subject of a closely related question - see "Why does struct mutation require `var` and `mutating`?")
+
+**The practical decision, matching Apple's own guidance:** default to `struct`, and reach for `class` only when you specifically need one of: shared/reference identity (two variables that must always reflect the exact same underlying state - a cache, a network session manager, anything meant to be a single shared source of truth); inheritance from an existing class hierarchy (unavoidable for `UIViewController`/`UIView` subclasses - UIKit's own base classes are classes, so anything subclassing them must be a class too); Objective-C interop that specifically requires a class; or deliberately observable, mutable shared state (SwiftUI/Combine's `ObservableObject` is a class specifically because its `@Published` properties need to be observed BY REFERENCE across multiple views holding the same instance).
+""",
+                example: """
+// VALUE semantics (struct) - independent copies.
+struct Point {
+    var x: Int
+    var y: Int
+}
+
+var a = Point(x: 1, y: 1)
+var b = a          // full copy - `b` is now independent of `a`
+b.x = 99
+print(a.x, b.x)    // 1 99 - mutating b never touched a
+
+// REFERENCE semantics (class) - shared instance.
+class MutablePoint {
+    var x: Int
+    var y: Int
+    init(x: Int, y: Int) { self.x = x; self.y = y }
+}
+
+let c = MutablePoint(x: 1, y: 1)
+let d = c           // copies the REFERENCE, not the object - c and d
+                    // now point at the exact same instance
+d.x = 99
+print(c.x, d.x)     // 99 99 - mutating through d is visible through c too
+
+print(c === d)      // true - identity check: same instance
+// print(a === b)   // wouldn't even compile - structs have no identity
+
+// A concrete iOS-flavored decision: value type for pure data...
+struct UserProfile: Equatable {
+    let id: String
+    var displayName: String
+    var email: String
+}
+
+// ...vs reference type for a shared, stateful service every screen
+// should observe/mutate the SAME instance of.
+final class SessionManager {
+    static let shared = SessionManager()   // reference identity IS the point -
+                                            // every caller must see the same session
+    private init() {}
+
+    var currentUser: UserProfile?
+    var isLoggedIn: Bool { currentUser != nil }
+}
+
+// UIViewController MUST be a class - it inherits from an Objective-C
+// base class, so there's no choice here regardless of preference:
+final class ProfileViewController: UIViewController {
+    var profile: UserProfile?   // plain value-type data held by a
+                                  // necessarily-reference-type controller
+}
+""",
+                keyTakeaways: [
+                    "struct = value semantics (assignment copies the whole value, independent afterward); class = reference semantics (assignment copies a pointer, all copies share one instance).",
+                    "Classes have identity (`===`, are these the SAME instance?) and support inheritance; structs have only equality (`==`, do these look the same?) and cannot inherit, though they can conform to protocols.",
+                    "Only classes participate in ARC and can form retain cycles; structs with no reference-type properties never touch the heap or ARC at all.",
+                    "Only classes can have `deinit` - there's no equivalent 'last owner released it' moment for a value type.",
+                    "Default to struct; reach for class specifically for shared/reference identity, required inheritance (UIViewController/UIView subclasses), Objective-C interop, or deliberately observable shared mutable state (ObservableObject)."
+                ]
+            ),
+            QAItem(
+                id: "mutating_keyword_struct_vs_class",
+                question: "How do `let` and `var` affect mutability differently for struct instances versus class instances, and why does a struct method need the `mutating` keyword when a class method doesn't?",
+                topics: ["Struct", "Class", "mutating", "Value Types", "Mutability"],
+                explanation: """
+This is the single most concrete, testable consequence of value versus reference semantics, and it's worth being able to explain the MECHANISM, not just the rule.
+
+**`let`/`var` on a struct binding controls the mutability of the ENTIRE value, including every property.** A struct has no identity separate from its value - conceptually, "changing one property" of a struct is indistinguishable from "constructing a new value of the same type with that one field different, and reassigning it to the same binding." Since `let` forbids reassigning its binding at all, and property mutation on a struct IS a form of reassignment under this model, `let`-bound struct instances are frozen solid: you cannot mutate ANY property, even ones that are themselves declared `var` inside the struct's own definition - the OUTER binding's `let` wins.
+
+**`let`/`var` on a class binding only controls whether the REFERENCE itself can be reassigned** - i.e., whether that variable can be made to point at a DIFFERENT object later. It says nothing about what you can do to the object it already points to. A class instance's own `var` properties remain mutable through a `let`-bound reference, because mutating a property doesn't reassign the binding - the binding still points at the exact same object before and after; only that object's internal state changed. This is exactly why `let session = SessionManager(); session.currentUser = newUser` compiles fine even though `session` is a `let` - you never reassigned `session` itself, you mutated the object it refers to.
+
+**Why struct methods need `mutating`, and class methods never do:** by default, when you call a method on a struct instance, `self` inside that method's body is treated as an implicit `let` - immutable. This exists because the COMPILER needs to know, at the call site, whether calling this method could possibly reassign the caller's own binding (since for a struct, "mutate self" and "reassign the caller's variable" are the same operation, per the point above) - and it needs that answer BEFORE compiling the call, not after. Marking a method `mutating` is how you tell the compiler "yes, this method may reassign `self` or its properties" - which does two things: it makes `self` mutable inside that specific method's body, and it means the compiler will reject any attempt to call this method on a `let`-bound instance, exactly as if you'd tried to mutate a property directly. A `mutating` method can even go further than changing individual properties - it's legal to write `self = SomeOtherValue(...)` inside one, replacing the ENTIRE value wholesale (a capability that has no real class equivalent, since a class's `self` is never reassignable even inside its own methods - there is no scenario where a class instance method could make `self` point at a completely different object).
+
+Class methods never need this because `self` inside a class instance method is always a reference to the same object, for the life of that method call, full stop - there is no ambiguity for the compiler to resolve, because mutating a property through `self` never requires reassigning what `self` points to. The entire `mutating` mechanism exists to solve a problem (does this operation replace the whole value?) that only value types have in the first place.
+
+**A related gotcha worth knowing:** a `mutating` method can be called through a `var` array/dictionary element (`array[i].increment()`) - Swift's subscript get/set machinery handles reading the value out, mutating it, and writing it back transparently - but calling the same method through a `let`-bound local, or through a computed property with no setter, is a compile error, since there's nowhere for the mutated value to be written back to.
+""",
+                example: """
+// STRUCT: `let` freezes the WHOLE value, including properties
+// declared `var` inside the struct's own definition.
+struct Counter {
+    var count = 0   // declared var INSIDE the struct...
+
+    mutating func increment() {
+        count += 1
+    }
+}
+
+var mutableCounter = Counter()
+mutableCounter.increment()          // fine - mutableCounter is `var`
+print(mutableCounter.count)         // 1
+
+let frozenCounter = Counter()
+// frozenCounter.count = 5          // COMPILE ERROR: cannot assign to
+                                     // property - frozenCounter is a `let`
+// frozenCounter.increment()        // COMPILE ERROR: cannot use mutating
+                                     // member on immutable value - calling
+                                     // a mutating method on a `let` struct
+                                     // is exactly as illegal as mutating
+                                     // a property on it directly.
+
+// CLASS: `let` only freezes the REFERENCE, not the object's own state.
+class CounterClass {
+    var count = 0
+
+    func increment() {              // no `mutating` needed at all -
+        count += 1                  // self is always the same object
+    }
+}
+
+let classCounter = CounterClass()   // `let` - the REFERENCE is frozen...
+classCounter.increment()            // ...but this is completely legal:
+print(classCounter.count)           // 1 - we never reassigned `classCounter`
+                                     // itself, only mutated the object
+                                     // it already points to.
+
+// classCounter = CounterClass()    // THIS would be the compile error -
+                                     // reassigning the `let` reference itself,
+                                     // not mutating through it.
+
+// A `mutating` method can replace `self` WHOLESALE - no class equivalent:
+struct Vector2D {
+    var x: Double
+    var y: Double
+
+    mutating func reset() {
+        self = Vector2D(x: 0, y: 0)   // legal: mutating methods can
+                                        // reassign `self` entirely
+    }
+}
+
+// Works correctly through a `var` array element - Swift's subscript
+// get/set machinery reads, mutates, and writes back transparently:
+var counters = [Counter(), Counter()]
+counters[0].increment()
+print(counters[0].count, counters[1].count)   // 1 0
+""",
+                keyTakeaways: [
+                    "For a struct, `let`/`var` on the OUTER binding controls mutability of the entire value, including every property - a `let` struct is frozen solid even if its properties are declared `var` internally.",
+                    "For a class, `let`/`var` controls only whether the REFERENCE can be reassigned to point at a different object - the object's own `var` properties stay mutable through a `let`-bound reference, since mutating them never reassigns the binding.",
+                    "`mutating` exists because, for a value type, 'mutate a property' and 'reassign the caller's binding' are the same operation under the hood - the compiler needs the method marked so it can require the caller's instance to be `var` and treat `self` as mutable inside that method.",
+                    "Class methods never need `mutating` because a class's `self` always refers to the same object for the life of a method call - there's no ambiguity about reassigning the binding to resolve.",
+                    "A `mutating` method can reassign `self` entirely (`self = NewValue(...)`) - a capability with no real class equivalent, since a class instance method can never make `self` point at a different object."
+                ]
+            ),
+            QAItem(
+                id: "uikit_concrete_retain_cycles_timer_notification_navigation",
+                question: "Where do you most commonly see retain cycles in real UIKit code (e.g. Timer, NotificationCenter observers, navigation closures), and how do you break each one?",
+                topics: ["Retain Cycle", "Timer", "NotificationCenter", "UIKit", "Memory Management", "Instruments"],
+                explanation: """
+Beyond the textbook delegate/closure-capturing-self example, three specific UIKit patterns account for most real-world retain cycles, and each has its own gotcha worth knowing individually - two of them are more subtle than "just add `[weak self]`."
+
+**1. `Timer` - the classic trap where `[weak self]` alone doesn't fully fix it.** `Timer.scheduledTimer` is retained by the RunLoop itself once scheduled, independent of anything else - and if you also store the timer as a property on the view controller AND its closure/target captures that view controller, you get a genuine cycle: VC -> (strong property) -> Timer -> (strong target/closure capture) -> VC. Adding `[weak self]` to the closure breaks the CYCLE (the VC can now deallocate), but this alone is NOT the full fix: the Timer is ALSO kept alive by the RunLoop regardless of what happens to the VC, so it keeps firing forever - calling `self?.doSomething()` as a harmless no-op once `self` is nil, but wasting CPU/battery indefinitely ("zombie timer"). The RunLoop's hold on the timer is completely independent of your view controller's retain graph. The real fix needs BOTH: `[weak self]` in the closure (or a weak-target proxy for the older selector-based API) AND an explicit `timer.invalidate()` call at the right lifecycle moment (typically `viewWillDisappear` or `deinit`) to actually stop and release the timer itself. A common mistake is putting `invalidate()` only in `deinit` while ALSO capturing `self` strongly in the closure - `deinit` then never runs at all, because the strong capture keeps the VC alive forever, so the "fix" in `deinit` is dead code that never executes.
+
+**2. `NotificationCenter` observers.** The older target-based API (`addObserver(self, selector:, name:, object:)`) does NOT strongly retain observers on modern iOS (9+) - so failing to call `removeObserver` isn't technically a retain cycle on current OS versions, though it's still best practice to remove it explicitly in `deinit` for clarity and to avoid relying on OS-version-specific behavior. The MODERN block-based API (`addObserver(forName:object:queue:using:)`) is the one that genuinely creates a cycle: it takes a CLOSURE, and NotificationCenter holds that closure alive for as long as the observer is registered - if the closure captures `self` strongly, you get VC -> (implicitly, via whatever holds the returned token) -> NotificationCenter -> (strong closure capture) -> VC. The fix is the same shape as any closure cycle: `[weak self]` inside the closure, and/or storing the returned opaque token and calling `removeObserver(token)` in `deinit` to stop observing once the VC goes away.
+
+**3. Navigation/completion closures between screens (the scenario this question is often getting at specifically).** Screen A presents Screen B and hands it a completion closure so B can notify A when it finishes - `let screenB = ScreenB(); screenB.onComplete = { self.refresh() }`. If `onComplete` is stored as a property on B (which it must be, to be called later), and the closure captures `self` (Screen A) strongly, you now have B -> (strong stored closure) -> A. Whether this is a full CYCLE depends on whether A also holds B strongly - which it usually does, at least implicitly: UIKit itself retains a presented view controller while it's on screen (via the presentation/navigation stack), and if A additionally stores B in a property, that's a second strong reference. The exact strong back-reference to look for is always the CLOSURE capture - `[weak self]` in the closure assigned from A (`screenB.onComplete = { [weak self] in self?.refresh() }`) breaks it cleanly, since UIKit's own retain of the presented VC is expected and temporary (it releases B naturally once B is dismissed) - the closure's strong capture of A was the piece keeping A alive unexpectedly.
+
+**Confirming the fix actually worked:** Instruments' Memory Graph Debugger (the three-circles icon in Xcode's debug navigator) is the right tool - trigger the suspect flow (present and dismiss the screen, start and stop the timer), then check whether the view controller instance is still alive when it shouldn't be. Xcode flags suspected leaks with a purple exclamation mark and shows the exact retaining reference chain, which is the fastest way to identify precisely which one of several possible strong references (property, closure capture, RunLoop/NotificationCenter/UIKit's own internal retain) is the one actually keeping the object alive.
+""",
+                example: """
+// 1) Timer - [weak self] alone is NOT sufficient; you also need
+// invalidate(), and it must be reachable (not blocked by a still-existing
+// cycle elsewhere).
+final class PollingViewController: UIViewController {
+    private var timer: Timer?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            // [weak self] breaks the VC -> Timer -> VC cycle, so the VC
+            // CAN deallocate - but the RunLoop still holds the Timer
+            // itself alive and it keeps firing (harmlessly, since self
+            // is nil) until explicitly invalidated.
+            self?.pollForUpdates()
+        }
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        // Without this, the timer keeps firing forever even after this
+        // screen is gone - a wasted, invisible battery/CPU drain, not a
+        // VC leak (weak self already prevented that), but still a bug.
+        timer?.invalidate()
+        timer = nil
+    }
+
+    private func pollForUpdates() { /* ... */ }
+}
+
+// 2) NotificationCenter - the block-based API genuinely retains the
+// closure (and whatever it captures strongly) for as long as you're
+// registered as an observer.
+final class BadgeViewController: UIViewController {
+    private var observerToken: NSObjectProtocol?
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        observerToken = NotificationCenter.default.addObserver(
+            forName: .badgeCountDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in       // breaks NC -> closure -> VC
+            self?.updateBadge(from: notification)
+        }
+    }
+
+    deinit {
+        // Removing the token is good hygiene even with [weak self] -
+        // stops the closure from running pointlessly after this VC is gone.
+        if let observerToken {
+            NotificationCenter.default.removeObserver(observerToken)
+        }
+    }
+
+    private func updateBadge(from notification: Notification) { /* ... */ }
+}
+
+// 3) Navigation/completion closure between two screens - the exact
+// scenario: does ScreenB's stored closure capture ScreenA strongly?
+final class ScreenA: UIViewController {
+    func presentScreenB() {
+        let screenB = ScreenB()
+        // [weak self] here is the fix - UIKit's own retain of the
+        // presented screenB is expected/temporary; this closure's
+        // strong capture of `self` (ScreenA) was the unexpected,
+        // long-lived back-reference keeping ScreenA alive.
+        screenB.onComplete = { [weak self] in
+            self?.refresh()
+        }
+        present(screenB, animated: true)
+    }
+
+    func refresh() { /* ... */ }
+}
+
+final class ScreenB: UIViewController {
+    var onComplete: (() -> Void)?   // stored strongly - this is exactly
+                                      // why the CLOSURE's own capture of
+                                      // self (ScreenA) is what must be weak,
+                                      // not this property itself.
+
+    func finish() {
+        dismiss(animated: true) { [weak self] in
+            self?.onComplete?()
+        }
+    }
+}
+
+extension Notification.Name {
+    static let badgeCountDidChange = Notification.Name("badgeCountDidChange")
+}
+""",
+                keyTakeaways: [
+                    "Timer: `[weak self]` in the closure breaks the retain CYCLE, but the RunLoop keeps the Timer itself alive and firing regardless - you also need an explicit `timer.invalidate()` at the right lifecycle point, or it becomes a 'zombie timer' that runs forever.",
+                    "A cycle-blocking bug compounds itself: if `invalidate()` is placed only in `deinit` while the closure ALSO captures self strongly, `deinit` never runs at all - the 'fix' is dead code, since the cycle it's supposed to break is the exact thing preventing it from executing.",
+                    "NotificationCenter's block-based `addObserver(forName:...)` genuinely retains its closure (and whatever it captures) until removed - `[weak self]` and/or storing+removing the returned token in `deinit` is the fix; the older target-based API doesn't strongly retain observers on modern iOS, but removing in deinit is still best practice.",
+                    "Navigation/completion closures: identify the EXACT strong back-reference - it's almost always the closure capturing `self` on the presenting screen, stored as a property on the presented screen (`onComplete = { self.doThing() }`) - `[weak self]` in that specific closure is the fix.",
+                    "Confirm fixes with Xcode's Memory Graph Debugger - it flags suspected leaks directly and shows the exact retaining reference chain, which is the fastest way to identify which of several candidate strong references is the real culprit."
+                ]
+            ),
+            QAItem(
+                id: "mvc_thin_view_controller_presentation_logic_placement",
+                question: "In an MVC app, what rules do you follow to keep UIViewController thin and avoid a 'Massive View Controller', and where does presentation/formatting logic belong?",
+                topics: ["MVC", "Architecture", "UIKit", "Massive View Controller"],
+                explanation: """
+"Massive View Controller" happens by structural default, not by accident: in Apple's own MVC, the Model correctly has no UI awareness at all, and Views (`UILabel`, `UIButton`, `UITableViewCell`) are largely passive - they don't know what the data they're displaying MEANS. That leaves the View Controller as the ONLY layer with any real intelligence, so everything that isn't pure data or pure rendering - networking, business logic, data-source/delegate handling, navigation, and formatting - has nowhere else to go except into it, unless you deliberately create somewhere else for it to go. The fix isn't a different architecture (that's what MVVM/VIPER are for) - it's a set of concrete extraction habits that work within plain MVC.
+
+**Six concrete techniques, roughly in order of impact:**
+
+1. **Extract `UITableViewDataSource`/`UITableViewDelegate` into their own object**, owned by the VC but not implemented BY it. Instead of the VC itself accumulating a dozen `numberOfRowsInSection`/`cellForRowAt`/`didSelectRowAt` methods, a dedicated `ProductListDataSource: NSObject, UITableViewDataSource` object holds the array and configures cells - the VC just owns and wires it up.
+
+2. **Move networking/persistence into dedicated Service objects**, injected and depended on via protocol (never constructed directly inside the VC, and never calling `URLSession` directly from VC code). This is the single highest-leverage extraction, since networking code tends to be the largest single chunk of "stuff that ended up in the VC by default."
+
+3. **Move presentation/formatting logic into a dedicated Presenter/Formatter/DisplayModel type** - even inside plain MVC, nothing stops you from introducing a small intermediate object whose only job is turning a raw Model into UI-ready data (formatted strings, resolved `UIColor`s, computed display flags). This is genuinely the answer to "where does formatting logic go": NOT the Model (keep it UI-framework-agnostic - the same Model might back a widget, a Mac Catalyst target, or a server-side Swift job where `UIColor` doesn't even exist), and NOT scattered inline inside `cellForRowAt` (that's exactly how a VC becomes massive one small formatting rule at a time). A dedicated DisplayModel, built by a pure mapping function, is independently testable with zero UIKit involved.
+
+4. **Push per-cell layout logic into custom `UIView`/`UITableViewCell` subclasses** with their own `configure(with: DisplayModel)` method, rather than building/updating subviews imperatively inline inside the VC or inside `cellForRowAt`.
+
+5. **Use Child View Controller containment** (`addChild`, `didMove(toParent:)`) to break one large screen into several smaller, independently thin view controllers, each responsible for one region of the screen.
+
+6. **Extract navigation/routing into a dedicated Coordinator/Router object**, rather than the VC directly constructing and presenting destination view controllers everywhere - this also makes navigation flows independently testable and reusable across entry points.
+
+A minor, purely organizational seventh technique - grouping a VC's own code into `// MARK: -` extensions by protocol conformance - genuinely helps readability, but doesn't reduce the VC's actual RESPONSIBILITY count on its own; it's worth doing, but it's not a substitute for the six extractions above, which is a distinction interviewers specifically listen for (do you know the difference between organizing bloat and actually removing it?).
+""",
+                example: """
+// BEFORE: everything lives directly on the VC - the classic path to
+// "Massive View Controller." (Illustrative, not exhaustive.)
+final class ProductListViewControllerBad: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    var products: [ProductAPIModel] = []
+    let tableView = UITableView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.dataSource = self
+        tableView.delegate = self
+
+        // Networking directly in the VC:
+        URLSession.shared.dataTask(with: URL(string: "https://api.example.com/products")!) { data, _, _ in
+            guard let data, let decoded = try? JSONDecoder().decode([ProductAPIModel].self, from: data) else { return }
+            DispatchQueue.main.async {
+                self.products = decoded
+                self.tableView.reloadData()
+            }
+        }.resume()
+    }
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { products.count }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell()
+        let product = products[indexPath.row]
+        // Formatting logic scattered inline, one rule added per bug fix:
+        cell.textLabel?.text = product.name
+        cell.detailTextLabel?.text = product.priceCents == 0 ? "Free" : "$\\(Double(product.priceCents) / 100.0)"
+        cell.detailTextLabel?.textColor = product.isOnSale ? .systemRed : .label
+        return cell
+    }
+}
+
+// AFTER: each responsibility extracted to its own small, testable piece.
+
+// MARK: - Model (raw, UI-agnostic)
+struct ProductAPIModel: Decodable {
+    let name: String
+    let priceCents: Int
+    let isOnSale: Bool
+}
+
+// MARK: - Formatter (presentation logic lives HERE, not the Model or the VC)
+struct ProductDisplayModel {
+    let title: String
+    let priceText: String
+    let priceColor: UIColor
+
+    init(product: ProductAPIModel) {
+        title = product.name
+        priceText = product.priceCents == 0 ? "Free" : "$\\(Double(product.priceCents) / 100.0)"
+        priceColor = product.isOnSale ? .systemRed : .label
+    }
+}
+
+// MARK: - Service (networking lives HERE, protocol-abstracted)
+protocol ProductServicing {
+    func fetchProducts() async throws -> [ProductAPIModel]
+}
+final class ProductService: ProductServicing {
+    func fetchProducts() async throws -> [ProductAPIModel] {
+        let url = URL(string: "https://api.example.com/products")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        return try JSONDecoder().decode([ProductAPIModel].self, from: data)
+    }
+}
+
+// MARK: - Data source (owned by the VC, not implemented BY it)
+final class ProductTableDataSource: NSObject, UITableViewDataSource {
+    var displayModels: [ProductDisplayModel] = []
+
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        displayModels.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell()
+        cell.configure(with: displayModels[indexPath.row])   // cell owns ITS OWN layout logic
+        return cell
+    }
+}
+
+extension UITableViewCell {
+    func configure(with model: ProductDisplayModel) {
+        textLabel?.text = model.title
+        detailTextLabel?.text = model.priceText
+        detailTextLabel?.textColor = model.priceColor
+    }
+}
+
+// MARK: - View Controller: thin - wires the pieces together, owns none
+// of their internal logic.
+final class ProductListViewController: UIViewController {
+    private let service: ProductServicing
+    private let dataSource = ProductTableDataSource()
+    private let tableView = UITableView()
+
+    init(service: ProductServicing = ProductService()) {
+        self.service = service
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.dataSource = dataSource
+        Task { await loadProducts() }
+    }
+
+    private func loadProducts() async {
+        guard let products = try? await service.fetchProducts() else { return }
+        dataSource.displayModels = products.map(ProductDisplayModel.init)
+        tableView.reloadData()
+    }
+}
+""",
+                keyTakeaways: [
+                    "Massive View Controller happens by structural default in MVC - the Model has no UI awareness and Views are passive, so everything else (networking, formatting, data source, navigation) accumulates in the VC unless you deliberately extract it.",
+                    "The two highest-leverage extractions: dedicated Service objects (protocol-abstracted networking/persistence) and a dedicated data source object (not the VC itself conforming to UITableViewDataSource).",
+                    "Presentation/formatting logic belongs in its own DisplayModel/Formatter type, built by a pure mapping function from the raw Model - not the Model itself (keep it UI-framework-agnostic) and not scattered inline in cellForRowAt (that's exactly how VCs become massive).",
+                    "A DisplayModel/Formatter is independently unit-testable with zero UIKit involved - a plain 'API model in, display model out' function - which is a concrete, checkable benefit worth naming in an interview.",
+                    "Organizing a VC's existing code into MARK-separated extensions improves readability but does NOT reduce its actual responsibility count - it's a complement to real extraction (services, data sources, formatters, coordinators), not a substitute for it."
+                ]
+            ),
+            QAItem(
+                id: "mvc_view_model_dto_layer_decision",
+                question: "When your API model doesn't match what the UI needs, do you create a separate 'view model'/DTO layer in MVC, or adapt in the controller - how do you decide?",
+                topics: ["MVC", "DTO", "View Model", "Architecture", "API Design"],
+                explanation: """
+The underlying tension is real and permanent, not a one-time problem to solve: your API layer's decoded model matches the SERVER's wire format (nullable/loosely-typed fields, server-side naming conventions, nesting driven by database structure), and that shape is rarely the ideal shape to drive UI directly. The two shapes - wire format and UI-ready format - will keep diverging independently as the backend and the UI each evolve on their own schedules, so this isn't a question of "get it right once," it's a question of where the adaptation code should live long-term.
+
+**Option A - adapt directly in the controller.** Pragmatic and appropriate for a small, one-off mapping (a single date-format call, a single nil-coalescing default) used in exactly one screen. But it couples that VC to BOTH the API model's exact shape and the UI's specific needs at once, and if the SAME API model is displayed by more than one screen - each wanting its own formatting - the mapping logic gets duplicated, and duplicated logic drifts out of sync over time (one screen's date format gets updated for a bug fix, the other doesn't).
+
+**Option B - a dedicated view-model/DTO layer.** A distinct type (`ProductDisplayModel`, `UserViewModel` - naming varies by team) constructed FROM the API model, holding only UI-ready data: formatted strings, resolved `UIColor`/image references, computed flags (`isOnSale: Bool`, `isOverdue: Bool`). This decouples the UI from the API's literal shape (the backend can rename/restructure/add fields without touching every screen that uses them, as long as the ONE mapping function is updated), makes the transformation independently unit-testable (a pure function - API model in, DisplayModel out, zero UIKit needed to test it), and lets multiple screens reuse the identical, consistent transformation instead of each reinventing it slightly differently.
+
+**The actual decision heuristic - four concrete questions to ask:**
+
+1. **Is the mapping trivial AND used in exactly one place?** If it's really just one date-format call feeding one screen, inline adaptation is fine - don't add a layer of ceremony for a problem you don't have yet. Premature abstraction here is a real cost, not a free "best practice."
+
+2. **Does the same API model feed multiple screens/cells with overlapping formatting needs?** If two or more places need to turn the same raw field into the same kind of display string, extract the DisplayModel - the alternative is duplicated logic that silently drifts.
+
+3. **Is the API model's shape volatile, or does it carry wire-format quirks you don't want leaking into UI code** (deeply nested JSON, inconsistent server-side naming, versioned/optional fields)? Introduce the DTO layer EARLY here - retrofitting it later means touching every call site that already consumes the raw API model directly, which is exactly the kind of change nobody budgets time for until it's actively painful.
+
+4. **Do you need the transformation to be independently testable** - verifying "does a zero price correctly render as 'Free'? Does a missing image URL correctly fall back to a placeholder?" - without spinning up any UIKit machinery at all? A standalone DisplayModel plus a pure mapping function is what makes that possible; logic buried inside `cellForRowAt` cannot be unit-tested without instantiating real UIKit views.
+
+**The trap worth naming explicitly:** "adapt in the controller" tends not to stay small. What starts as "just one date-format call" accumulates one more formatting rule per bug fix over a project's lifetime, until the controller has quietly become a de facto, untested, undocumented DisplayModel layer - just spread across `cellForRowAt` instead of being named, isolated, and testable. Recognizing that drift early is usually a stronger signal to extract than any size threshold.
+
+**One precision point worth making explicitly in an interview:** introducing a view-model/DTO type this way is NOT the same thing as adopting MVVM. MVVM specifically implies BINDING - the View automatically observes and re-renders from the ViewModel's published state. Here, it's just a plain data-transformation step that the Controller pulls a value from and pushes into Views manually - no automatic binding involved at all. This pattern is sometimes called "MVC + VM" or "Presentation Model," and it's worth distinguishing by name from full MVVM, since conflating the two is a common and telling mistake.
+""",
+                example: """
+// The raw API model - matches the SERVER's wire format exactly,
+// including quirks (cents as an Int, a boolean sale flag, no formatting).
+struct ProductAPIModel: Decodable {
+    let id: String
+    let name: String
+    let price_cents: Int        // server's snake_case naming
+    let on_sale: Bool
+    let image_url: String?      // nullable - server doesn't always have one
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, price_cents, on_sale, image_url
+    }
+}
+
+// Option B: a dedicated DisplayModel - UI-ready data, built by ONE
+// pure mapping function, reusable by every screen that shows a product.
+struct ProductDisplayModel {
+    let id: String
+    let title: String
+    let priceText: String       // "Free" / "$12.99" - formatting decided ONCE
+    let priceColor: UIColor
+    let imageURL: URL?          // falls back to a known placeholder URL
+
+    init(apiModel: ProductAPIModel) {
+        id = apiModel.id
+        title = apiModel.name
+        priceText = apiModel.price_cents == 0
+            ? "Free"
+            : String(format: "$%.2f", Double(apiModel.price_cents) / 100.0)
+        priceColor = apiModel.on_sale ? .systemRed : .label
+        imageURL = apiModel.image_url.flatMap(URL.init(string:))
+            ?? URL(string: "https://example.com/placeholder.png")
+    }
+}
+
+// This mapping is a PURE FUNCTION - fully unit-testable with zero UIKit:
+func testFreePriceFormatsCorrectly() {
+    let api = ProductAPIModel(id: "1", name: "Sample", price_cents: 0, on_sale: false, image_url: nil)
+    let display = ProductDisplayModel(apiModel: api)
+    assert(display.priceText == "Free")
+    assert(display.imageURL != nil)   // fell back to the placeholder
+}
+
+// Two DIFFERENT screens reuse the exact same, already-tested mapping -
+// this is the concrete payoff of extracting it: no drift between them.
+final class ProductListViewController: UIViewController {
+    func present(products: [ProductAPIModel]) {
+        let displayModels = products.map(ProductDisplayModel.init)
+        // ... feed displayModels to a table view data source ...
+    }
+}
+
+final class ProductDetailViewController: UIViewController {
+    func present(product: ProductAPIModel) {
+        let displayModel = ProductDisplayModel(apiModel: product)
+        // ... same priceText/priceColor logic, guaranteed consistent
+        // with the list screen above, with zero duplicated formatting code ...
+    }
+}
+
+// Option A (for comparison): fine ONLY when trivial and single-use -
+// this is reasonable, not automatically wrong, for a one-off screen:
+final class SimpleOneOffViewController: UIViewController {
+    func present(product: ProductAPIModel) {
+        let priceLabel = product.price_cents == 0 ? "Free" : "$\\(product.price_cents / 100)"
+        // ... used exactly once, nowhere else needs this exact mapping ...
+    }
+}
+""",
+                keyTakeaways: [
+                    "The tension is permanent: the API model matches the server's wire format, the UI wants formatted, UI-ready data - the two shapes diverge independently over time regardless of which option you pick.",
+                    "Adapt inline in the controller when the mapping is trivial AND used in exactly one place - extracting a DTO layer for a problem you don't have yet is a real cost (premature abstraction), not free best practice.",
+                    "Extract a dedicated DisplayModel/DTO when: the same API model feeds multiple screens (avoids duplicated, drifting formatting logic), the API shape is volatile or has wire-format quirks you don't want leaking into UI code, or you need the transformation independently unit-testable without UIKit.",
+                    "The trap: 'adapt in the controller' rarely stays small - it accumulates one formatting rule per bug fix until the controller becomes a de facto, untested DisplayModel layer spread across cellForRowAt instead of being named and testable.",
+                    "A DTO/view-model layer here is NOT MVVM - MVVM specifically implies automatic BINDING (the View observes the ViewModel's published state); this is a manual data-transformation step the Controller pulls from and pushes into Views itself, sometimes called 'MVC + VM' or 'Presentation Model' - worth naming precisely in an interview."
+                ]
+            ),
+            QAItem(
+                id: "copy_on_write_array_dictionary_mechanics",
+                question: "How does Swift's copy-on-write (COW) affect the struct-value-semantics explanation for common value types like Array and Dictionary?",
+                topics: ["Copy-on-Write", "Struct", "Array", "Dictionary", "Performance", "Value Types"],
+                explanation: """
+Copy-on-write is the optimization that makes Swift's value-type collections (`Array`, `Dictionary`, `Set`, `String`) fast in practice, while still keeping the OBSERVABLE guarantee that value semantics always promise: each variable behaves as if it holds a fully independent copy, even though the runtime is much lazier about it than that description suggests.
+
+**The mechanism.** An `Array` (or `Dictionary`/`Set`/`String`) is actually a small struct wrapping a reference to a class instance that owns the real backing storage buffer on the heap. When you write `var b = a`, Swift copies the STRUCT wrapper - which is cheap, just copying a pointer and incrementing that buffer's retain count - not the buffer itself. At this point, `a` and `b` are two separate Swift values that both point at the SAME underlying storage. Nothing has actually been duplicated yet.
+
+**The trigger.** The moment either `a` or `b` is MUTATED, Swift's standard library implementation calls `isKnownUniquelyReferenced(&buffer)` before performing the write. This checks the buffer's retain count: if it's exactly 1 (meaning only THIS variable currently references it), the mutation happens in place, directly on the shared buffer - safe, because nothing else could possibly observe the change. If the retain count is greater than 1 (meaning another variable - like `a`, if `b` is the one being mutated - is also pointing at the same buffer), Swift allocates a fresh copy of the buffer FIRST, redirects the mutating variable's reference to that new copy, and only then performs the write. The other variable's reference is completely unaffected and still points at the original, unchanged buffer.
+
+**Why this doesn't violate value semantics.** From the OUTSIDE - from the perspective of anyone just reading and writing through `a` and `b` - the behavior is indistinguishable from "each variable got its own real copy the instant the assignment happened." `b.append(4)` never causes `a` to change, exactly as full value semantics promise; COW is purely an internal performance optimization for WHEN the actual duplication happens (lazily, deferred until the first divergent mutation), never a change to WHAT the collection appears to do. This is precisely why copying a 10,000-element array is nearly free until you actually mutate one of the copies - the expensive part (duplicating the buffer) only happens if and when it's truly needed, and never happens at all if you only ever read from both copies.
+
+**The concrete cost this saves:** without COW, every `var b = a` for an array would need an immediate full O(n) buffer copy just to preserve value semantics defensively, even for the (extremely common) case where `b` is never mutated at all, or where only one of the two variables ends up living long enough to be mutated. COW defers that cost to exactly the moment (if ever) it's actually required, and this is why Apple's own custom value types - when you write one yourself with a class-backed buffer - can and often should implement the SAME `isKnownUniquelyReferenced` check to get the identical performance characteristic, rather than relying on the naive "always copy" behavior a plain struct-of-structs would give you for free (correct, but needlessly expensive for large backing data).
+""",
+                example: """
+// COW in action - observe when the actual buffer copy happens.
+var a = [1, 2, 3]
+var b = a               // cheap: copies the wrapper struct + a pointer,
+                         // NOT the underlying buffer. a and b currently
+                         // share the exact same storage.
+
+b.append(4)              // MUTATION on b triggers isKnownUniquelyReferenced
+                          // check: the buffer's retain count is 2 (a AND b
+                          // reference it), so a fresh copy is made for b
+                          // FIRST, then the append happens on that copy.
+
+print(a)                 // [1, 2, 3] - completely unaffected
+print(b)                 // [1, 2, 3, 4] - independent, exactly as value
+                          // semantics promise - COW was invisible from here.
+
+// Confirming the deferred-copy behavior with withUnsafeBufferPointer
+// addresses (illustrative - real code shouldn't rely on this, but it's
+// how you'd actually OBSERVE the shared-then-diverged storage):
+func bufferAddress<T>(_ array: [T]) -> String {
+    array.withUnsafeBufferPointer { String(describing: $0.baseAddress) }
+}
+
+var x = [1, 2, 3]
+var y = x
+print(bufferAddress(x) == bufferAddress(y))   // true - same storage, no copy yet
+y.append(4)
+print(bufferAddress(x) == bufferAddress(y))   // false - y's mutation forced
+                                                // a divergent copy; x kept
+                                                // its original buffer.
+
+// Implementing the SAME optimization for your own class-backed value type -
+// this is what the standard library does internally for Array/Dictionary/Set:
+final class Storage {
+    var values: [Int]
+    init(_ values: [Int]) { self.values = values }
+    func copy() -> Storage { Storage(values) }
+}
+
+struct COWContainer {
+    private var storage: Storage
+
+    init(_ values: [Int]) {
+        storage = Storage(values)
+    }
+
+    var values: [Int] {
+        get { storage.values }
+        set {
+            // The same pattern the stdlib uses: only copy if this
+            // storage is ALSO referenced elsewhere.
+            if !isKnownUniquelyReferenced(&storage) {
+                storage = storage.copy()
+            }
+            storage.values = newValue
+        }
+    }
+}
+
+var c1 = COWContainer([1, 2, 3])
+var c2 = c1                        // shares storage - cheap
+c2.values.append(4)                // triggers the uniqueness check ->
+                                    // copies storage for c2 only
+print(c1.values, c2.values)        // [1, 2, 3] [1, 2, 3, 4]
+""",
+                keyTakeaways: [
+                    "Array/Dictionary/Set/String are structs wrapping a reference to a heap-allocated buffer - assigning `var b = a` copies only the cheap wrapper (a pointer), not the buffer, so a and b initially share the same storage.",
+                    "A mutation triggers `isKnownUniquelyReferenced` on the buffer: if the retain count is 1, the mutation happens in place; if greater than 1 (shared), a fresh copy is made first, then mutated - the OTHER variable's reference is untouched.",
+                    "This is purely an internal performance optimization - from the outside, behavior is indistinguishable from 'each variable got a real independent copy immediately,' exactly preserving value semantics; COW only changes WHEN the copy happens, never WHAT the collection appears to do.",
+                    "The cost this saves is real: without COW, `var b = a` on a large array would need an immediate O(n) copy defensively, even when b is never mutated - COW defers that cost until (and unless) it's actually needed.",
+                    "You can implement the identical pattern in your own class-backed value types via `isKnownUniquelyReferenced` - this is literally what the standard library does internally for Array/Dictionary/Set, and it's the right technique when you write a custom value type wrapping expensive-to-copy backing storage."
+                ]
+            ),
+            QAItem(
+                id: "actor_isolation_vs_serial_dispatchqueue",
+                question: "In Swift concurrency, what's the difference between actor isolation and using a serial DispatchQueue for thread safety, and when would you prefer an actor?",
+                topics: ["Actors", "Concurrency", "GCD", "Thread Safety", "Swift Concurrency"],
+                explanation: """
+Both genuinely solve the same underlying problem - serializing access to shared mutable state so two threads can never read-modify-write it simultaneously - but they differ in where the guarantee is enforced and how much of it the compiler can check for you.
+
+**Serial DispatchQueue: a runtime discipline you must uphold by hand, everywhere, forever.** A serial `DispatchQueue` guarantees that blocks submitted to it run one at a time, in order - which is exactly the property that prevents a data race, IF every single access to the shared state is routed through `queue.sync { }`/`queue.async { }`. The compiler enforces NOTHING here: nothing stops you from accidentally reading or writing the protected property directly from some other piece of code that forgot to go through the queue - that mistake compiles cleanly and just reintroduces the exact race you were trying to prevent, silently, with no warning until it manifests as a flaky bug under load. The discipline is entirely convention - correct only as long as every current AND future line of code that touches that state remembers to use the queue.
+
+**Actor: the same guarantee, but enforced by the compiler itself.** An `actor` type's stored properties and methods are "actor-isolated" by default - the Swift compiler will not let you compile code that reads or writes an actor's isolated state from outside the actor without an `await`, full stop. This isn't a discipline you have to remember; it's a rule the type system checks at every call site, at compile time. Internally, actors likely use similar underlying machinery to a serial queue (a private, serialized executor), but the difference that matters is that the COMPILER, not just convention, is what's preventing the mistake - a future teammate (or you, six months later) literally cannot accidentally write code that skips the synchronization, because it won't compile.
+
+**Concretely, what "isolation" adds over "serialization":** a serial queue only protects code that REMEMBERS to enter it - an actor's isolated state can only EVER be touched through the actor's own interface, checked at every single access site by the compiler, not just the ones a developer remembers to wrap. Actors also compose more naturally with the rest of structured Swift Concurrency (`async`/`await`, `Task`, structured task groups) - calling into an actor from an `async` context is just an ordinary `await`, no manual bridging between GCD's callback-based world and `async`/`await` required, whereas mixing a `DispatchQueue`-protected type into async code usually means wrapping queue calls in a `withCheckedContinuation` or similar boilerplate.
+
+**When you'd still prefer a serial DispatchQueue over an actor:** (1) code that must interoperate with older completion-handler-based APIs or Objective-C, where introducing `async`/`await` throughout isn't practical yet; (2) needing FINE-GRAINED control the actor model doesn't directly expose - e.g. `.barrier` flags on a concurrent queue for a reader-writer pattern (many concurrent reads, exclusive writes), which actors don't have a direct equivalent for (an actor serializes ALL access, reads included, whereas a concurrent-queue-with-barrier lets reads run in parallel); (3) extremely hot, low-level code where you've profiled and confirmed the overhead of actor hopping (potential context switches when crossing isolation boundaries) is measurably worse than a queue for your specific access pattern. For the overwhelming majority of "protect this shared mutable state" cases in an app, though, an actor is the right default specifically BECAUSE the compiler enforces the guarantee instead of trusting everyone to remember - see the BankAccount data-race machine-coding question in this app for a concrete before/after.
+""",
+                example: """
+// Serial DispatchQueue - the guarantee is a CONVENTION, not compiler-checked.
+final class QueueProtectedCounter {
+    private var count = 0
+    private let queue = DispatchQueue(label: "counter.queue")
+
+    func increment() {
+        queue.sync { count += 1 }   // safe, IF every access goes through this
+    }
+
+    func unsafeDirectRead() -> Int {
+        // Nothing stops this from compiling, even though it reads `count`
+        // WITHOUT going through the queue - this is a real, silent data
+        // race waiting to happen, and the compiler has no way to flag it.
+        return count
+    }
+}
+
+// Actor - the SAME guarantee, but enforced by the compiler at every call site.
+actor IsolatedCounter {
+    private var count = 0
+
+    func increment() {
+        count += 1        // no queue needed - the actor's own isolation
+                           // already guarantees this can't race
+    }
+
+    func currentCount() -> Int {
+        count
+    }
+}
+
+let counter = IsolatedCounter()
+Task {
+    await counter.increment()             // `await` is MANDATORY here -
+    print(await counter.currentCount())   // omitting it is a COMPILE ERROR,
+                                            // not a silent bug.
+}
+
+// counter.count            // wouldn't even compile - `count` is private
+                              // AND actor-isolated; there is no way to
+                              // accidentally bypass the protection.
+
+// Where a serial/concurrent queue still earns its place: a reader-writer
+// pattern (many concurrent READS, exclusive WRITES) - actors serialize
+// ALL access including reads, with no direct equivalent to this:
+final class ReaderWriterCache {
+    private var storage: [String: Int] = [:]
+    private let queue = DispatchQueue(label: "cache.queue", attributes: .concurrent)
+
+    func value(for key: String) -> Int? {
+        queue.sync { storage[key] }              // concurrent reads allowed
+    }
+
+    func setValue(_ value: Int, for key: String) {
+        queue.async(flags: .barrier) {            // exclusive write - blocks
+            self.storage[key] = value             // out all reads/writes
+        }                                          // until it completes
+    }
+}
+""",
+                keyTakeaways: [
+                    "Both a serial DispatchQueue and an actor serialize access to shared mutable state - the difference is WHERE the guarantee is enforced: a queue is a runtime convention (only as safe as every access site remembering to use it); an actor's isolation is checked by the COMPILER at every call site.",
+                    "Forgetting to route an access through a serial queue compiles cleanly and silently reintroduces the exact race being guarded against; forgetting `await` on actor-isolated state is a compile error, not a runtime bug waiting to happen.",
+                    "Actors compose naturally with async/await and structured concurrency (Task, task groups) with no manual bridging; mixing a DispatchQueue-protected type into async code typically needs continuation-wrapping boilerplate.",
+                    "Prefer a serial/concurrent DispatchQueue when interoperating with completion-handler/Objective-C APIs, or when you specifically need a reader-writer pattern (concurrent reads + barrier writes) - actors serialize ALL access, reads included, with no direct equivalent.",
+                    "For the general 'protect this shared mutable state from concurrent access' case, an actor is the right default specifically because the compiler enforces the guarantee instead of trusting every developer, present and future, to remember a convention."
+                ]
+            ),
+            QAItem(
+                id: "swiftui_state_ownership_property_wrappers",
+                question: "In SwiftUI, if a view isn't updating after an async call, how do you decide between @State, @StateObject, @ObservedObject, and @EnvironmentObject to ensure updates propagate correctly?",
+                topics: ["SwiftUI", "State Management", "@StateObject", "@ObservedObject", "@EnvironmentObject", "Data Flow"],
+                explanation: """
+A view failing to update after an async call is almost always a state-OWNERSHIP bug, not a rendering bug - the fix is picking the property wrapper that matches who actually owns the data's lifetime, not just "the one that compiles."
+
+**`@State` - value-type state OWNED and created by this view.** For simple, local, value-type data (`Bool`, `Int`, `String`, a small struct) that this specific view is the source of truth for. SwiftUI stores the actual value OUTSIDE the view struct itself (views are re-created constantly; `@State`'s storage persists across those re-creations, tied to the view's identity in the view tree). Mutating a `@State` variable - even from inside an `async` callback, as long as the mutation happens on the main actor - correctly triggers a re-render, because the property wrapper itself is what SwiftUI observes.
+
+**`@StateObject` - reference-type state OWNED and created by this view, exactly once.** For a class conforming to `ObservableObject` that THIS view is responsible for creating and keeping alive - `@StateObject private var viewModel = MyViewModel()`. SwiftUI guarantees the object is created only ONCE for the lifetime of the view's identity, even if the parent view re-renders and re-evaluates the child view's body many times - this is precisely the property that makes it safe to kick off an async load in the view model's `init` or in `.task {}`, since the SAME instance survives repeated re-renders of the containing view.
+
+**`@ObservedObject` - reference-type state OWNED elsewhere, just observed here.** Same `ObservableObject` requirement, but this view does NOT create the instance - it's passed in from a parent. This is where the classic "view isn't updating" bug lives: if the PARENT view re-creates the object on every re-render (e.g. `ChildView(viewModel: MyViewModel())` written directly in the parent's `body`, rather than holding it in the parent's own `@StateObject`), the child gets a BRAND NEW instance every time the parent re-renders - any async work that was in flight on the OLD instance updates a view model nobody is observing anymore, since the child has already moved on to a newer instance. The fix is almost always: the object's true owner should hold it in `@StateObject`, and everything downstream that merely reads/observes it should take it as `@ObservedObject` (or, in iOS 17+, migrate to the `@Observable` macro, which removes much of this ownership ambiguity by tracking property-level dependencies automatically).
+
+**`@EnvironmentObject` - reference-type state injected implicitly from an ancestor, for state used widely across a subtree.** Functionally similar to `@ObservedObject` (doesn't own the instance, just observes it), but retrieved implicitly from the environment (`.environmentObject(session)` set higher up the view hierarchy) instead of passed explicitly through every intermediate initializer. The most common "view not updating" failure here is simply forgetting to attach `.environmentObject(...)` somewhere in the ANCESTOR chain above the view that declares `@EnvironmentObject` - which is a RUNTIME crash (SwiftUI can't find a matching object in the environment), not a silent no-update, so it's usually easier to diagnose than the `@ObservedObject` re-creation bug above.
+
+**The debugging heuristic for "view isn't updating after an async call":** trace who actually CREATES the `ObservableObject` instance, and confirm it's created exactly once, by whoever should own its lifetime (`@StateObject`), while every other view that merely displays it takes it as a parameter (`@ObservedObject`) rather than constructing its own copy. If the async call's completion handler is firing (confirm with a print/breakpoint) but the view still isn't updating, the near-certain cause is that the mutated instance and the instance the view is currently observing are no longer the same object.
+""",
+                example: """
+// THE BUG: @ObservedObject whose owner recreates it on every re-render.
+final class ProfileViewModel: ObservableObject {
+    @Published var name: String = "Loading..."
+
+    func load() async {
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        name = "Sachin"   // mutating a @Published property on the main actor
+    }
+}
+
+struct ParentViewBad: View {
+    @State private var showProfile = false
+
+    var body: some View {
+        VStack {
+            Toggle("Show", isOn: $showProfile)
+            if showProfile {
+                // BUG: a NEW ProfileViewModel is constructed every time
+                // ParentViewBad's body re-evaluates (e.g. from the Toggle's
+                // own @State changing) - any in-flight async load from a
+                // PREVIOUS instance updates an object nobody is watching.
+                ProfileDetailBad(viewModel: ProfileViewModel())
+            }
+        }
+    }
+}
+
+struct ProfileDetailBad: View {
+    @ObservedObject var viewModel: ProfileViewModel   // correct wrapper...
+    var body: some View {
+        Text(viewModel.name)
+            .task { await viewModel.load() }           // ...but re-fired on
+    }                                                    // every fresh instance
+}
+
+// THE FIX: the OWNER holds it in @StateObject (created exactly once,
+// survives re-renders); the child takes it as @ObservedObject.
+struct ParentViewGood: View {
+    @State private var showProfile = false
+    @StateObject private var viewModel = ProfileViewModel()   // ONE instance,
+                                                                 // for the life
+                                                                 // of ParentViewGood
+    var body: some View {
+        VStack {
+            Toggle("Show", isOn: $showProfile)
+            if showProfile {
+                ProfileDetailGood(viewModel: viewModel)   // passes the SAME
+            }                                              // instance, never
+        }                                                  // recreates it
+    }
+}
+
+struct ProfileDetailGood: View {
+    @ObservedObject var viewModel: ProfileViewModel
+    var body: some View {
+        Text(viewModel.name)
+            .task { await viewModel.load() }
+    }
+}
+
+// @State: simple, local, value-type - this view IS the source of truth.
+struct CounterView: View {
+    @State private var count = 0
+    var body: some View {
+        Button("Count: \\(count)") { count += 1 }
+    }
+}
+
+// @EnvironmentObject: implicit injection for state used widely - the
+// most common failure is forgetting .environmentObject(...) upstream.
+final class Session: ObservableObject {
+    @Published var isLoggedIn = false
+}
+
+struct RootView: View {
+    @StateObject private var session = Session()
+    var body: some View {
+        ContentViewUsingSession()
+            .environmentObject(session)   // forgetting this line is a
+    }                                      // RUNTIME CRASH downstream,
+}                                           // not a silent non-update
+
+struct ContentViewUsingSession: View {
+    @EnvironmentObject var session: Session   // retrieved implicitly
+    var body: some View {
+        Text(session.isLoggedIn ? "Welcome" : "Please log in")
+    }
+}
+""",
+                keyTakeaways: [
+                    "@State is for simple, local, VALUE-type data this specific view owns - SwiftUI persists its storage outside the view struct across re-renders, keyed to the view's identity.",
+                    "@StateObject guarantees a reference-type ObservableObject is created exactly ONCE for the view's lifetime, even if the containing view re-evaluates its body many times - this is what makes it safe to kick off async work tied to that instance.",
+                    "@ObservedObject observes an instance owned elsewhere - the classic 'view not updating' bug is the PARENT recreating the object on every re-render (constructing it inline in body instead of holding it in @StateObject), so async work lands on an instance nobody is watching anymore.",
+                    "@EnvironmentObject is functionally like @ObservedObject (doesn't own the instance) but retrieved implicitly from an ancestor's `.environmentObject(...)` - forgetting to attach it upstream is a runtime crash, not a silent failure, making it easier to diagnose than the @ObservedObject re-creation bug.",
+                    "Debugging heuristic: trace who CREATES the ObservableObject and confirm it happens exactly once via @StateObject at the true owner - if an async completion is firing but the view isn't updating, the mutated instance and the observed instance have almost certainly diverged."
+                ]
+            ),
+            QAItem(
+                id: "swiftui_diagnosing_reducing_unnecessary_rerenders",
+                question: "In SwiftUI, when a view is re-rendering too often, what tools or techniques do you use to identify the cause and reduce unnecessary updates?",
+                topics: ["SwiftUI", "Performance", "Instruments", "View Identity", "Equatable"],
+                explanation: """
+SwiftUI re-computes a view's `body` whenever any state it reads changes - which is cheap in isolation, but "too often" usually means either the DEPENDENCY tracking is broader than it needs to be (reading more state than the view actually displays) or the view's IDENTITY is unstable (SwiftUI thinks it's looking at a "new" view when it's really the same one).
+
+**Diagnosis tools, in order of how directly they answer the question:**
+
+1. **The `Self._printChanges()` debug call** (available on any `View`, call it as the first line of `body`) prints exactly WHICH property triggered this specific re-render, directly to the console - this is the fastest, most direct way to confirm your hypothesis about what's causing a suspicious re-render, and it costs nothing to leave sprinkled around temporarily.
+
+2. **Instruments' SwiftUI template** (not just generic Time Profiler) has dedicated "Update Groups" and "View Body" tracks that visualize exactly which views recomputed their body on which run-loop turn, and why - this is the right tool once you know a re-render problem exists somewhere in a screen but don't yet know which view.
+
+3. **Xcode's View Debugger / "Slow SwiftUI updates" instrument** flags views whose body evaluation is itself taking meaningfully long - useful for distinguishing "this view re-renders too OFTEN" from "this view's body is too EXPENSIVE per render" - two different problems with two different fixes.
+
+**Common causes, and the fix for each:**
+
+- **A view reads MORE of an ObservableObject than it displays.** SwiftUI's dependency tracking for `@ObservedObject`/`@StateObject`/`@EnvironmentObject` is at the OBJECT level for pre-iOS-17 `ObservableObject` - reading ANY `@Published` property anywhere in the view's body subscribes that whole view to ALL of that object's `@Published` changes, even ones it never displays. The fix: split a large view model into smaller, more focused ones, or (iOS 17+) migrate to the `@Observable` macro, which tracks dependencies per-PROPERTY automatically - a view reading only `.title` no longer re-renders when an unrelated `.subtitle` changes on the same object.
+
+- **Passing a new closure/computed value into a child view on every parent render**, even when the underlying data hasn't meaningfully changed - SwiftUI compares view VALUES structurally to decide whether a child needs to re-render, and a freshly-allocated closure or a computed array literal is never `==` to the previous one by reference, forcing a re-render even if the actual displayed content is identical.
+
+- **Unstable view identity** - using array INDEX as a `ForEach` id, or constructing views without a stable `Identifiable` id, makes SwiftUI treat what's conceptually "the same row, just reordered" as an entirely different view instance, discarding and rebuilding state instead of updating it in place.
+
+- **Conforming a value type to `Equatable` and using `.equatable()`** on a view lets SwiftUI skip re-rendering entirely when the new value is equal to the old one by your own custom equality check - useful when a view's inputs change representation (e.g. object identity) more often than their observable content actually does.
+
+- **`@State`/binding churn from a parent that doesn't need to own that state at all** - hoisting shared state too high up the view tree makes every sibling under that parent re-render on every change, even ones uninterested in that particular piece of state; pushing state down to the smallest view that actually needs it limits the blast radius of each update.
+""",
+                example: """
+// 1) Self._printChanges() - the fastest way to confirm WHAT triggered
+// a specific re-render, directly in the console.
+struct ProfileRow: View {
+    let profile: Profile
+
+    var body: some View {
+        let _ = Self._printChanges()   // prints e.g. "ProfileRow: _profile changed."
+        Text(profile.name)
+    }
+}
+
+// PROBLEM: object-level dependency tracking re-renders EVERY observer
+// of `ViewModel` even for @Published properties this view never reads.
+final class ViewModel: ObservableObject {
+    @Published var title = "Home"
+    @Published var scrollOffset: CGFloat = 0   // changes on every scroll frame
+}
+
+struct TitleBarBad: View {
+    @ObservedObject var viewModel: ViewModel
+    var body: some View {
+        // Re-renders on EVERY scrollOffset change too, even though this
+        // view only ever displays `title` - object-level tracking can't
+        // tell the difference.
+        Text(viewModel.title)
+    }
+}
+
+// FIX (iOS 17+): @Observable tracks dependencies per PROPERTY, not per
+// object - a view reading only `.title` no longer re-renders when
+// `.scrollOffset` changes on the same object.
+@Observable
+final class ObservableViewModel {
+    var title = "Home"
+    var scrollOffset: CGFloat = 0
+}
+
+struct TitleBarGood: View {
+    let viewModel: ObservableViewModel   // no property wrapper needed at all -
+    var body: some View {                 // @Observable handles tracking
+        Text(viewModel.title)             // automatically, per property read
+    }
+}
+
+// PROBLEM: unstable view identity from using array index as ForEach id.
+struct RowListBad: View {
+    let items: [String]
+    var body: some View {
+        ForEach(items.indices, id: \\.self) { index in   // index, not content -
+            Text(items[index])                            // reordering the array
+        }                                                  // discards/rebuilds
+    }                                                      // every row's state
+}
+
+// FIX: a stable, content-based identity.
+struct Item: Identifiable {
+    let id: UUID
+    let name: String
+}
+
+struct RowListGood: View {
+    let items: [Item]
+    var body: some View {
+        ForEach(items) { item in   // stable id -> SwiftUI updates rows
+            Text(item.name)         // in place instead of rebuilding them
+        }
+    }
+}
+
+// FIX: .equatable() skips re-rendering when the view's own equality
+// check says nothing meaningfully changed, even if the input reference
+// technically differs.
+struct ChartView: View, Equatable {
+    let dataPoints: [Double]
+
+    static func == (lhs: ChartView, rhs: ChartView) -> Bool {
+        lhs.dataPoints == rhs.dataPoints   // custom equality - skip
+    }                                       // re-render if data is the same
+
+    var body: some View {
+        // ... expensive chart rendering ...
+        Text("Chart with \\(dataPoints.count) points")
+    }
+}
+
+struct Profile { let name: String }
+""",
+                keyTakeaways: [
+                    "`Self._printChanges()` as the first line of body is the fastest way to confirm exactly which property triggered a specific re-render - cheap to leave sprinkled around while diagnosing.",
+                    "Pre-iOS-17 ObservableObject dependency tracking is OBJECT-level - reading any @Published property subscribes the whole view to ALL of that object's changes; @Observable (iOS 17+) tracks dependencies per-property instead.",
+                    "Unstable view identity (using array index as ForEach id) makes SwiftUI discard and rebuild views instead of updating them in place - use a stable, content-based Identifiable id.",
+                    "Passing freshly-allocated closures/computed values into a child forces a re-render even when displayed content is unchanged, since SwiftUI compares view values structurally, not semantically.",
+                    "Instruments' dedicated SwiftUI template (Update Groups / View Body tracks) is the right tool once you know a re-render problem exists on a screen but don't yet know which specific view - use it to narrow down before reaching for `.equatable()` or restructuring state ownership."
+                ]
+            ),
+            QAItem(
+                id: "geometryreader_vs_preferencekey",
+                question: "In SwiftUI, what's the difference between GeometryReader and using preference keys for layout/scroll offset tracking, and when would you choose one over the other?",
+                topics: ["SwiftUI", "GeometryReader", "PreferenceKey", "Layout"],
+                explanation: """
+Both let a view learn something about geometry it wouldn't otherwise have access to, but they read information in OPPOSITE directions through the view tree, which is the actual distinction that determines which one is appropriate.
+
+**`GeometryReader` reads information DOWNWARD - a parent asking "how much space do I have?"** It's a view itself, and it aggressively takes up ALL the space its own parent offers it (by default, filling available width/height), then hands that size (plus the view's coordinate-space frame) to its content closure. This is exactly right for "I need to know my own available size to lay out my children accordingly" - but it comes with two real costs: it doesn't naturally respect its content's own intrinsic size (it force-fills whatever space is offered, which can silently break layouts that expect a view to size itself to its content), and reading a GeometryProxy's values can trigger MORE layout passes, since the value is only known after the parent has already decided its size - nesting several `GeometryReader`s can measurably hurt scroll/layout performance.
+
+**Preference keys read information UPWARD - a child reporting "here's a value I computed" back to an ancestor.** You define a `PreferenceKey` type (a static default value + a `reduce` function combining multiple children's reported values), attach `.preference(key:value:)` to a child view to report its own value up, and read it back further up the tree with `.onPreferenceChange(_:perform:)`. This is the CORRECT, idiomatic mechanism for the "how far has this content scrolled" pattern specifically: a child anchored to the scroll content reports its current frame/offset via a preference, and an ancestor (often the fixed header) reads that reported value to decide how to react - all WITHOUT the child needing a GeometryReader to force-fill space it doesn't actually need, and without introducing the extra layout-pass dependency GeometryReader has.
+
+**The concrete decision:** if you need a view to size ITSELF based on the space its parent gives it (e.g. "make this rectangle exactly half of my container's width"), that's a downward query - `GeometryReader` (or, in more recent SwiftUI, `containerRelativeFrame`, which handles the common "size relative to my container" case WITHOUT needing a full GeometryReader at all, and without its content-sizing side effects). If you need an ANCESTOR to react to something happening in a DESCENDANT - most commonly scroll offset tracking, where a header wants to know how far a scroll view's content has moved - that's an upward report, and `PreferenceKey` is the mechanism actually designed for it, avoiding GeometryReader's space-filling side effect entirely. A very common real mistake is reaching for `GeometryReader` for scroll-offset tracking (since it CAN read a `.global`/`.named` coordinate space frame, and many blog posts default to that pattern) when a `PreferenceKey` produces the identical result with less layout overhead and without accidentally forcing the tracked content to fill unwanted space.
+""",
+                example: """
+// GeometryReader - reads DOWNWARD: "how much space do I have?"
+// Correct use: sizing a child relative to the space its parent offers.
+struct HalfWidthBox: View {
+    var body: some View {
+        GeometryReader { proxy in
+            Rectangle()
+                .fill(.blue)
+                .frame(width: proxy.size.width / 2, height: 100)
+        }
+        // Note: GeometryReader itself fills ALL space its parent offers,
+        // regardless of what its content actually needs - a common
+        // surprise when it's dropped into a layout expecting the view
+        // to size itself to its content instead.
+    }
+}
+
+// PreferenceKey - reads UPWARD: "here's a value I computed, ancestor."
+// The idiomatic mechanism for scroll-offset tracking specifically.
+struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()   // last-reported child wins (typically only one)
+    }
+}
+
+struct CollapsingHeaderScrollView: View {
+    @State private var offset: CGFloat = 0
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header reacts to the offset reported by the scroll content
+            // below - it never needed a GeometryReader of its own.
+            Text("Header").opacity(offset < -50 ? 0.4 : 1.0)
+                .frame(height: max(44, 120 + min(0, offset)))
+
+            ScrollView {
+                VStack {
+                    // A child reports its own scroll position UP via the
+                    // preference key - no space-filling side effect,
+                    // no extra GeometryReader-induced layout pass.
+                    GeometryReader { proxy in
+                        Color.clear
+                            .preference(
+                                key: ScrollOffsetKey.self,
+                                value: proxy.frame(in: .named("scroll")).minY
+                            )
+                    }
+                    .frame(height: 0)   // zero-height probe - only used to
+                                         // report a value, not to display anything
+
+                    ForEach(0..<50, id: \\.self) { i in
+                        Text("Row \\(i)")
+                    }
+                }
+            }
+            .coordinateSpace(name: "scroll")
+            .onPreferenceChange(ScrollOffsetKey.self) { offset = $0 }
+        }
+    }
+}
+
+// Modern alternative for the "size relative to my container" case that
+// doesn't need a full GeometryReader at all:
+struct RelativeSizedBox: View {
+    var body: some View {
+        Rectangle()
+            .fill(.blue)
+            .containerRelativeFrame(.horizontal) { width, _ in width / 2 }
+    }
+}
+""",
+                keyTakeaways: [
+                    "GeometryReader reads DOWNWARD - a parent learning how much space its own parent offered it - and force-fills all available space by default, which can silently break layouts expecting content-driven sizing.",
+                    "PreferenceKey reads UPWARD - a child reporting a computed value back to an ancestor - the correct, idiomatic mechanism for scroll-offset tracking, since the ancestor (e.g. a collapsing header) reacts to a value a descendant reports, not the other way around.",
+                    "A common real mistake: using GeometryReader for scroll-offset tracking (it CAN read a coordinate-space frame) when PreferenceKey produces the same result with less layout overhead and without GeometryReader's space-filling side effect.",
+                    "Nesting multiple GeometryReaders can measurably hurt scroll/layout performance, since a GeometryProxy's value is only known after the parent has already committed to a size, adding extra layout-pass dependencies.",
+                    "Modern SwiftUI's `containerRelativeFrame` covers the common 'size relative to my container' case without needing a full GeometryReader at all - reach for it first before defaulting to GeometryReader for simple relative sizing."
+                ]
+            ),
+            QAItem(
+                id: "custom_swiftui_control_accessible_clean_api",
+                question: "In SwiftUI, how would you build a custom control (like a segmented picker) that supports keyboard focus, accessibility, and haptics while keeping the API clean for callers?",
+                topics: ["SwiftUI", "Custom Controls", "Accessibility", "Focus", "Haptics"],
+                explanation: """
+Building a genuinely reusable custom control means treating it like a first-class SwiftUI primitive - which means matching the ergonomics AND the accessibility contract callers already expect from `Picker`, not just visually resembling one.
+
+**1. A clean API means a `Binding`, not a callback.** The caller should interact with your control exactly like a built-in one: `CustomSegmentedControl(selection: $filter, options: FilterOption.allCases)`, driven by a `Binding<T>` for two-way state, not a `didSelect: (T) -> Void` closure the caller has to manually wire into their own `@State`. This is the single biggest thing that makes a custom control feel native versus feeling like a bolted-on component.
+
+**2. Keyboard focus** via `@FocusState` - a control that can be tapped but not navigated to/activated by keyboard (external keyboard, or Full Keyboard Access on iPadOS/macOS) is inaccessible to a real class of users. Bind a `@FocusState` boolean (or enum, for multiple focusable regions) to the control, and handle arrow-key navigation between segments explicitly if you're not using a container that already provides it - `.focusable()` plus `.onKeyPress(_:action:)` (iOS 17+; the direct iOS equivalent of macOS/tvOS's `.onMoveCommand`, which isn't available on iOS at all) is the mechanism for a fully custom control.
+
+**3. Accessibility - this needs FOUR distinct pieces, not just a label:**
+   - `.accessibilityElement(children: .ignore)` on the control's container, combined with a SINGLE synthesized description, so VoiceOver doesn't read each internal segment as a separate, confusing stop when the whole control should be understood as one unit.
+   - `.accessibilityLabel(...)` describing what the control IS ("Filter"), and `.accessibilityValue(...)` describing its CURRENT state ("All selected") - these are two separate pieces VoiceOver announces together, and conflating them into one label that changes entirely on each selection is a common mistake that makes VoiceOver announcements needlessly verbose.
+   - `.accessibilityAddTraits(.isButton)` (or `.updatesFrequently` if the value changes often) so VoiceOver correctly describes HOW to interact with it.
+   - `.accessibilityAdjustableAction { direction in }` is the specific API for a control like a segmented picker/stepper where VoiceOver users should be able to swipe up/down to change the value directly, without needing precise double-tap targeting on a specific segment - this is what makes a custom segmented control genuinely as accessible as the real `Picker`, not just labeled.
+
+**4. Haptics** via `UIFeedbackGenerator` (or SwiftUI's `.sensoryFeedback(_:trigger:)` on iOS 17+) - fire a light selection-changed haptic (`UISelectionFeedbackGenerator`) exactly when the selection changes, not on every tap (tapping the ALREADY-selected segment shouldn't re-trigger it) - matching the real `Picker`'s own feel is what makes a custom control feel native rather than visibly homemade.
+
+**Keeping it all internal to the component:** every piece above should live INSIDE the custom control's own implementation - the caller's usage stays exactly as clean as `CustomSegmentedControl(selection: $filter, options: options)`, with zero extra API surface required to opt into focus/accessibility/haptics support. That's the actual bar for a production-quality reusable component, not just something that visually looks right.
+""",
+                example: """
+import SwiftUI
+
+enum FilterOption: String, CaseIterable, Identifiable {
+    case all, active, completed
+    var id: String { rawValue }
+    var title: String { rawValue.capitalized }
+}
+
+struct CustomSegmentedControl<Option: Identifiable & Hashable>: View {
+    @Binding var selection: Option              // clean API: a Binding,
+    let options: [Option]                        // not a callback the
+    let title: (Option) -> String                // caller has to wire up
+
+    @FocusState private var isFocused: Bool
+    private let feedback = UISelectionFeedbackGenerator()
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(options) { option in
+                Text(title(option))
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(option == selection ? Color.accentColor : .clear)
+                    .foregroundStyle(option == selection ? .white : .primary)
+            }
+        }
+        .background(Color(.systemGray5))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        // 2) Keyboard focus - a control that only responds to touch
+        // fails external-keyboard and Full Keyboard Access users.
+        .focusable()
+        .focused($isFocused)
+        // `.onMoveCommand` is macOS/tvOS-only; on iOS, `.onKeyPress`
+        // (iOS 17+) is the correct API for arrow-key navigation from an
+        // external keyboard or Full Keyboard Access.
+        .onKeyPress(.leftArrow) {
+            guard let currentIndex = options.firstIndex(of: selection), currentIndex > 0 else { return .ignored }
+            select(options[currentIndex - 1])
+            return .handled
+        }
+        .onKeyPress(.rightArrow) {
+            guard let currentIndex = options.firstIndex(of: selection), currentIndex < options.count - 1 else { return .ignored }
+            select(options[currentIndex + 1])
+            return .handled
+        }
+        // 3) Accessibility - four distinct pieces, not just a label.
+        .accessibilityElement(children: .ignore)          // one unit, not
+                                                             // N separate stops
+        .accessibilityLabel("Filter")                      // WHAT it is
+        .accessibilityValue(title(selection))               // its CURRENT state
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAdjustableAction { direction in        // swipe up/down to
+            guard let currentIndex = options.firstIndex(of: selection) else { return }
+            switch direction {
+            case .increment where currentIndex < options.count - 1:
+                select(options[currentIndex + 1])
+            case .decrement where currentIndex > 0:
+                select(options[currentIndex - 1])
+            default:
+                break
+            }
+        }
+        .onTapGesture {
+            guard let currentIndex = options.firstIndex(of: selection) else { return }
+            let next = options[(currentIndex + 1) % options.count]
+            select(next)
+        }
+    }
+
+    private func select(_ option: Option) {
+        guard option != selection else { return }   // don't haptic-fire on
+        feedback.selectionChanged()                   // re-tapping the SAME
+        selection = option                             // segment
+    }
+}
+
+// Usage: exactly as clean as a built-in Picker - the caller gets
+// keyboard focus, full VoiceOver support, and haptics for free.
+struct FilterBarView: View {
+    @State private var filter: FilterOption = .all
+
+    var body: some View {
+        CustomSegmentedControl(selection: $filter, options: FilterOption.allCases) {
+            $0.title
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "A clean API means driving the control with a `Binding<T>`, matching how built-in controls like Picker work - not a callback the caller has to manually wire into their own @State.",
+                    "Keyboard focus needs @FocusState plus explicit arrow-key handling (.focusable() + .onMoveCommand) - a control that's only tap-accessible fails external-keyboard and Full Keyboard Access users entirely.",
+                    "Accessibility is four distinct pieces: .accessibilityElement(children: .ignore) to read as one unit, separate .accessibilityLabel (what it is) and .accessibilityValue (current state), and .accessibilityAdjustableAction for swipe-to-change - a bare .accessibilityLabel alone is not equivalent to what the real Picker provides.",
+                    "Fire selection-changed haptics only when the selection actually changes, not on every tap - tapping an already-selected segment shouldn't re-trigger feedback, matching how the built-in control feels.",
+                    "All of this lives INSIDE the component's own implementation - the caller's usage stays exactly as simple as a one-line initializer, with zero extra API surface required to get focus/accessibility/haptics support for free."
+                ]
+            ),
+            QAItem(
+                id: "uikit_frame_vs_bounds_transforms",
+                question: "In UIKit, what's the practical difference between `frame` and `bounds`, and when you rotate or scale a view, which changes: frame, bounds, or both, and why?",
+                topics: ["UIKit", "frame", "bounds", "CGAffineTransform", "Layout"],
+                explanation: """
+`frame` and `bounds` both describe a `CGRect`, but they answer two fundamentally different questions, and confusing them is one of the most common sources of "my view is in the wrong place" bugs in UIKit.
+
+**`frame` - where this view sits, in its SUPERVIEW's coordinate system.** `view.frame` tells you the view's position and size as seen from OUTSIDE - specifically, as measured in the coordinate space of `view.superview`. This is the rect you set to position a view within its parent, and it's derived FROM `center` + `bounds.size` + `transform` (frame is actually a computed property in the presence of a non-identity transform, not independent stored state - more on this below).
+
+**`bounds` - this view's own internal coordinate system, as seen from INSIDE.** `view.bounds` describes the view's drawable area in its OWN coordinate space - `bounds.origin` is almost always `(0, 0)` for a plain view (the view's own coordinate system starts at its own top-left), but `bounds.origin` is exactly what a `UIScrollView` MANIPULATES to implement scrolling: scrolling content doesn't move the scroll view's `frame` at all (it stays fixed on screen) - it changes `bounds.origin`, which shifts what portion of the (larger) content coordinate space is currently visible within the same on-screen rect. `bounds.size` is normally equal to `frame.size` for an unrotated view, but the two are NOT interchangeable concepts even when their numbers happen to match.
+
+**Which changes under rotation/scale - and why this trips people up:** applying a `CGAffineTransform` (rotation or scale) to `view.transform` changes `frame`, but NOT `bounds`. This feels backwards until you think through what each one actually means: `bounds` describes the view's OWN internal size and coordinate system - rotating a view doesn't change how big its own content thinks it is, or reset its internal coordinate space, so `bounds` is correctly unaffected. `frame`, on the other hand, is defined as the axis-aligned bounding box that fully CONTAINS the (possibly now-rotated) view, as measured in the superview's coordinate system - rotate a 100x100 square by 45 degrees and the smallest axis-aligned rectangle that contains it is now roughly 141x141 (the diagonal), so `frame` grows to reflect that, even though the view's own `bounds` is still reporting a clean 100x100. This is precisely why Apple's own documentation warns that `frame` becomes UNDEFINED/unreliable once a non-identity transform is applied to a view with sublayers using anything beyond simple axis-aligned transforms - `center` and `bounds` (which the transform is applied AROUND, pivoting on `center`) remain the reliable source of truth for a transformed view, and `frame` should generally be avoided for POSITIONING once you're applying transforms - reposition via `center` instead.
+
+**The practical rule this leads to:** use `frame` for simple, untransformed layout positioning relative to a superview (the common case). Use `bounds` when a view needs to know or manipulate ITS OWN coordinate space - implementing custom scrolling/panning, or drawing content in `draw(_:)` (which draws relative to `bounds`, not `frame`, since drawing happens in the view's own coordinate space). Once `transform` is non-identity, stop reasoning about `frame` at all and reposition/resize via `center` + `bounds.size` (setting `bounds.size` still correctly resizes the view's own content around its center, independent of rotation) instead.
+""",
+                example: """
+// frame: position in the SUPERVIEW's coordinate system.
+let containerView = UIView(frame: CGRect(x: 0, y: 0, width: 300, height: 400))
+let childView = UIView(frame: CGRect(x: 20, y: 40, width: 100, height: 50))
+containerView.addSubview(childView)
+print(childView.frame)    // (20, 40, 100, 50) - as seen from containerView
+
+// bounds: the view's OWN internal coordinate system - origin is (0,0)
+// for a plain (non-scrolling) view.
+print(childView.bounds)   // (0, 0, 100, 50) - always starts at its own origin
+
+// UIScrollView: scrolling manipulates bounds.origin, NOT frame - the
+// scroll view's own on-screen position/size never changes while scrolling.
+class DemoScrollBehavior {
+    let scrollView = UIScrollView(frame: CGRect(x: 0, y: 0, width: 300, height: 500))
+
+    func scrollProgrammatically() {
+        // frame stays (0, 0, 300, 500) throughout - only bounds.origin
+        // moves, revealing a different portion of the (larger) content.
+        scrollView.bounds.origin = CGPoint(x: 0, y: 200)
+    }
+}
+
+// Rotation: transform changes `frame`, but NEVER `bounds`.
+let square = UIView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
+print(square.bounds.size)    // (100, 100)
+print(square.frame.size)     // (100, 100) - identity transform, they match
+
+square.transform = CGAffineTransform(rotationAngle: .pi / 4)   // 45 degrees
+print(square.bounds.size)    // STILL (100, 100) - bounds is unaffected;
+                              // the view's own internal size never changed
+print(square.frame.size)     // roughly (141, 141) - the smallest AXIS-ALIGNED
+                              // box that contains the now-rotated view
+
+// The practical rule: once transform is non-identity, reposition via
+// `center` (which the transform pivots around), NOT `frame`.
+square.center = CGPoint(x: 200, y: 200)   // reliable, transform-independent
+// square.frame = CGRect(x: 150, y: 150, width: 100, height: 100)
+// ^ AVOID this once transform is non-identity - frame's meaning becomes
+// unreliable/undefined for anything beyond simple cases, per Apple's docs.
+
+// draw(_:) works in the view's OWN coordinate space - i.e. bounds, not frame:
+class CustomDrawnView: UIView {
+    override func draw(_ rect: CGRect) {
+        // `rect` here is expressed in bounds' coordinate space - drawing
+        // at (0, 0) draws at this view's own top-left, regardless of
+        // where its frame places it within the superview.
+        UIColor.systemBlue.setFill()
+        UIBezierPath(rect: bounds).fill()
+    }
+}
+""",
+                keyTakeaways: [
+                    "frame describes a view's position/size in its SUPERVIEW's coordinate system; bounds describes the view's own internal coordinate system, as seen from inside - they answer 'where is this from outside' vs 'how big am I from inside'.",
+                    "UIScrollView implements scrolling by manipulating bounds.origin, not frame - the scroll view's on-screen frame never moves; bounds.origin shifts which portion of the larger content coordinate space is currently visible.",
+                    "Rotating or scaling a view via `transform` changes `frame` but NEVER `bounds` - bounds describes the view's own unchanged internal size, while frame becomes the (now-larger) axis-aligned bounding box containing the rotated view.",
+                    "Once a view has a non-identity transform, `frame` becomes unreliable for positioning per Apple's own documentation - use `center` (which the transform pivots around) and `bounds.size` instead.",
+                    "`draw(_:)` draws in the view's own coordinate space (bounds), not frame - this is why custom drawing code always reasons in terms of bounds, never frame."
+                ]
+            ),
+            QAItem(
+                id: "uikit_reusable_component_autolayout_and_manual_layout",
+                question: "In UIKit, if you're building a reusable component that must support both Auto Layout and manual layout, how do you structure it (initializers, constraint setup, intrinsicContentSize, layoutSubviews)? Also, if you manually set a view's frame inside layoutSubviews while Auto Layout is active, what issues can that cause, and where should you adjust layout instead?",
+                topics: ["UIKit", "Auto Layout", "layoutSubviews", "intrinsicContentSize", "Custom Views"],
+                explanation: """
+A genuinely reusable UIKit component needs to work correctly whether its CALLER uses Auto Layout (constraints) or manual frame-based layout - and the failure mode when you mix the two carelessly INSIDE the component itself is exactly the "issues" half of this question.
+
+**Structuring the component to support both:**
+
+1. **`translatesAutoresizingMaskIntoConstraints`** is the actual switch between the two systems for any given view. It defaults to `true` for any view created in code, which means UIKit auto-generates constraints FROM the view's `frame` - this is what lets a manually-frame-positioned view coexist in an Auto-Layout-driven hierarchy at all. If YOUR component internally uses Auto Layout for its own subviews, set this to `false` on each of those subviews - otherwise your own explicit constraints conflict with the auto-generated ones and you get the classic "Unable to simultaneously satisfy constraints" runtime warning.
+
+2. **Provide both a frame-based AND a constraint-friendly initializer path**: a plain `init(frame:)` override (required for manual-layout callers) that still works correctly, and don't assume a caller will use Auto Layout just because your OWN internals do - your component's public surface should accept whichever the caller uses; what you do INTERNALLY is a separate, private decision.
+
+3. **Override `intrinsicContentSize`** if your component has a natural, content-driven size (e.g. a label-like component sized by its text) - this is what makes the component behave correctly for an Auto-Layout caller who DOESN'T explicitly constrain your width/height, exactly like `UILabel` does for its own callers. Call `invalidateIntrinsicContentSize()` whenever content that affects this size changes, so Auto Layout knows to re-query it.
+
+4. **`layoutSubviews`** is where you position CHILD views manually IF your component manages its own children via frames internally (a common, valid choice even for an otherwise Auto-Layout-friendly component, especially for performance-sensitive collection/table view cells) - always call `super.layoutSubviews()` first, then set each subview's `frame` based on `bounds` (never `frame` of self - see the frame-vs-bounds question for why bounds is the reliable read here).
+
+**The actual problem with manually setting frames inside `layoutSubviews` while Auto Layout constraints ALSO exist on the same view:** Auto Layout's constraint solver and manual frame assignment are two competing systems for determining the same property, and `layoutSubviews` is called by UIKit AFTER Auto Layout has already computed and applied the constraint-driven frame for that pass - so a manual frame assignment inside `layoutSubviews` on a view that ALSO has active constraints gets silently overwritten again on the VERY NEXT layout pass (any subsequent `setNeedsLayout()`/`layoutIfNeeded()`, which can be triggered by all sorts of things: rotation, keyboard appearance, a parent's own layout change) - producing a view that appears correctly positioned initially, then snaps back to its constraint-computed position unpredictably, a genuinely confusing bug to chase since it doesn't reproduce consistently. The fix is architectural: PICK ONE system per view. If a view is Auto-Layout-managed (has active constraints), adjust its layout by updating CONSTANT/PRIORITY on its existing constraints (commonly inside an `updateConstraints()` override, which is the actual, correct hook for programmatically adjusting constraint-driven layout - not `layoutSubviews`) and call `setNeedsUpdateConstraints()` to trigger re-evaluation. If a view is meant to be manually positioned, it should have `translatesAutoresizingMaskIntoConstraints = true` (or simply no constraints at all on it) so there's no competing system to conflict with in the first place.
+""",
+                example: """
+// A reusable "badge" component supporting BOTH Auto Layout and manual
+// frame-based callers correctly.
+final class BadgeView: UIView {
+    private let label = UILabel()
+    var text: String = "" {
+        didSet {
+            label.text = text
+            invalidateIntrinsicContentSize()   // tell Auto Layout callers
+        }                                        // this view's natural size changed
+    }
+
+    // Works for BOTH manual-frame callers (BadgeView(frame: ...)) and
+    // Auto Layout callers (BadgeView() + constraints) - the caller's
+    // choice, not something this component assumes.
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupInternalLayout()
+    }
+    required init?(coder: NSCoder) { super.init(coder: coder); setupInternalLayout() }
+
+    private func setupInternalLayout() {
+        addSubview(label)
+        // This component's OWN internals use Auto Layout for its child -
+        // must disable auto-generated constraints on that child, or they
+        // conflict with the explicit ones below.
+        label.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 8),
+            label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -8),
+            label.topAnchor.constraint(equalTo: topAnchor, constant: 4),
+            label.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4),
+        ])
+        backgroundColor = .systemBlue
+        layer.cornerRadius = 8
+    }
+
+    // Content-driven natural size - makes this component behave like a
+    // built-in control (UILabel, UIButton) for Auto-Layout callers who
+    // don't explicitly constrain width/height.
+    override var intrinsicContentSize: CGSize {
+        let labelSize = label.intrinsicContentSize
+        return CGSize(width: labelSize.width + 16, height: labelSize.height + 8)
+    }
+}
+
+// THE BUG: mixing manual frame assignment in layoutSubviews with ACTIVE
+// constraints on the SAME view - the manual frame gets silently
+// overwritten on the next layout pass, an inconsistent, hard-to-chase bug.
+final class ConflictingLayoutView: UIView {
+    let indicator = UIView()
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // BAD: `indicator` ALSO has active constraints (set elsewhere) -
+        // this manual assignment works on THIS pass, then gets silently
+        // discarded the next time Auto Layout re-solves (rotation,
+        // keyboard, any setNeedsLayout() call anywhere in the hierarchy).
+        indicator.frame = CGRect(x: 10, y: 10, width: 20, height: 20)
+    }
+}
+
+// THE FIX: pick ONE system. If the view is Auto-Layout-managed, adjust
+// via constraint CONSTANTS in updateConstraints(), not layoutSubviews().
+final class ConstraintAdjustedView: UIView {
+    let indicator = UIView()
+    private var leadingConstraint: NSLayoutConstraint!
+    private var isExpanded = false
+
+    override func updateConstraints() {
+        leadingConstraint.constant = isExpanded ? 40 : 10
+        super.updateConstraints()   // the correct hook for programmatic
+    }                                 // constraint-driven layout changes
+
+    func setExpanded(_ expanded: Bool) {
+        isExpanded = expanded
+        setNeedsUpdateConstraints()   // triggers updateConstraints() on
+    }                                   // the next layout pass, cleanly
+}
+""",
+                keyTakeaways: [
+                    "`translatesAutoresizingMaskIntoConstraints` is the actual switch between manual frame-based layout and Auto Layout for a given view - set it false on subviews YOUR component manages via its own constraints, regardless of how the component's caller lays out the component itself.",
+                    "Override `intrinsicContentSize` (and call `invalidateIntrinsicContentSize()` when content changes) so an Auto-Layout caller gets correct natural sizing without explicitly constraining width/height, matching how built-in controls behave.",
+                    "layoutSubviews runs AFTER Auto Layout has already applied constraint-computed frames for that pass - manually setting a frame there on a view that ALSO has active constraints gets silently overwritten on the next layout pass, producing an inconsistent, hard-to-reproduce positioning bug.",
+                    "The fix is architectural, not a workaround: pick ONE layout system per view - adjust Auto-Layout-managed views via constraint constants inside `updateConstraints()` (triggered by `setNeedsUpdateConstraints()`), and only use manual frame assignment in layoutSubviews for views with no competing active constraints.",
+                    "Provide both a frame-based initializer and correct Auto Layout support internally - a genuinely reusable component shouldn't assume which layout system its caller uses, even if its own internal child-view layout is implemented with one specific approach."
+                ]
+            ),
+            QAItem(
+                id: "uikit_collapsing_header_scroll_view",
+                question: "In UIKit, how would you make a scrolling screen with a large header that collapses smoothly as you scroll - what components or APIs would you rely on?",
+                topics: ["UIKit", "UIScrollView", "UINavigationBar", "Collapsing Header", "Animation"],
+                explanation: """
+There are two genuinely different ways to get this effect, and picking the right one depends on whether "large title that shrinks" (the standard iOS pattern) is enough, or whether you need a fully custom header (image, gradient, custom controls) that native large titles can't provide.
+
+**Option 1 - `UINavigationBar`'s built-in large title (the standard, least-code approach).** Setting `navigationItem.largeTitleDisplayMode = .always` and `navigationController?.navigationBar.prefersLargeTitles = true` gets you Apple's own collapsing-title behavior for free, entirely driven by `UIScrollView`'s content offset automatically - no manual scroll tracking code needed at all. This is the right choice whenever the header is JUST a title (no custom image/gradient/controls needed) - it's also the version users' muscle memory already expects from every other iOS app, and it correctly handles Dynamic Type, Dark Mode, and accessibility without any extra work.
+
+**Option 2 - a custom header view, manually driven by scroll offset (when you need more than a title).** This is genuinely a from-scratch construction, built from these pieces:
+- A `UIScrollView` (or `UITableView`/`UICollectionView`, which ARE `UIScrollView` subclasses) as the container, with the custom header view placed ABOVE the scrolling content - often as the scroll view's own subview, positioned with a height constraint you'll animate, rather than as a table/collection view section header (section headers have their own, more restrictive sticky-header behavior via `UITableView`'s built-in mechanics, which fights a fully custom collapse animation).
+- `UIScrollViewDelegate`'s `scrollViewDidScroll(_:)` is where the actual work happens: read `scrollView.contentOffset.y`, and drive the header's height constraint's `constant` (clamped between a minimum and maximum height) as a function of that offset - typically `newHeight = max(minHeight, maxHeight - scrollOffset)`.
+- Cross-fading content WITHIN the header (e.g. a large image visible at full height, fading to just a title bar as it collapses) is done by animating those inner views' `alpha` as a function of the SAME scroll-offset-derived collapse progress, not as a separate, unsynchronized animation.
+- To prevent the header from being pulled below its minimum (collapsed) height, or growing unboundedly when the user pulls-to-refresh/overscrolls at the top, clamp the computed height explicitly rather than letting the raw offset drive it unclamped.
+- For a "stretchy header" effect specifically (the header GROWS when the user pulls down past the top, common in profile/photo-detail screens), you additionally check for NEGATIVE `contentOffset.y` (meaning the user has scrolled past the natural top) and increase the header height beyond its resting max in that specific case, rather than just clamping to a fixed maximum.
+
+**The decision between the two:** default to Option 1 (native large titles) unless the design genuinely requires visual content (image, gradient, non-title controls) in the collapsing region that `UINavigationBar` has no API for - building the custom version is meaningfully more code and needs its own care around Dynamic Type/accessibility/Dark Mode that the native version gets for free.
+""",
+                example: """
+// Option 1: native UIKit large title - zero manual scroll tracking.
+final class SimpleListViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        title = "Messages"
+        navigationItem.largeTitleDisplayMode = .always
+        navigationController?.navigationBar.prefersLargeTitles = true
+        // That's it - UIKit handles the collapse animation, Dynamic
+        // Type, Dark Mode, and accessibility automatically as the user
+        // scrolls the table/collection view below it.
+    }
+}
+
+// Option 2: a fully custom collapsing header, manually driven by
+// UIScrollViewDelegate - needed when the header has an image/gradient/
+// custom controls that native large titles can't represent.
+final class CustomCollapsingHeaderViewController: UIViewController, UITableViewDelegate {
+    private let headerView = UIView()
+    private let headerImageView = UIImageView()
+    private let headerTitleLabel = UILabel()
+    private let tableView = UITableView()
+
+    private let maxHeaderHeight: CGFloat = 240
+    private let minHeaderHeight: CGFloat = 88
+    private var headerHeightConstraint: NSLayoutConstraint!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.delegate = self   // UITableViewDelegate inherits from
+                                     // UIScrollViewDelegate, so scrollViewDidScroll
+                                     // below satisfies both at once
+
+        view.addSubview(tableView)
+        view.addSubview(headerView)   // header ABOVE the scroll content,
+                                        // not as a table section header
+
+        headerView.addSubview(headerImageView)
+        headerView.addSubview(headerTitleLabel)
+
+        headerHeightConstraint = headerView.heightAnchor.constraint(equalToConstant: maxHeaderHeight)
+        headerHeightConstraint.isActive = true
+        // ... remaining Auto Layout setup omitted for brevity ...
+    }
+
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        let offsetY = scrollView.contentOffset.y
+
+        if offsetY < 0 {
+            // Stretchy-header case: user pulled down PAST the natural
+            // top - grow the header beyond its resting max, not just
+            // clamp it, for the common "stretchy" profile-header feel.
+            headerHeightConstraint.constant = maxHeaderHeight - offsetY
+        } else {
+            // Normal collapse: shrink as the user scrolls down, clamped
+            // so it never goes below the minimum collapsed height.
+            let newHeight = max(minHeaderHeight, maxHeaderHeight - offsetY)
+            headerHeightConstraint.constant = newHeight
+        }
+
+        // Cross-fade the image out and the compact title in, driven by
+        // the SAME scroll-derived progress - not a separate animation.
+        let collapseRange = maxHeaderHeight - minHeaderHeight
+        let collapseProgress = min(1, max(0, offsetY / collapseRange))
+        headerImageView.alpha = 1 - collapseProgress
+        headerTitleLabel.alpha = collapseProgress
+    }
+}
+""",
+                keyTakeaways: [
+                    "UINavigationBar's own large-title support (`prefersLargeTitles` + `largeTitleDisplayMode`) gives the standard collapsing-title effect for free, entirely driven by scroll offset automatically, with correct Dynamic Type/Dark Mode/accessibility built in - the right default whenever the header is just a title.",
+                    "A fully custom header (image, gradient, custom controls) needs manual construction: a header view placed above the scroll content with an animatable height constraint, driven from UIScrollViewDelegate's scrollViewDidScroll(_:).",
+                    "The core formula is `newHeight = max(minHeight, maxHeight - contentOffset.y)`, clamped so the header never shrinks below its collapsed minimum as the user scrolls down.",
+                    "Cross-fading inner header content (image fading out, compact title fading in) should be driven by the SAME scroll-offset-derived progress value as the height animation, not a separately-timed animation, to stay visually synchronized.",
+                    "A 'stretchy header' (grows on pull-down past the top) needs an explicit check for negative contentOffset.y and increases height beyond the resting maximum in that case specifically, rather than clamping to a fixed max unconditionally."
+                ]
+            ),
+            QAItem(
+                id: "uikit_trait_changes_dark_mode_dynamic_type_size_class",
+                question: "In UIKit, how do you handle trait changes - like Dark Mode, Dynamic Type size changes, and size class transitions - so the UI updates correctly without flicker?",
+                topics: ["UIKit", "UITraitCollection", "Dark Mode", "Dynamic Type", "Size Classes"],
+                explanation: """
+All three of these - Dark Mode, Dynamic Type, and size class transitions - are unified under the same underlying mechanism, `UITraitCollection`, and handling them correctly (without flicker or stale content) means using the RIGHT hook for each kind of change instead of over-relying on manual observation.
+
+**The modern, correct API (iOS 17+): `registerForTraitChanges`.** This lets a view/view controller register a closure to run specifically when named traits change (`UITraitVerticalSizeClass.self`, `UITraitUserInterfaceStyle.self`, `UITraitPreferredContentSizeCategory.self`, or combinations), replacing the older, coarser `traitCollectionDidChange(_:)` override which fires for ANY trait change and requires you to manually diff `previousTraitCollection` against the current one to figure out WHICH trait actually changed - registering for the SPECIFIC traits you care about avoids unnecessary work (and potential flicker from re-doing work unrelated to what actually changed) for trait changes your view doesn't care about.
+
+**For colors specifically - the single biggest lever against Dark Mode flicker is using DYNAMIC `UIColor`s (semantic colors, or colors defined in an asset catalog with Any/Dark variants) instead of hardcoded RGB values.** A dynamic color automatically resolves to the correct value for the CURRENT trait collection every time it's drawn - no manual re-assignment code needed at all when the mode switches, and critically, no FLASH of the old color rendering first before your change-handler code runs, since the color itself is trait-aware at the rendering level, not something you're reactively updating after the fact.
+
+**For Dynamic Type - use `UIFont.preferredFont(forTextStyle:)` (a semantic text style, not a fixed point size) combined with `adjustsFontForContentSizeCategory = true` on the label/text view.** This is the same principle as dynamic colors: the font itself knows how to resolve for the current content size category, so it updates automatically as part of the system's own trait-change handling, rather than you manually re-querying and re-assigning a font size in a change handler (which is both more code AND more prone to a visible flash if the manual update lags behind the trait change even slightly).
+
+**For size class transitions (regular vs compact, e.g. rotation or multitasking split-view resize) - `traitCollectionDidChange(_:)` (or the modern registration API) is where you'd swap entire LAYOUTS**, not just adjust individual view properties: activating/deactivating whole sets of constraints for compact vs regular, or switching between a `UIStackView`'s horizontal/vertical axis. Wrap these bigger structural changes in `UIView.animate` (or `UIViewPropertyAnimator`) explicitly, since layout-affecting trait changes don't automatically get the same "just re-resolves silently" treatment dynamic colors/fonts do - an unanimated instant snap between compact and regular layouts is itself a form of visual "flicker," just structural rather than color-based.
+
+**The actual flicker-avoidance principle underlying all of this:** prefer trait-AWARE values (dynamic colors, semantic fonts) that resolve themselves automatically at render time over trait-CHANGE-HANDLER code that reactively re-applies values after the fact - the former has no window where stale content can flash, since there's no "old value rendered, then updated" step at all; the latter always has some (even if brief) window between the trait changing and your handler running and re-applying the new value.
+""",
+                example: """
+// 1) Dynamic UIColor - resolves automatically, no manual re-assignment
+// needed, and critically no flash-of-old-color window at all.
+final class ThemedCardView: UIView {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        // Semantic system colors adapt to Dark Mode automatically:
+        backgroundColor = .secondarySystemBackground
+        layer.borderColor = UIColor.separator.cgColor
+
+        // A custom dynamic color (Any/Dark variants) also resolves
+        // itself - defined either in an asset catalog, or in code:
+        backgroundColor = UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark
+                ? UIColor(white: 0.15, alpha: 1)
+                : UIColor(white: 0.95, alpha: 1)
+        }
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+// 2) Dynamic Type - semantic text style + adjustsFontForContentSizeCategory,
+// resolves automatically as the user changes text size in Settings.
+final class BodyLabel: UILabel {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        font = UIFont.preferredFont(forTextStyle: .body)   // semantic, not
+        adjustsFontForContentSizeCategory = true             // a fixed point size
+        numberOfLines = 0
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+// 3) Modern trait-change registration (iOS 17+) - register for SPECIFIC
+// traits, avoiding unnecessary work for changes you don't care about.
+final class AdaptiveViewController: UIViewController {
+    private let stack = UIStackView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        registerForTraitChanges([UITraitVerticalSizeClass.self]) { (self: Self, previous: UITraitCollection) in
+            self.updateLayoutForCurrentSizeClass()
+        }
+
+        registerForTraitChanges([UITraitPreferredContentSizeCategory.self]) { (self: Self, previous: UITraitCollection) in
+            // Only fires for Dynamic Type changes specifically - no
+            // unrelated work re-run for, say, a Dark Mode toggle.
+            self.updateSpacingForContentSize()
+        }
+    }
+
+    private func updateLayoutForCurrentSizeClass() {
+        // Size class transitions swap whole LAYOUTS - animate the
+        // structural change explicitly, since it doesn't self-resolve
+        // the way dynamic colors/fonts do.
+        UIView.animate(withDuration: 0.25) {
+            self.stack.axis = self.traitCollection.verticalSizeClass == .compact
+                ? .horizontal
+                : .vertical
+            self.view.layoutIfNeeded()
+        }
+    }
+
+    private func updateSpacingForContentSize() {
+        let isAccessibilitySize = traitCollection.preferredContentSizeCategory.isAccessibilityCategory
+        stack.spacing = isAccessibilitySize ? 16 : 8
+    }
+}
+
+// Older API (pre-iOS 17) for comparison - fires for ANY trait change,
+// requiring a manual diff against previousTraitCollection:
+extension AdaptiveViewController {
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            // handle Dark Mode change specifically
+        }
+        if traitCollection.preferredContentSizeCategory != previousTraitCollection?.preferredContentSizeCategory {
+            updateSpacingForContentSize()
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "Dark Mode, Dynamic Type, and size class transitions are all unified under UITraitCollection - the modern (iOS 17+) API is `registerForTraitChanges`, which lets you register for SPECIFIC traits instead of the coarser traitCollectionDidChange firing for every trait change.",
+                    "The strongest flicker-avoidance technique is using trait-AWARE values (dynamic UIColor, `UIFont.preferredFont(forTextStyle:)`) that resolve themselves automatically at render time - there's no window for stale content to flash, unlike reactive change-handler code that re-applies values after the fact.",
+                    "`adjustsFontForContentSizeCategory = true` combined with a semantic text style makes Dynamic Type changes self-resolving, the same principle as dynamic colors for Dark Mode.",
+                    "Size class transitions are structural, not just color/font changes - swap whole layouts (constraint sets, stack view axis) in the trait-change handler, wrapped in an explicit `UIView.animate` so the transition itself isn't an instant, jarring snap.",
+                    "The underlying principle: prefer values that adapt themselves automatically over code that reacts to a change notification and manually re-applies a new value - the former has no stale-content window at all; the latter always has some, even if brief."
+                ]
+            ),
+            QAItem(
+                id: "uikit_custom_view_accessibility_dynamic_type_voiceover_hit_targets",
+                question: "In UIKit, how do you ensure a custom view is accessible - specifically for Dynamic Type, VoiceOver labels/traits, and tappable hit targets - without breaking layout?",
+                topics: ["UIKit", "Accessibility", "VoiceOver", "Dynamic Type", "Hit Targets"],
+                explanation: """
+A custom view (as opposed to a built-in control) gets NONE of this for free - every piece has to be deliberately implemented, and each has its own specific failure mode if skipped.
+
+**Dynamic Type without breaking layout.** Use `UIFont.preferredFont(forTextStyle:)` plus `adjustsFontForContentSizeCategory = true` (see the trait-changes question for the mechanism) - but the LAYOUT-BREAKING part specifically comes from views that assume a FIXED height/width for text content. A label constrained to a fixed HEIGHT (rather than letting it grow) will clip or truncate text at the largest accessibility text sizes, even though the font itself resolved correctly - the fix is `numberOfLines = 0` plus height-driven-by-content (no fixed height constraint on the label itself, only on the CONTAINER if truly needed, with the label free to grow inside it) and testing explicitly at the largest accessibility size (Settings > Accessibility > Display & Text Size > Larger Text, all the way up) - a view that looks fine at the default size very often visibly breaks at the largest one, and that's specifically what needs to be checked, not just "does it compile and look okay at default settings."
+
+**VoiceOver labels and traits.** `isAccessibilityElement = true` marks the custom view as a single stop VoiceOver should land on (needed for any custom view built from multiple subviews that should be announced as ONE thing, not N separate stops) - combined with `accessibilityLabel` (what it IS - concise, not a full sentence description), `accessibilityValue` (its CURRENT state, if it has one, kept separate from the label so VoiceOver doesn't have to re-announce a static description every time only the value changes), and `accessibilityTraits` (`.button`, `.header`, `.selected`, `.updatesFrequently`, etc. - these tell VoiceOver users HOW to interact with the element and what kind of thing it is, and picking the wrong trait, e.g. leaving a genuinely tappable custom view with no `.button` trait, makes VoiceOver users unable to discover that it's interactive at all). For a custom view built from several subviews where only SOME should be individually navigable, `accessibilityElements` (an explicit array on the container) lets you control precisely which children VoiceOver exposes and in what order, rather than relying on the view hierarchy's natural traversal order.
+
+**Tappable hit targets.** Apple's Human Interface Guidelines specify a minimum 44x44 point tappable area - a custom view whose VISUAL size is smaller than that (a small icon button, a close "x") still needs its actual HIT-TESTABLE area to be at least 44x44, which is NOT automatic just from the visual bounds. The correct fix is overriding `point(inside:with:)` to test against an ENLARGED rect (extending symmetrically beyond the view's own visible bounds) rather than just `bounds.contains(point)` - crucially, this expands the TAPPABLE area without needing to actually resize (and therefore visually change) the view itself, which is exactly the "without breaking layout" requirement: the view's visible frame/size in the layout stays exactly as designed, only its invisible touch-response area grows.
+
+**Testing all three together, not just individually:** VoiceOver, Dynamic Type at the largest accessibility size, AND normal visual layout should all be verified in combination, not in isolation - a common miss is fixing Dynamic Type in isolation (looks right at default VoiceOver-off testing) but never actually turning VoiceOver on to confirm the label/trait/hit-target work reads correctly together with the now-larger text.
+""",
+                example: """
+// A custom "favorite" icon button - small VISUAL size, but a full
+// 44x44 tappable area, correct VoiceOver label/trait, and content that
+// scales with Dynamic Type without breaking its container's layout.
+final class FavoriteButton: UIControl {
+    private let iconView = UIImageView(image: UIImage(systemName: "star"))
+    private let minimumHitTargetSize: CGFloat = 44
+
+    var isFavorited = false {
+        didSet {
+            iconView.image = UIImage(systemName: isFavorited ? "star.fill" : "star")
+            // Update the VALUE, not the label - the label ("Favorite")
+            // never changes; only the current state does, which is
+            // exactly what accessibilityValue is for.
+            accessibilityValue = isFavorited ? "Favorited" : "Not favorited"
+        }
+    }
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        addSubview(iconView)
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 20),   // visual
+            iconView.heightAnchor.constraint(equalToConstant: 20),  // size stays small
+        ])
+
+        // VoiceOver: single stop, concise label, correct trait so
+        // VoiceOver users know it's interactive.
+        isAccessibilityElement = true
+        accessibilityLabel = "Favorite"
+        accessibilityTraits = .button
+        accessibilityValue = "Not favorited"
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    // Enlarge the TAPPABLE area to at least 44x44 without changing the
+    // view's actual visible frame/size - layout is completely unaffected.
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        let expandedWidth = max(bounds.width, minimumHitTargetSize)
+        let expandedHeight = max(bounds.height, minimumHitTargetSize)
+        let expandedBounds = CGRect(
+            x: (bounds.width - expandedWidth) / 2,
+            y: (bounds.height - expandedHeight) / 2,
+            width: expandedWidth,
+            height: expandedHeight
+        )
+        return expandedBounds.contains(point)
+    }
+}
+
+// A custom card built from multiple subviews, announced as ONE VoiceOver
+// stop with a synthesized label, and Dynamic-Type-safe (no fixed height).
+final class ProfileCardView: UIView {
+    private let nameLabel = UILabel()
+    private let roleLabel = UILabel()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        [nameLabel, roleLabel].forEach {
+            $0.font = .preferredFont(forTextStyle: .body)
+            $0.adjustsFontForContentSizeCategory = true
+            $0.numberOfLines = 0   // grows with text, never clips at
+        }                            // the largest accessibility sizes
+
+        isAccessibilityElement = true   // ONE VoiceOver stop for the
+        accessibilityTraits = .staticText   // whole card, not per-subview
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func configure(name: String, role: String) {
+        nameLabel.text = name
+        roleLabel.text = role
+        // Synthesize a single combined label since the view reads as
+        // one VoiceOver element, not two separate label stops.
+        accessibilityLabel = "\\(name), \\(role)"
+    }
+}
+""",
+                keyTakeaways: [
+                    "Dynamic Type without breaking layout needs BOTH the semantic font (`preferredFont(forTextStyle:)`) AND a layout that lets text grow (numberOfLines = 0, no fixed height on the label) - test explicitly at the largest accessibility text size, not just the default.",
+                    "`isAccessibilityElement = true` on a multi-subview custom view makes VoiceOver treat it as ONE stop; `accessibilityLabel` (what it is) and `accessibilityValue` (its current state) are separate pieces VoiceOver announces together - conflating them forces a full re-announcement on every state change.",
+                    "`accessibilityTraits` (.button, .header, .selected, etc.) tells VoiceOver users HOW to interact - omitting `.button` on a genuinely tappable custom view makes VoiceOver users unable to discover it's interactive at all.",
+                    "A minimum 44x44 tappable area (per Apple's HIG) is not automatic from a view's visual size - override `point(inside:with:)` to test against an enlarged rect, which expands the TOUCH area without resizing (and therefore without visually affecting) the view itself.",
+                    "Test all three together - VoiceOver on, Dynamic Type at the largest accessibility size, and normal layout - not in isolation; fixing Dynamic Type without ever turning VoiceOver on to check labels/traits together with the now-larger text is a common, incomplete verification."
+                ]
+            ),
+            QAItem(
+                id: "uihostingcontroller_data_flow_to_uikit_parent",
+                question: "When you bridge SwiftUI into UIKit with UIHostingController, how do you typically pass data back from the SwiftUI view to the UIKit parent without tightly coupling them?",
+                topics: ["UIHostingController", "SwiftUI", "UIKit", "Interop", "Combine"],
+                explanation: """
+`UIHostingController<Content>` embeds a SwiftUI view tree inside a UIKit hierarchy - passing data DOWN (UIKit to SwiftUI) is the easy direction, just constructing the hosted view with whatever data it needs. Passing data BACK UP (SwiftUI to its UIKit parent) is the direction that needs a deliberate decoupling strategy, since a SwiftUI `View` has no notion of "my parent UIViewController" at all.
+
+**The core technique: inject a closure (or an ObservableObject) into the SwiftUI view's initializer, exactly like you would between two decoupled UIKit view controllers.** The SwiftUI view calls the closure when it needs to report something upward; the UIKit parent supplies that closure when constructing the hosting controller, and reacts however it wants (dismiss itself, navigate, update its own state) - the SwiftUI view never needs to know it's even embedded in UIKit, or what its parent does with the callback. This is the SAME decoupling principle as a UIKit delegate protocol or a completion closure passed to a presented view controller - just expressed as a plain closure property on a SwiftUI View struct instead.
+
+**For richer, ongoing communication (not just one-shot events)**, an `ObservableObject` shared between both sides works well: the UIKit parent creates and owns an instance, passes it into the SwiftUI view (as an `@ObservedObject` there, or via `.environmentObject`), and BOTH sides can read and write it - the SwiftUI view mutates it to report changes upward, and the UIKit parent observes it via Combine (`objectWillChange` or a specific `@Published` property's own `.sink`) to react. This is preferable to closures when the SwiftUI content needs to report MULTIPLE different kinds of updates over time, rather than a single "I'm done" event.
+
+**A `UIHostingController`-specific detail worth knowing:** `sizingOptions` (or manually reading `sizeThatFits(in:)` on the hosting controller) is how you get the SwiftUI content's OWN intrinsic size back into UIKit's layout system if the hosting controller is embedded as a child rather than full-screen - relevant if the "data" you need back isn't just business-logic values but the content's actual rendered size, for UIKit to lay out correctly around it.
+
+**Why closures/ObservableObject (not a delegate protocol) is the idiomatic SwiftUI-side choice:** delegate protocols require a reference-type conformer with clear identity and lifetime, which fits UIKit's object-graph style naturally, but a SwiftUI `View` is a value type, re-created constantly - there's no stable "self" to hand out as a delegate in the traditional sense. Closures (which capture whatever THEY need, independent of the view struct's own lifecycle) and `ObservableObject` (a genuine reference type, held stably regardless of how many times the View struct itself gets re-created) both sidestep this mismatch cleanly, which is why they're the standard pattern rather than trying to force a UIKit-style delegate onto a SwiftUI View.
+""",
+                example: """
+// Closure-based: a one-shot "I'm done" event reported back up - the
+// SwiftUI view never needs to know anything about its UIKit parent.
+struct OnboardingSwiftUIView: View {
+    let onComplete: (OnboardingResult) -> Void   // injected, not assumed
+
+    @State private var selectedPlan: String = "free"
+
+    var body: some View {
+        VStack {
+            Text("Choose a plan")
+            Button("Continue") {
+                onComplete(OnboardingResult(plan: selectedPlan))
+            }
+        }
+    }
+}
+
+struct OnboardingResult {
+    let plan: String
+}
+
+final class OnboardingContainerViewController: UIViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let hostingController = UIHostingController(
+            rootView: OnboardingSwiftUIView { [weak self] result in
+                // The UIKit parent decides what to DO with the report -
+                // the SwiftUI view stays completely decoupled from it.
+                self?.finishOnboarding(with: result)
+            }
+        )
+
+        addChild(hostingController)
+        view.addSubview(hostingController.view)
+        hostingController.view.frame = view.bounds
+        hostingController.didMove(toParent: self)
+    }
+
+    private func finishOnboarding(with result: OnboardingResult) {
+        print("Onboarding finished with plan: \\(result.plan)")
+        dismiss(animated: true)
+    }
+}
+
+// ObservableObject-based: for ONGOING, multi-event communication rather
+// than a single completion callback.
+final class SearchCoordinatorModel: ObservableObject {
+    @Published var searchText: String = ""
+    @Published var didTapCancel: Bool = false
+}
+
+struct SearchSwiftUIView: View {
+    @ObservedObject var coordinator: SearchCoordinatorModel   // shared,
+                                                                  // not owned here
+    var body: some View {
+        VStack {
+            TextField("Search", text: $coordinator.searchText)
+            Button("Cancel") { coordinator.didTapCancel = true }
+        }
+    }
+}
+
+final class SearchContainerViewController: UIViewController {
+    private let coordinator = SearchCoordinatorModel()   // UIKit parent
+    private var cancellables = Set<AnyCancellable>()      // OWNS the instance
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let hosting = UIHostingController(rootView: SearchSwiftUIView(coordinator: coordinator))
+        addChild(hosting)
+        view.addSubview(hosting.view)
+        hosting.didMove(toParent: self)
+
+        // UIKit reacts via Combine as the SwiftUI side reports changes -
+        // no direct coupling between the two view types themselves.
+        coordinator.$searchText
+            .sink { [weak self] text in self?.performSearch(text) }
+            .store(in: &cancellables)
+
+        coordinator.$didTapCancel
+            .filter { $0 }
+            .sink { [weak self] _ in self?.dismiss(animated: true) }
+            .store(in: &cancellables)
+    }
+
+    private func performSearch(_ text: String) { /* ... */ }
+}
+""",
+                keyTakeaways: [
+                    "Passing data DOWN (UIKit to SwiftUI) is trivial - just construct the hosted view with the data it needs; passing data UP needs a deliberate decoupling strategy, since a SwiftUI View has no notion of 'my parent UIViewController'.",
+                    "The standard technique is injecting a closure into the SwiftUI view's initializer for one-shot events (mirroring a UIKit completion closure) - the SwiftUI view calls it, the UIKit parent decides what to do, and the SwiftUI view never needs to know it's embedded in UIKit at all.",
+                    "For ongoing, multi-event communication, a shared ObservableObject (created and owned by the UIKit parent, passed in as @ObservedObject) works better than closures - the UIKit side observes it via Combine (.sink on a @Published property) to react over time.",
+                    "Delegate protocols don't fit naturally here because a SwiftUI View is a value type re-created constantly - there's no stable 'self' identity to hand out as a delegate the way a UIKit class instance provides.",
+                    "UIHostingController's `sizingOptions` (or `sizeThatFits(in:)`) is the mechanism for getting the SwiftUI content's own intrinsic size back into UIKit's layout system, relevant when the hosting controller is embedded as a child rather than full-screen."
+                ]
+            ),
+            QAItem(
+                id: "diffabledatasource_vs_swiftui_list_complex_lists",
+                question: "If you have a complex list UI with frequent updates, how would you decide between UITableViewDiffableDataSource (UIKit) and List with @State/Observable updates (SwiftUI) in terms of performance and control?",
+                topics: ["UIKit", "SwiftUI", "UITableViewDiffableDataSource", "List", "Performance"],
+                explanation: """
+Both solve the same underlying problem - updating a list's visible rows to match a new data snapshot without visual glitches - but they differ sharply in how much manual control you have over the update, which is exactly the axis that matters for "complex... frequent updates."
+
+**`UITableViewDiffableDataSource`: explicit snapshots, precise diffing control.** You construct an `NSDiffableDataSourceSnapshot` describing the FULL desired state (sections + items, using `Hashable` identifiers), and call `apply(_:animatingDifferences:)` - the diffable data source computes the minimal set of inserts/deletes/moves/reloads needed to go from the CURRENT visible state to the new snapshot, and animates exactly that diff. Critically, you control WHEN this happens explicitly (you decide the exact moment to call `apply`), can batch many data changes into ONE snapshot update (avoiding N separate animated updates for N rapid-fire changes), and can tune it further with `reconfigureItems(_:)` (updates a cell's CONTENT in place without a full reload/re-animation, when only content changed but identity didn't) versus `reloadItems(_:)` (a full cell reload). This explicit control is exactly what "complex, frequently-updating" lists benefit from: you can coalesce a burst of 50 rapid updates into a single, smooth batched `apply` call instead of processing them one at a time.
+
+**SwiftUI `List` with `@State`/`@Observable`: implicit diffing, driven entirely by data identity.** SwiftUI diffs automatically whenever the underlying array (or observed object) changes, based on each row's `Identifiable` id - you don't call anything explicitly; you just mutate the data and SwiftUI figures out what changed. This is much LESS code and gets you a reasonable result for most lists, but you have far less control over exactly how/when the diff happens - many rapid-fire mutations to an `@State` array each trigger SwiftUI's own diffing independently (there's no direct SwiftUI equivalent to "batch these 50 changes into one manual apply call"), and for very large or very frequently-updating lists, this can mean more re-diffing work than a deliberately-batched diffable-data-source update would do.
+
+**The performance dimension specifically:** `UITableViewDiffableDataSource`'s explicit snapshot model scales better for GENUINELY large datasets (thousands of rows) with frequent, high-volume updates, specifically because you control batching and can use `reconfigureItems` to avoid unnecessary reload animations for identity-stable content updates. SwiftUI's `List` performs perfectly well for the vast majority of real app lists (tens to low hundreds of rows, moderate update frequency) and the implicit model is significantly less code to write and maintain - the performance gap only becomes practically meaningful at real scale or genuinely high update frequency.
+
+**The decision:** default to SwiftUI `List` for typical app lists - less code, automatic diffing, good performance for realistic sizes. Reach for `UITableViewDiffableDataSource` specifically when you need: precise control over WHEN a diff/animation happens (batching many rapid updates into one), the content-vs-identity distinction `reconfigureItems` vs `reloadItems` provides, or you're already validated (via Instruments) that SwiftUI's implicit diffing is a measured bottleneck for your specific list's size/update frequency - not preemptively, since UIKit's explicit model is meaningfully more code to write and maintain correctly.
+""",
+                example: """
+// UIKit: UITableViewDiffableDataSource - explicit snapshot, precise
+// batching control.
+struct Message: Hashable {
+    let id: UUID
+    let text: String
+}
+
+final class ChatViewController: UIViewController {
+    private var dataSource: UITableViewDiffableDataSource<Int, Message>!
+    private let tableView = UITableView()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        dataSource = UITableViewDiffableDataSource(tableView: tableView) { tableView, indexPath, message in
+            let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+            cell.textLabel?.text = message.text
+            return cell
+        }
+    }
+
+    // Explicit control: batch many rapid-fire updates into ONE apply
+    // call, instead of processing each individually.
+    func applyIncomingMessages(_ newMessages: [Message]) {
+        var snapshot = dataSource.snapshot()
+        snapshot.appendItems(newMessages, toSection: 0)
+        dataSource.apply(snapshot, animatingDifferences: true)   // ONE
+    }                                                              // animated diff,
+                                                                    // however many
+                                                                    // messages arrived
+
+    // Content-only update (e.g. a message's delivery status changed) -
+    // reconfigures the cell in place, no removal/insertion animation.
+    func markDelivered(_ message: Message) {
+        var snapshot = dataSource.snapshot()
+        snapshot.reconfigureItems([message])
+        dataSource.apply(snapshot, animatingDifferences: false)
+    }
+}
+
+// SwiftUI: List with @Observable - implicit diffing driven by identity,
+// far less code, good performance for realistic list sizes.
+struct ChatMessage: Identifiable, Hashable {
+    let id: UUID
+    let text: String
+}
+
+@Observable
+final class ChatViewModel {
+    var messages: [ChatMessage] = []
+
+    func appendIncoming(_ newMessages: [ChatMessage]) {
+        // No explicit "apply" call - SwiftUI diffs automatically the
+        // next time this triggers a body re-evaluation. Simpler, but
+        // no direct equivalent to UIKit's explicit batching control if
+        // dozens of these calls happen in a tight loop.
+        messages.append(contentsOf: newMessages)
+    }
+}
+
+struct ChatListView: View {
+    let viewModel: ChatViewModel
+
+    var body: some View {
+        List(viewModel.messages) { message in
+            Text(message.text)
+        }
+        // SwiftUI computes the minimal diff itself, based on each
+        // message's Identifiable id, whenever `messages` changes.
+    }
+}
+""",
+                keyTakeaways: [
+                    "UITableViewDiffableDataSource uses explicit snapshots - you control exactly WHEN a diff/animation happens and can batch many rapid data changes into ONE `apply` call, avoiding N separate animated updates for N changes.",
+                    "SwiftUI List diffs implicitly and automatically based on each row's Identifiable id whenever the underlying data changes - far less code, but no direct equivalent to explicitly batching a burst of updates into one controlled diff.",
+                    "`reconfigureItems` (content-only update, no removal/insertion animation) vs `reloadItems` (full reload) is a precision UIKit offers that SwiftUI's implicit model doesn't expose directly - relevant when identity is stable but displayed content changed.",
+                    "The performance gap is only practically meaningful at real scale (thousands of rows) or genuinely high update frequency - SwiftUI List performs well for the vast majority of typical app lists (tens to low hundreds of rows).",
+                    "Default to SwiftUI List for less code and automatic diffing; reach for UITableViewDiffableDataSource when you specifically need explicit batching control, the content-vs-identity update distinction, or have measured (via Instruments) that implicit diffing is a real bottleneck for your list's actual size/update frequency."
+                ]
+            ),
+            QAItem(
+                id: "mvc_core_responsibilities_business_logic_model_design",
+                question: "In MVC on iOS, what are the core responsibilities of the Model, View, and Controller? Specifically, where should business logic like calculating totals or validating input live, and how do you keep the Model layer independent of UIKit (UIColor, UIImage, UIView) and manage shared app state without hidden dependencies?",
+                topics: ["MVC", "Architecture", "Model", "Business Logic", "Shared State"],
+                explanation: """
+This is the foundational question every other MVC follow-up assumes you've already answered correctly - and the most common mistake is treating the Model as a passive data bag and defaulting ALL logic, including logic that genuinely belongs to the Model, into the Controller out of habit.
+
+**The three responsibilities, precisely:**
+
+- **Model** - owns DATA and the BUSINESS/DOMAIN LOGIC that operates on it. This is the point most often gotten wrong: a Model is not just `struct Order { let items: [Item] }` with no behavior - in real MVC, calculating a total, validating that an input is well-formed, determining whether an order qualifies for free shipping, are all DOMAIN rules that belong on the Model (or a closely-related domain service the Model layer owns), because they're true regardless of what UI is displaying them, or whether there's a UI at all. The Model has zero awareness of UIKit, networking, or persistence mechanics - it's pure domain data and domain logic.
+- **View** - owns PRESENTATION and rendering only. Genuinely passive: it displays whatever it's given and reports raw user interaction (a tap, a text change) upward. A View should never reach out to fetch data, never contain business rules, and ideally never even hold a direct reference to a Model type at all - the Controller mediates.
+- **Controller** - owns COORDINATION: receiving View events, invoking the right Model operations, deciding which View to show/update as a result. It should be relatively thin and mostly ORCHESTRATION code, not the place computations or validation rules actually live - the Controller calls `order.total` (asking the Model), it doesn't calculate the total itself inline.
+
+**Where business logic like "calculate totals" or "validate input" actually belongs: the Model, not the Controller.** `order.calculateTotal()` and `email.isValidFormat` are domain rules with no dependency on any specific screen - they're true whether they're triggered from a checkout screen, an email receipt, or a unit test with no UI involved at all. Putting them in the Controller instead couples a piece of pure business logic to a specific screen's lifecycle, duplicates it the moment a SECOND screen needs the same calculation, and makes it untestable without spinning up that Controller's full UIKit machinery. The tell that logic has leaked into the wrong layer: if you can't write a test for "does a $0 order correctly calculate free shipping" without touching `UIViewController`, `UITableView`, or any UIKit import at all, that logic is almost certainly misplaced.
+
+**A concrete Model example and how a Controller interacts with it:** a `ShoppingCart` Model owns its line items and the calculation logic (`subtotal`, `tax`, `total`, `qualifiesForFreeShipping`) - all pure, UIKit-free computation. A `CheckoutViewController` holds a reference to the cart, calls its computed properties/methods to get values, and hands those values to Views to display - the Controller never recomputes the total itself; it always asks the Model.
+
+**Why the Model must never depend on UIKit types (`UIColor`, `UIImage`, `UIView`), and why this matters:** the Model layer describes WHAT is true about the domain, not HOW it looks - importing UIKit into a Model file couples pure business logic to one specific platform/framework, meaning the same Model can never be reused in a widget extension, a watchOS companion app, a Mac Catalyst target, or a server-side Swift job, all of which either lack UIKit entirely or want a completely different visual representation of the SAME underlying data. It also means unit tests for Model logic don't need to run on a simulator/device at all - they're pure Swift, running anywhere `swift test` can run. Formatting a domain value into `UIColor`/display string is PRESENTATION work - it belongs in a dedicated Presenter/Formatter/DisplayModel layer (see the related "where does formatting logic go" question), which is explicitly allowed to import UIKit, since ITS whole job is bridging domain data to a specific platform's visual representation.
+
+**Managing shared app state - what belongs in Models vs global managers, and avoiding hidden dependencies:** genuinely domain-level state that represents "what is objectively true right now" (the current user's session, the shopping cart's contents) is reasonable to centralize in a dedicated, explicitly-injected manager/service (a `SessionManager`, a `CartStore`) - the key discipline is INJECTING it explicitly into whatever Controller/Model needs it (via initializer, matching Dependency Injection), rather than every Controller reaching for a global singleton (`SessionManager.shared`) directly wherever convenient. The difference is subtle but important: a singleton accessed directly from deep inside a dozen unrelated Controllers is a HIDDEN dependency - nothing in that Controller's own type signature reveals it depends on session state at all, making the dependency invisible until something breaks, and impossible to substitute with a fake in a unit test. The same shared instance, passed in through an initializer parameter (even if it's still ultimately backed by one shared instance created once at the app's composition root), is a VISIBLE, testable dependency - the type signature honestly documents what the Controller actually needs.
+""",
+                example: """
+// MODEL: owns data AND the domain/business logic that operates on it -
+// zero UIKit awareness, zero dependency on any specific screen.
+struct CartItem {
+    let name: String
+    let unitPrice: Decimal
+    let quantity: Int
+}
+
+struct ShoppingCart {
+    private(set) var items: [CartItem] = []
+
+    mutating func add(_ item: CartItem) {
+        items.append(item)
+    }
+
+    // Business logic lives HERE - true regardless of which screen (or
+    // no screen at all, e.g. a unit test) is asking.
+    var subtotal: Decimal {
+        items.reduce(0) { $0 + $1.unitPrice * Decimal($1.quantity) }
+    }
+
+    var qualifiesForFreeShipping: Bool {
+        subtotal >= 50
+    }
+
+    var total: Decimal {
+        subtotal + (qualifiesForFreeShipping ? 0 : 5.99)
+    }
+}
+
+// Fully testable with ZERO UIKit involved - exactly the tell that this
+// logic lives in the right layer.
+func testFreeShippingThreshold() {
+    var cart = ShoppingCart()
+    cart.add(CartItem(name: "Widget", unitPrice: 50, quantity: 1))
+    assert(cart.qualifiesForFreeShipping)
+    assert(cart.total == cart.subtotal)   // no shipping fee added
+}
+
+// Input validation - also a domain rule, not UI code, and reusable
+// anywhere the concept of "a valid email" matters.
+enum EmailValidator {
+    static func isValidFormat(_ email: String) -> Bool {
+        email.contains("@") && email.contains(".") && !email.hasPrefix("@")
+    }
+}
+
+// VIEW (illustrative UIKit view) - purely presentational, holds no
+// business logic, no direct Model reference beyond what it's handed.
+final class CartSummaryView: UIView {
+    let totalLabel = UILabel()
+    func update(totalText: String) {
+        totalLabel.text = totalText   // just displays what it's given
+    }
+}
+
+// CONTROLLER: coordinates - asks the MODEL for values, never computes
+// them itself.
+final class CheckoutViewController: UIViewController {
+    private var cart = ShoppingCart()
+    private let summaryView = CartSummaryView()
+
+    func addItem(_ item: CartItem) {
+        cart.add(item)
+        refreshSummary()
+    }
+
+    private func refreshSummary() {
+        // Controller ORCHESTRATES - it calls cart.total, it never
+        // reimplements the total calculation inline itself.
+        summaryView.update(totalText: "$\\(cart.total)")
+    }
+}
+
+// SHARED STATE: injected explicitly, not reached for as a global
+// singleton from deep inside unrelated controllers.
+protocol SessionProviding {
+    var currentUserID: String? { get }
+}
+
+final class SessionManager: SessionProviding {
+    static let shared = SessionManager()   // ONE instance still exists...
+    private init() {}
+    var currentUserID: String?
+}
+
+final class OrderHistoryViewController: UIViewController {
+    private let session: SessionProviding   // ...but this Controller's
+                                              // dependency on it is VISIBLE
+                                              // in its own type signature,
+    init(session: SessionProviding = SessionManager.shared) {   // not hidden -
+        self.session = session                                   // and a test
+        super.init(nibName: nil, bundle: nil)                    // can inject
+    }                                                             // a fake here
+    required init?(coder: NSCoder) { fatalError() }
+}
+""",
+                keyTakeaways: [
+                    "Model owns data AND business/domain logic (calculating totals, validation) - not just passive data; View is purely presentational; Controller coordinates between them and should mostly be orchestration code, not where computations live.",
+                    "The tell that business logic has leaked into the wrong layer: if you can't test 'does a $0 order get free shipping' without touching UIViewController/UITableView/any UIKit import, that logic is misplaced in the Controller instead of the Model.",
+                    "The Model must never import UIKit (UIColor/UIImage/UIView) - it describes WHAT is true about the domain, not HOW it looks, which is what makes it reusable across targets (widget, watchOS, server-side Swift) and testable without a simulator at all.",
+                    "Formatting domain data into UIColor/display strings is PRESENTATION work and belongs in a dedicated Presenter/Formatter layer that's explicitly allowed to import UIKit - not the Model, and not scattered inline in the Controller.",
+                    "Shared app state (session, cart) should be explicitly INJECTED (via initializer) into whatever needs it, even if ultimately backed by one shared instance - reaching for a global singleton directly from deep inside unrelated Controllers is a hidden, untestable dependency invisible in the type signature."
+                ]
+            ),
+            QAItem(
+                id: "mvc_avoiding_god_controller_networking_update_propagation",
+                question: "In MVC, if a Controller needs data from multiple Models and a network response, how do you prevent it from becoming a 'god object'? What are two concrete refactoring steps for a Massive View Controller, how do you structure a networking layer so the Controller isn't building requests/parsing responses directly, how do you decide what belongs in a View subclass versus the Controller for a complex reusable screen, and how do you propagate Model changes to update the UI?",
+                topics: ["MVC", "Architecture", "God Object", "Networking", "Coordinator"],
+                explanation: """
+A Controller that directly aggregates multiple Models AND a raw network response is doing at least three jobs at once (fetching, combining, presenting) - the fix for all of the sub-questions here is the same underlying move: give each of those jobs its OWN object, and make the Controller depend on the RESULTS of that work, not perform the work itself.
+
+**Preventing the 'god object' Controller aggregating multiple Models + a network response.** Introduce a dedicated AGGREGATOR/use-case object (sometimes called an Interactor, or just a plain "UseCase" type) whose one job is: fetch/combine whatever's needed from multiple sources and hand the Controller back ONE ready-to-use result. The Controller then depends on this one aggregator (injected via protocol), not on N separate Model-fetching calls it has to orchestrate and combine itself. This is the same Single Responsibility fix as any other extraction - the difference from a plain Service is that an aggregator's specific job is COMBINING multiple sources into one coherent result, which is exactly the kind of code that silently accumulates inside a Controller if nothing else owns it.
+
+**Two concrete refactoring steps for an existing Massive View Controller (staying within MVC, not switching architectures):**
+1. Extract the `UITableViewDataSource`/`UITableViewDelegate` conformance into a separate, dedicated object the Controller owns but doesn't implement itself - immediately removes a large, self-contained chunk of methods from the Controller's surface with minimal risk (it's a mechanical extraction, not a logic change).
+2. Extract all networking/persistence calls into an injected Service (protocol-abstracted) - typically the SINGLE largest chunk of accumulated code in a Massive View Controller, and extracting it also happens to make the Controller unit-testable for the first time, since a fake Service can now be injected in tests.
+Both are safe, incremental, behavior-preserving moves - deliberately NOT "rewrite this Controller in MVVM," which is a much bigger, riskier change than the question is asking for.
+
+**Structuring the networking layer so the Controller never builds requests or parses responses directly:** a dedicated Service type (protocol-abstracted: `ProductServicing`) owns the `URLSession` calls, `Codable` decoding, and error mapping entirely - it exposes a method returning already-decoded domain models (`func fetchProducts() async throws -> [Product]`), and the Controller's only involvement is calling that method and reacting to its result. The Controller should have literally zero `URLSession`/`URLRequest`/`JSONDecoder` references anywhere in it.
+
+**Deciding what belongs in a View subclass versus the Controller, for a complex screen with multiple reusable components:** the dividing line is REUSABILITY and SELF-CONTAINED LAYOUT versus CROSS-COMPONENT COORDINATION. A custom `UIView`/`UITableViewCell` subclass should own everything about rendering and laying out ITSELF from the data it's given (`configure(with: DisplayModel)`, its own Auto Layout/`layoutSubviews`, its own subview hierarchy) - anything a SINGLE component can decide purely from its own inputs. The Controller owns coordination BETWEEN multiple components - deciding when component A's state should affect component B, aggregating input from several components before calling a Service, and driving navigation. A concrete test: if a piece of logic only needs that ONE component's own data to decide what to do, it belongs in the View subclass; if it needs to know about ANOTHER component or the screen's overall state, it belongs in the Controller.
+
+**Propagating Model changes to update the UI - the mechanisms available in UIKit, and how to choose:** four real options, matching different needs - (1) a plain CLOSURE/callback property set by the Controller on the Model or Service (simplest, one observer, easy to reason about, but doesn't scale past one listener); (2) the DELEGATE pattern (a protocol the Controller conforms to, common for one-to-one Model-owns-a-single-delegate relationships, e.g. a custom manager type); (3) `NotificationCenter` (appropriate when MULTIPLE, decoupled, possibly-distant parts of the app all need to react to the same event, e.g. "user logged out" - overkill and needlessly indirect for a simple one-to-one Controller-observes-its-own-Model relationship); (4) Combine (`@Published` properties + `.sink`, if the Model is a class - gives you multiple observers AND composable operators like `.debounce`/`.combineLatest` for free, at the cost of importing Combine). The decision is about FAN-OUT (how many observers) and DIRECTNESS (does the observer already have a reference to the Model, or does it need to be reachable from somewhere else entirely) - closures/delegates for direct one-to-one relationships, NotificationCenter/Combine when multiple, decoupled observers need to react to the same change.
+""",
+                example: """
+// AGGREGATOR (Interactor/UseCase): combines multiple sources into ONE
+// ready-to-use result - the Controller depends on THIS, not on
+// orchestrating multiple Model fetches + a network call itself.
+protocol ProductDetailAggregating {
+    func loadProductDetail(id: String) async throws -> ProductDetailResult
+}
+
+struct ProductDetailResult {
+    let product: Product              // from a network Service
+    let isFavorited: Bool              // from a local Model/store
+    let recentlyViewed: [Product]      // from another local Model/store
+}
+
+final class ProductDetailAggregator: ProductDetailAggregating {
+    private let productService: ProductServicing
+    private let favoritesStore: FavoritesStoring
+    private let historyStore: RecentlyViewedStoring
+
+    init(productService: ProductServicing, favoritesStore: FavoritesStoring, historyStore: RecentlyViewedStoring) {
+        self.productService = productService
+        self.favoritesStore = favoritesStore
+        self.historyStore = historyStore
+    }
+
+    func loadProductDetail(id: String) async throws -> ProductDetailResult {
+        async let product = productService.fetchProduct(id: id)
+        async let recentlyViewed = historyStore.recentItems()
+        return try await ProductDetailResult(
+            product: product,
+            isFavorited: favoritesStore.isFavorited(id: id),
+            recentlyViewed: recentlyViewed
+        )
+    }
+}
+
+// CONTROLLER: depends on the ONE aggregator - never combines the three
+// sources itself, never touches URLSession/JSONDecoder directly.
+final class ProductDetailViewController: UIViewController {
+    private let aggregator: ProductDetailAggregating
+    private let dataSource = ProductDetailDataSource()   // refactoring
+                                                            // step 1: extracted
+    init(aggregator: ProductDetailAggregating) {
+        self.aggregator = aggregator
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func load(productID: String) {
+        Task {
+            let result = try await aggregator.loadProductDetail(id: productID)
+            dataSource.apply(result)
+        }
+    }
+}
+
+// VIEW SUBCLASS: owns everything decidable from ITS OWN data alone -
+// its own layout, its own rendering. Never coordinates with siblings.
+final class ProductCardView: UIView {
+    func configure(with product: Product, isFavorited: Bool) {
+        // lays out and renders itself entirely from its own inputs -
+        // no knowledge of any OTHER component on the screen
+    }
+}
+
+// MODEL-TO-UI PROPAGATION: Combine, for a class-based Model with
+// multiple potential observers and built-in composable operators.
+final class FavoritesStore: ObservableObject {
+    @Published private(set) var favoriteIDs: Set<String> = []
+
+    func toggle(_ id: String) {
+        if favoriteIDs.contains(id) { favoriteIDs.remove(id) } else { favoriteIDs.insert(id) }
+    }
+}
+
+final class FavoritesBadgeController: UIViewController {
+    private let store: FavoritesStore
+    private var cancellable: AnyCancellable?
+
+    init(store: FavoritesStore) {
+        self.store = store
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        cancellable = store.$favoriteIDs
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] ids in self?.updateBadge(count: ids.count) }
+    }
+
+    private func updateBadge(count: Int) { /* ... */ }
+}
+
+protocol ProductServicing { func fetchProduct(id: String) async throws -> Product; func fetchProducts() async throws -> [Product] }
+protocol FavoritesStoring { func isFavorited(id: String) -> Bool }
+protocol RecentlyViewedStoring { func recentItems() async throws -> [Product] }
+struct Product { let id: String }
+final class ProductDetailDataSource { func apply(_ result: ProductDetailResult) {} }
+""",
+                keyTakeaways: [
+                    "A Controller aggregating multiple Models + a network response should depend on a dedicated AGGREGATOR/UseCase object that combines those sources into ONE ready-to-use result - the Controller calls one method, it never orchestrates and combines the fetches itself.",
+                    "Two safe, incremental Massive-View-Controller refactoring steps that stay within MVC: extract the UITableViewDataSource/Delegate conformance into its own owned object, and extract all networking/persistence into an injected, protocol-abstracted Service - both mechanical extractions, not architecture rewrites.",
+                    "The networking layer belongs entirely in a Service returning already-decoded domain models - the Controller should have zero direct URLSession/URLRequest/JSONDecoder references anywhere in it.",
+                    "View subclass vs Controller: a component owns everything decidable from ITS OWN data alone (its own layout/rendering); the Controller owns coordination BETWEEN multiple components and screen-wide state - if logic only needs one component's own inputs, it belongs in that component, not the Controller.",
+                    "Model-to-UI propagation mechanism choice comes down to fan-out and directness: closures/delegates for simple one-to-one Controller-observes-its-own-Model relationships; NotificationCenter or Combine when multiple, decoupled observers need to react to the same change."
+                ]
+            ),
+            QAItem(
+                id: "mvc_navigation_coordination_and_module_boundaries",
+                question: "How would you handle navigation and flow coordination in an MVC app (pushing/presenting controllers) without tightly coupling every ViewController to every other one? If a feature is split into modules, how do you define clear boundaries between Model, View, and Controller across modules to avoid cross-module dependencies?",
+                topics: ["MVC", "Coordinator Pattern", "Navigation", "Modularization", "Architecture"],
+                explanation: """
+Both questions are really about the SAME failure mode at two different scales - a ViewController that knows how to construct and present the specific NEXT ViewController creates tight coupling either between two screens (small scale) or between two entire feature modules (large scale) - and both are fixed by inserting an intermediary that owns "what comes next" instead of leaving that decision inside the screens themselves.
+
+**The problem with naive MVC navigation.** The default, un-refactored approach has `ViewControllerA` directly construct `ViewControllerB` and call `present`/`pushViewController` inline: `let vc = ProductDetailViewController(product: product); navigationController?.pushViewController(vc, animated: true)`. This means A must import and know the full initializer signature of B - completely reasonable for a TINY app, but it means every screen is coupled to every OTHER screen it can navigate to, navigation flow logic (which screen comes after which, under what conditions) is scattered across every ViewController instead of living anywhere you could look at it as a whole, and A becomes literally impossible to reuse or test in isolation from B's concrete existence.
+
+**The Coordinator pattern - a dedicated object owning navigation flow, decoupling ViewControllers from each other.** A `Coordinator` object owns a `UINavigationController` (or a `present`-ing context) and is responsible for deciding WHICH screen comes next and constructing it - ViewControllers themselves don't construct or present their siblings at all; instead, they report an EVENT upward (via a closure or a lightweight delegate protocol - "user tapped this product," "user finished checkout") and the Coordinator decides what that event means for navigation. This means `ProductListViewController` needs to know NOTHING about `ProductDetailViewController`'s existence, construction, or presentation style - it just reports "user selected product X," and the Coordinator (which DOES know about both screens, since coordinating between them is its entire job) handles the rest. This is the single biggest lever for making ViewControllers independently reusable and testable, since a ViewController's own tests never need to construct or mock any OTHER ViewController.
+
+**Applying the same idea across MODULE boundaries (a feature split into modules to avoid cross-module dependencies):** the exact same Coordinator principle, scaled up - if `ProductModule` and `CheckoutModule` are separate Swift Package targets, `ProductModule` should NOT import `CheckoutModule` directly just to push a checkout screen (that would make the "smaller," more foundational module depend on a "larger" feature module, usually backwards from the intended dependency direction, and makes ProductModule impossible to reuse anywhere checkout doesn't exist). Instead: define the NAVIGATION EVENT as a protocol or enum owned by a shared, LOW-level module both feature modules can depend on (or simply as a closure the app's composition root wires up), and let a top-level Coordinator (living in the APP target, which is allowed to depend on both feature modules) be the one thing that actually imports both and connects "product module reports this event" to "checkout module gets pushed." This keeps the dependency graph strictly one-directional: feature modules depend downward on shared/foundational modules, never sideways on each other, and the app target (or a dedicated Coordinator/routing module) is the only place allowed to depend on multiple feature modules at once.
+
+**The Model/View/Controller boundary specifically across modules:** Models that represent genuinely SHARED domain concepts (a `User`, a `Product` referenced by multiple feature modules) belong in a low-level shared module every feature module can depend on; Models specific to ONE feature's own internal concerns stay private to that feature's module, not exposed at all. Views and Controllers are almost always feature-specific and should stay inside their owning module, communicating with OTHER modules only through the same event/protocol mechanism described above for navigation - never by one feature module reaching in and directly manipulating another feature module's internal View/Controller types.
+""",
+                example: """
+// THE PROBLEM: A directly constructs and presents B - tightly coupled,
+// A cannot be tested/reused without B concretely existing.
+final class ProductListViewControllerCoupled: UIViewController {
+    func didSelectProduct(_ product: Product) {
+        // A must know B's exact construction and presentation style -
+        // coupled directly to a sibling screen.
+        let detail = ProductDetailViewController(product: product)
+        navigationController?.pushViewController(detail, animated: true)
+    }
+}
+
+// THE FIX: a Coordinator owns navigation flow; ViewControllers report
+// EVENTS upward and know nothing about their siblings.
+protocol ProductListViewControllerDelegate: AnyObject {
+    func productListDidSelect(_ product: Product)
+}
+
+final class ProductListViewController: UIViewController {
+    weak var delegate: ProductListViewControllerDelegate?
+
+    func didSelectProduct(_ product: Product) {
+        // Reports an EVENT - has zero knowledge of what happens next,
+        // or that ProductDetailViewController even exists.
+        delegate?.productListDidSelect(product)
+    }
+}
+
+final class ProductCoordinator: ProductListViewControllerDelegate {
+    private let navigationController: UINavigationController
+
+    init(navigationController: UINavigationController) {
+        self.navigationController = navigationController
+    }
+
+    func start() {
+        let list = ProductListViewController()
+        list.delegate = self   // Coordinator is the ONLY thing that
+        navigationController.pushViewController(list, animated: false)
+    }               // knows about BOTH screens - that's its entire job
+
+    func productListDidSelect(_ product: Product) {
+        // The Coordinator decides what "selected a product" MEANS for
+        // navigation - constructs and presents the next screen itself.
+        let detail = ProductDetailViewController(product: product)
+        detail.delegate = self
+        navigationController.pushViewController(detail, animated: true)
+    }
+}
+
+// MODULE BOUNDARIES: the SAME principle, scaled up. ProductModule does
+// NOT import CheckoutModule directly - it reports an event via a
+// protocol owned by a shared, low-level module both depend on.
+
+// In a shared "AppNavigationEvents" module (foundational, low-level):
+protocol ProductModuleOutput: AnyObject {
+    func productModuleDidRequestCheckout(productID: String)
+}
+
+// In ProductModule - depends ONLY on the shared events module, never
+// on CheckoutModule directly:
+final class ProductModuleCoordinator {
+    weak var output: ProductModuleOutput?
+
+    func userTappedBuy(productID: String) {
+        output?.productModuleDidRequestCheckout(productID: productID)
+    }
+}
+
+// In the APP target (or a dedicated routing module) - the ONLY place
+// allowed to import BOTH ProductModule and CheckoutModule:
+// final class AppCoordinator: ProductModuleOutput {
+//     func productModuleDidRequestCheckout(productID: String) {
+//         let checkoutCoordinator = CheckoutModuleCoordinator(productID: productID)
+//         checkoutCoordinator.start()
+//     }
+// }
+// This keeps the dependency graph strictly one-directional: feature
+// modules never depend sideways on each other.
+
+struct Product { let id: String }
+
+protocol ProductDetailViewControllerDelegate: AnyObject {}
+
+final class ProductDetailViewController: UIViewController {
+    weak var delegate: ProductDetailViewControllerDelegate?
+    private let product: Product
+    init(product: Product) {
+        self.product = product
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+extension ProductCoordinator: ProductDetailViewControllerDelegate {}
+""",
+                keyTakeaways: [
+                    "Naive MVC navigation has each ViewController directly construct and present the next one - coupling every screen to every screen it can navigate to, and making ViewControllers impossible to test/reuse in isolation from their siblings.",
+                    "The Coordinator pattern inserts a dedicated object that owns navigation flow: ViewControllers report EVENTS upward (closure or delegate protocol) instead of constructing/presenting siblings themselves - the Coordinator is the only thing that needs to know about both screens.",
+                    "The same principle scales to module boundaries: a feature module should never import another feature module directly just to navigate to it - report the navigation event via a protocol/enum owned by a shared, low-level module both depend on.",
+                    "A top-level Coordinator (living in the app target, or a dedicated routing module) is the only place allowed to depend on multiple feature modules at once - this keeps the dependency graph strictly one-directional, never sideways between features.",
+                    "Models representing genuinely shared domain concepts belong in a low-level shared module; Models specific to one feature's internal concerns stay private to that module - Views/Controllers communicate across module boundaries only through the same event mechanism used for navigation, never by directly manipulating another module's internal types."
+                ]
+            ),
+            QAItem(
+                id: "mvc_testability_offline_caching_legacy_migration",
+                question: "When writing unit tests in an MVC UIKit app, which parts do you typically test most, and what makes Views and ViewControllers harder to test? How would you design a screen so it can be reused with different data sources (mock vs live) without rewriting the ViewController? How would you handle offline caching for a feature so the ViewController doesn't need to know whether data came from cache or network? And if you inherit a legacy MVC codebase with tightly coupled controllers and singletons, what's your first safe step to improve the architecture without breaking behavior?",
+                topics: ["MVC", "Testing", "Repository Pattern", "Dependency Injection", "Legacy Code"],
+                explanation: """
+These four questions share one answer at their core: testability, reusability, and safe legacy improvement all come from the SAME move - depending on protocol abstractions instead of concrete types, injected rather than reached for directly - which is worth recognizing as one underlying principle rather than four separate tricks.
+
+**Which parts of an MVC app to unit test most, and why Views/ViewControllers are harder to test.** Models (pure data + business logic, no UIKit) and Services (networking/persistence, protocol-abstracted) are the highest-value, easiest-to-test layers - they're plain Swift, need no simulator, and a test failure points precisely at broken business logic. Views and ViewControllers are structurally harder to unit test for a real reason, not just tooling friction: a `UIViewController` only reaches its normal, fully-configured state through the UIKit view lifecycle (`loadView`, `viewDidLoad`, `viewWillAppear`, layout passes) - a lifecycle a plain XCTest doesn't naturally drive the way running the app does, so testing one meaningfully often means either instantiating it inside a real (if minimal) app/window context, or accepting that you're only testing whatever logic you could extract OUT of it. This is precisely the argument for extracting as much logic as possible into a data source object, a Service, and a Model - each testable independently and fully - leaving the actual ViewController/View so thin that what little remains genuinely doesn't need much direct testing at all, more UI/snapshot/integration-level verification than fine-grained unit tests.
+
+**Designing a screen reusable with mock vs live data sources, without rewriting the ViewController.** This is Dependency Inversion applied directly: the ViewController should depend on a PROTOCOL (`ProductServicing`), injected through its initializer, never construct a concrete Service itself. Production code injects the real, network-backed implementation; a test - or a SwiftUI preview, or a demo/QA build - injects a fake returning canned data. The ViewController's own code never changes between these cases; only what's passed into its initializer does.
+
+**Offline caching so the ViewController doesn't need to know whether data came from cache or network - the Repository pattern.** A `Repository` sits BETWEEN the ViewController and the actual data sources (a network Service and a local cache/persistence layer), and owns the POLICY of which one to use and when (try cache first and return immediately, then refresh from network in the background and notify of updates; or check network first, falling back to cache only on failure; whatever the feature's specific needs are). The ViewController depends on the Repository's single, simple interface (`func fetchProducts() async throws -> [Product]`) and is completely unaware that a decision between cache and network is even happening - that policy can change entirely (add a TTL, change the fallback order, add a third data source) without touching the ViewController at all, since it only ever depended on the Repository's stable interface.
+
+**A legacy MVC codebase with tightly-coupled controllers and singletons - the safe first step.** Resist the urge to do a big-bang rewrite - the safe, incremental path is: (1) before changing ANYTHING, add characterization tests (tests that document CURRENT behavior, even if that behavior isn't ideal) around the specific area you're about to touch, so you have a safety net that catches accidental behavior changes; (2) introduce a PROTOCOL in front of the tightly-coupled singleton dependency at its point of use (`protocol AnalyticsLogging { func log(_ event: String) }` wrapping `AnalyticsManager.shared`), without changing the singleton itself yet - this alone makes the ONE Controller you're working on newly testable, with zero risk to the rest of the app, since everywhere else still uses the singleton exactly as before; (3) only AFTER a piece of code is behind a protocol seam and covered by tests do you have a safe foundation to actually change its internals or extract it further. This is the "strangler fig" approach - new, better-structured code grows in behind stable seams around the OLD code, incrementally, rather than a risky wholesale rewrite that has to get an entire feature right in one large, unverifiable step.
+""",
+                example: """
+// TESTABLE: Models and Services - plain Swift, no UIKit, no lifecycle.
+struct Product: Equatable { let id: String; let price: Decimal }
+
+func testProductEquality() {
+    let a = Product(id: "1", price: 9.99)
+    let b = Product(id: "1", price: 9.99)
+    assert(a == b)   // no simulator, no view lifecycle needed at all
+}
+
+// REUSABLE WITH MOCK VS LIVE: depend on a protocol, injected.
+protocol ProductServicing {
+    func fetchProducts() async throws -> [Product]
+}
+
+final class LiveProductService: ProductServicing {
+    func fetchProducts() async throws -> [Product] {
+        // real URLSession call
+        return []
+    }
+}
+
+final class MockProductService: ProductServicing {
+    var stubbedProducts: [Product] = [Product(id: "1", price: 9.99)]
+    func fetchProducts() async throws -> [Product] { stubbedProducts }
+}
+
+final class ProductListViewController: UIViewController {
+    private let service: ProductServicing
+
+    // Production injects LiveProductService; a test, preview, or demo
+    // build injects MockProductService - THIS CODE never changes.
+    init(service: ProductServicing) {
+        self.service = service
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+// OFFLINE CACHING: a Repository owns the cache-vs-network POLICY - the
+// ViewController only ever sees ONE simple interface.
+protocol ProductRepositoryProtocol {
+    func fetchProducts() async throws -> [Product]
+}
+
+final class ProductRepository: ProductRepositoryProtocol {
+    private let service: ProductServicing
+    private let cache: ProductCaching
+
+    init(service: ProductServicing, cache: ProductCaching) {
+        self.service = service
+        self.cache = cache
+    }
+
+    func fetchProducts() async throws -> [Product] {
+        // The POLICY lives HERE - entirely invisible to whatever calls
+        // fetchProducts(). Could change to cache-first, TTL-based, etc.
+        // without the ViewController's code changing at all.
+        if let cached = cache.cachedProducts(), !cached.isEmpty {
+            Task { try? await refreshCacheInBackground() }
+            return cached
+        }
+        return try await refreshCacheInBackground()
+    }
+
+    @discardableResult
+    private func refreshCacheInBackground() async throws -> [Product] {
+        let fresh = try await service.fetchProducts()
+        cache.store(fresh)
+        return fresh
+    }
+}
+
+protocol ProductCaching {
+    func cachedProducts() -> [Product]?
+    func store(_ products: [Product])
+}
+
+// LEGACY MIGRATION: wrap a tightly-coupled singleton behind a protocol
+// AT ITS POINT OF USE - makes ONE controller testable with zero risk
+// to the rest of the app, which keeps using the singleton unchanged.
+protocol AnalyticsLogging {
+    func log(_ event: String)
+}
+
+extension AnalyticsManager: AnalyticsLogging {}   // the legacy singleton
+                                                    // now conforms, unchanged
+
+final class LegacyCheckoutViewController: UIViewController {
+    // Before: called AnalyticsManager.shared.log(...) directly, untestable.
+    // After: depends on the PROTOCOL - testable, and the rest of the
+    // app's untouched code still uses AnalyticsManager.shared exactly
+    // as it always did.
+    private let analytics: AnalyticsLogging
+
+    init(analytics: AnalyticsLogging = AnalyticsManager.shared) {
+        self.analytics = analytics
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+}
+
+final class AnalyticsManager {
+    static let shared = AnalyticsManager()
+    private init() {}
+    func log(_ event: String) { /* ... */ }
+}
+""",
+                keyTakeaways: [
+                    "Models and Services (pure Swift, no UIKit) are the highest-value, easiest unit-test targets; Views/ViewControllers are structurally harder because they only reach their normal state through UIKit's view lifecycle, which a plain XCTest doesn't naturally drive.",
+                    "Reusing a screen with mock vs live data is Dependency Inversion applied directly: the ViewController depends on a protocol injected through its initializer - production injects the real Service, tests/previews inject a fake, and the ViewController's own code never changes.",
+                    "Offline caching belongs in a dedicated Repository sitting between the ViewController and the real data sources - it owns the cache-vs-network POLICY entirely; the ViewController depends on one simple interface and is unaware a decision is even happening.",
+                    "The safe first step on a legacy, tightly-coupled codebase is NOT a rewrite: add characterization tests around the area you're about to touch first, then wrap the tightly-coupled singleton behind a protocol at its point of use - without changing the singleton itself yet.",
+                    "This 'strangler fig' approach lets better-structured code grow in behind stable seams around the old code incrementally - each step (protocol seam, then tests, then internals) is individually safe and verifiable, unlike a wholesale rewrite that has to get everything right in one large, unverifiable step."
+                ]
+            ),
+            QAItem(
+                id: "token_refresh_401_retry_interceptor",
+                question: "How do you handle authentication in iOS networking - specifically attaching and refreshing access tokens, and safely retrying failed requests after a 401?",
+                topics: ["Networking", "Authentication", "URLSession", "Token Refresh", "Concurrency"],
+                explanation: """
+This needs a single, centralized interceptor - not per-call-site retry logic - specifically because the tricky part isn't "retry once after a 401," it's correctly handling MULTIPLE requests that all hit a 401 around the same time, without triggering N separate, redundant token-refresh calls.
+
+**Attaching the token: a single request-building chokepoint.** Every outgoing request should pass through ONE place that attaches the current access token as an `Authorization` header - never scattered inline at each call site, both because that's repetitive and because it's the natural place to also handle what happens when a request comes back unauthorized.
+
+**The 401 retry flow, done correctly:**
+1. A request goes out with the current access token attached.
+2. It comes back `401 Unauthorized` - the token has expired (or was revoked).
+3. Refresh the access token using the refresh token, then retry the ORIGINAL request once with the new token attached.
+4. If the retried request ALSO gets a 401, or the refresh call itself fails, treat this as a genuine auth failure - log the user out / route to a re-authentication screen, and do NOT retry again (an unbounded retry loop against a server that keeps rejecting you is both wasteful and, at high frequency, indistinguishable from hammering the server).
+
+**The concurrency problem this flow has to solve correctly: multiple in-flight requests hitting a 401 at the same time.** If a screen fires off five concurrent requests right as the token expires, all five will independently receive a 401 - a naive implementation lets each one independently kick off its OWN token refresh call, resulting in five simultaneous refresh requests hitting the auth server (wasteful, and depending on the auth server's implementation, possibly causing some of those refreshes to invalidate each other, or exhausting a single-use refresh token after the first one succeeds, silently breaking the other four). The correct fix: a single, SHARED in-flight refresh operation - the first request to hit a 401 starts the refresh and stores the in-progress `Task`/operation; every OTHER request that hits a 401 while a refresh is already underway AWAITS that SAME shared task instead of starting a new one, and once it completes, all of them retry their own original request with the newly-refreshed token.
+
+**Where this lives architecturally:** as a dedicated `AuthenticatingURLSession`/interceptor type that every Service depends on instead of raw `URLSession` directly - this keeps the retry-with-refresh logic in exactly one place, testable independently, rather than duplicated (and likely inconsistently implemented) across every individual Service that happens to need authenticated requests.
+""",
+                example: """
+actor TokenRefreshCoordinator {
+    private var refreshTask: Task<String, Error>?
+    private let refreshEndpoint: URL
+    private var currentRefreshToken: String
+
+    init(refreshEndpoint: URL, refreshToken: String) {
+        self.refreshEndpoint = refreshEndpoint
+        self.currentRefreshToken = refreshToken
+    }
+
+    // Multiple concurrent callers all hitting a 401 around the same
+    // time share ONE in-flight refresh - only the FIRST caller actually
+    // starts the network call; every other caller awaits the SAME task.
+    func refreshedToken() async throws -> String {
+        if let existingTask = refreshTask {
+            return try await existingTask.value
+        }
+
+        let task = Task<String, Error> {
+            defer { refreshTask = nil }   // clear once done, success or failure
+            var request = URLRequest(url: refreshEndpoint)
+            request.httpMethod = "POST"
+            request.httpBody = try JSONEncoder().encode(["refresh_token": currentRefreshToken])
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                throw AuthError.refreshFailed
+            }
+            let decoded = try JSONDecoder().decode(TokenResponse.self, from: data)
+            KeychainStore.saveAccessToken(decoded.accessToken)
+            return decoded.accessToken
+        }
+        refreshTask = task
+        return try await task.value
+    }
+}
+
+final class AuthenticatingURLSession {
+    private let coordinator: TokenRefreshCoordinator
+    private var accessToken: String
+
+    init(coordinator: TokenRefreshCoordinator, accessToken: String) {
+        self.coordinator = coordinator
+        self.accessToken = accessToken
+    }
+
+    // Every Service routes requests through THIS single chokepoint -
+    // token attachment and refresh-on-401 logic live in exactly one place.
+    func authenticatedData(for request: URLRequest, isRetry: Bool = false) async throws -> (Data, URLResponse) {
+        var authedRequest = request
+        authedRequest.setValue("Bearer \\(accessToken)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: authedRequest)
+        guard let http = response as? HTTPURLResponse else { return (data, response) }
+
+        if http.statusCode == 401 {
+            guard !isRetry else {
+                // Already retried once after a fresh token and STILL 401 -
+                // genuine auth failure, not a token-expiry timing issue.
+                // Route to re-authentication; do NOT retry again.
+                throw AuthError.reauthenticationRequired
+            }
+            // Multiple concurrent 401s all await the SAME refresh via
+            // the actor-isolated coordinator - only one network call
+            // happens no matter how many requests hit this branch at once.
+            accessToken = try await coordinator.refreshedToken()
+            return try await authenticatedData(for: request, isRetry: true)   // retry ONCE
+        }
+
+        return (data, response)
+    }
+}
+
+struct TokenResponse: Decodable { let accessToken: String }
+enum AuthError: Error { case refreshFailed, reauthenticationRequired }
+enum KeychainStore { static func saveAccessToken(_ token: String) {} }
+""",
+                keyTakeaways: [
+                    "Attach tokens at a single request-building chokepoint, not scattered inline at each call site - the same place naturally handles what happens when a request comes back unauthorized.",
+                    "The retry flow: on 401, refresh the token, retry the ORIGINAL request once with the new token - if the retry also 401s or the refresh itself fails, treat it as a genuine auth failure (log out / re-authenticate), never retry unboundedly.",
+                    "The real complexity is multiple concurrent requests hitting a 401 around the same time - a naive implementation lets each one independently trigger its own refresh call, wastefully hitting the auth server multiple times and potentially invalidating a single-use refresh token after the first succeeds.",
+                    "The fix: a single SHARED in-flight refresh task (via an actor) - the first 401 starts the refresh; every other concurrent 401 awaits that SAME task instead of starting a new one, then all retry with the refreshed token once it completes.",
+                    "This logic belongs in one dedicated interceptor/authenticating-session type that every Service depends on instead of raw URLSession directly - keeping retry-with-refresh behavior in exactly one testable place instead of duplicated inconsistently across services."
+                ]
+            ),
+            QAItem(
+                id: "robust_codable_decoding_diagnosable_failures",
+                question: "When decoding JSON with Codable, how do you handle mismatched keys, optional fields, and date formats while keeping decoding failures diagnosable?",
+                topics: ["Codable", "JSON", "Networking", "Debugging"],
+                explanation: """
+Real-world APIs rarely hand you JSON whose keys and types line up perfectly with idiomatic Swift naming - handling the mismatch cleanly, and being able to diagnose it quickly when it fails, are both about using Codable's own extension points rather than fighting them.
+
+**Mismatched keys - `CodingKeys`, or `keyDecodingStrategy` for a systematic pattern.** For occasional one-off renames, an explicit `CodingKeys` enum maps a differently-named JSON key to your Swift property name. When an ENTIRE API consistently uses snake_case (`full_name`, `created_at`), `JSONDecoder().keyDecodingStrategy = .convertFromSnakeCase` handles the whole payload automatically instead of writing a `CodingKeys` case for every single property - reach for the systematic strategy first, and only fall back to explicit `CodingKeys` for the individual fields that don't follow the general pattern (mixing both is fine: `.convertFromSnakeCase` handles the common case, and `CodingKeys` for a handful of exceptions layers on top of it correctly).
+
+**Optional fields - make the Swift property `Optional`, and understand `decodeIfPresent` vs a genuinely missing key.** Synthesized `Codable` conformance automatically uses `decodeIfPresent` for any `Optional`-typed property, which returns `nil` both when the key is ABSENT from the JSON entirely and when it's present with a JSON `null` value - for the common case, this is exactly the right behavior (nullable API field -> optional Swift property). If you need to distinguish "key missing" from "key present but null" (rare, but happens with PATCH-style APIs where absence means "don't change this field" and explicit null means "clear this field"), that needs manual `init(from:)` using `container.contains(.key)` to check presence separately from decoding the value.
+
+**Date formats - a custom `dateDecodingStrategy`, matched to what the API actually sends.** `.iso8601` covers the most common case; for a non-standard format (`"2024-01-15 10:30:00"`, no `T`/timezone), `.formatted(dateFormatter)` with an explicit `DateFormatter` (or `.custom { decoder in ... }` for genuinely irregular formats, e.g. a field that's SOMETIMES a Unix timestamp number and sometimes an ISO string) - configuring this ONCE on the decoder instance handles every `Date` property in the payload consistently, rather than manually parsing date strings field-by-field after decoding.
+
+**Keeping decoding failures diagnosable - this is the part most implementations get wrong by simply discarding the error.** `DecodingError` is a genuinely detailed, structured error type - `.keyNotFound(let key, let context)`, `.typeMismatch(let type, let context)`, `.valueNotFound(let type, let context)`, `.dataCorrupted(let context)` - each carrying a `context.codingPath` (the EXACT nested path to the field that failed, e.g. `orders[3].items[0].price`) and `context.debugDescription`. Catching this as a generic `Error` and logging `error.localizedDescription` throws away nearly all of this - `localizedDescription` on a raw `DecodingError` is often a generic, unhelpful string. Pattern-matching the specific `DecodingError` case and logging `codingPath` explicitly is what turns "decoding failed somewhere in this 200-field response" into "the `price` field at `orders[3].items[0]` was a string, expected a number" - the difference between a five-minute fix and an hour of bisecting the payload manually.
+""",
+                example: """
+struct APIOrder: Decodable {
+    let id: String
+    let customerName: String       // maps from snake_case automatically
+    let createdAt: Date            // custom date format
+    let discountCode: String?      // optional - decodeIfPresent handles
+                                    // both "missing key" and "null" cases
+    let totalCents: Int
+
+    // Only needed for the ONE field that doesn't follow the general
+    // snake_case pattern the decoder's keyDecodingStrategy already handles.
+    enum CodingKeys: String, CodingKey {
+        case id, customerName, createdAt, discountCode
+        case totalCents = "total_in_cents"   // exception to the pattern
+    }
+}
+
+func makeOrderDecoder() -> JSONDecoder {
+    let decoder = JSONDecoder()
+    decoder.keyDecodingStrategy = .convertFromSnakeCase   // handles
+                                                             // full_name -> fullName
+                                                             // for every OTHER field
+    // Non-standard date format the API actually sends - configured
+    // ONCE, applies to every Date property in the payload consistently.
+    let formatter = DateFormatter()
+    formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+    formatter.timeZone = TimeZone(identifier: "UTC")
+    decoder.dateDecodingStrategy = .formatted(formatter)
+    return decoder
+}
+
+// Distinguishing "key missing" from "key present but explicitly null" -
+// needed only for PATCH-style semantics; manual init(from:) required.
+struct PatchRequest: Decodable {
+    let name: String??   // outer Optional: key present or absent;
+                          // inner Optional: value null or not, when present
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        if container.contains(.name) {
+            name = .some(try container.decode(String?.self, forKey: .name))
+        } else {
+            name = .none   // key genuinely absent - "don't change this field"
+        }
+    }
+    enum CodingKeys: String, CodingKey { case name }
+}
+
+// KEEPING FAILURES DIAGNOSABLE: pattern-match the specific DecodingError
+// case instead of discarding it as a generic Error.
+func decodeOrders(from data: Data) throws -> [APIOrder] {
+    do {
+        return try makeOrderDecoder().decode([APIOrder].self, from: data)
+    } catch let DecodingError.typeMismatch(type, context) {
+        // codingPath gives the EXACT nested location of the failure -
+        // e.g. [orders, Index 3, items, Index 0, price] - not just
+        // "decoding failed somewhere in this 200-field response".
+        let path = context.codingPath.map(\\.stringValue).joined(separator: ".")
+        print("Type mismatch decoding \\(type) at '\\(path)': \\(context.debugDescription)")
+        throw DecodingError.typeMismatch(type, context)
+    } catch let DecodingError.keyNotFound(key, context) {
+        let path = context.codingPath.map(\\.stringValue).joined(separator: ".")
+        print("Missing key '\\(key.stringValue)' at '\\(path)'")
+        throw DecodingError.keyNotFound(key, context)
+    } catch {
+        print("Decoding failed with an unexpected error: \\(error)")
+        throw error
+    }
+}
+""",
+                keyTakeaways: [
+                    "Use `keyDecodingStrategy = .convertFromSnakeCase` for a systematic naming pattern across an entire payload, and reserve explicit `CodingKeys` for the individual fields that don't follow it - mixing both is fine and common.",
+                    "Making a property Optional gets you `decodeIfPresent` automatically, which returns nil for BOTH a missing key and an explicit JSON null - distinguishing those two cases (needed for PATCH-style 'absence means no change' semantics) requires manual `init(from:)` with `container.contains(.key)`.",
+                    "Configure `dateDecodingStrategy` once on the decoder (`.iso8601`, `.formatted(_:)`, or `.custom` for irregular formats) rather than manually parsing date strings field-by-field after decoding.",
+                    "DecodingError is a structured, detailed error type - `.typeMismatch`/`.keyNotFound`/`.valueNotFound`/`.dataCorrupted` each carry a `codingPath` giving the EXACT nested location of the failure, which `error.localizedDescription` on a generic catch throws away almost entirely.",
+                    "Pattern-match the specific DecodingError case and log `codingPath` explicitly - this turns 'decoding failed somewhere in a 200-field response' into an exact field path, the difference between a five-minute fix and manually bisecting the payload."
+                ]
+            ),
+            QAItem(
+                id: "request_lifecycle_cancellation_dedup_retry_backoff",
+                question: "How do you implement request cancellation in URLSession when a user leaves a screen (and ensure the UI doesn't update from a cancelled response)? If two screens need the same backend resource, how do you avoid duplicate requests and keep data consistent? And for a flaky endpoint that times out, how do you implement retries with backoff while preventing retry storms across the app?",
+                topics: ["Networking", "URLSession", "Task Cancellation", "Retry", "Request Coalescing"],
+                explanation: """
+These three problems - cancellation, deduplication, and retry-with-backoff - all come from the same root cause (a request's lifetime not being tightly tied to what actually still needs its result) and are best solved together in the same networking layer, not as three unrelated patches.
+
+**Request cancellation - tie the request's lifetime to a `Task`, not a manually-tracked flag.** Swift Concurrency's structured `Task` is cancellation-aware natively: `URLSession.data(for:)` checks for cancellation and throws `CancellationError` if the enclosing `Task` is cancelled while the request is in flight. The idiomatic pattern is `.task { }` on a SwiftUI view (automatically cancelled when the view disappears) or explicitly storing the `Task` a UIKit ViewController starts and calling `.cancel()` on it in `viewWillDisappear`/`deinit`. **Ensuring the UI doesn't update from a cancelled response specifically** needs one more check: even after cancellation, code AFTER an `await` point can still technically resume and run - so a `Task.isCancelled` (or catching `CancellationError` explicitly) check RIGHT BEFORE applying a result to the UI is what prevents a slow, now-irrelevant response from overwriting what's currently displayed, since cancellation stops the underlying request but doesn't literally erase already-in-flight completion code without an explicit check.
+
+**Avoiding duplicate requests across screens needing the same resource - request coalescing via a shared in-flight-task registry.** If Screen A and Screen B both request `GET /user/42` within the same moment, a naive implementation fires two independent network calls. A `Repository`/`RequestCoalescer` keyed by request identity (URL + parameters) checks whether a request for that EXACT resource is already in flight, and if so, returns the EXISTING task's result to the second caller instead of starting a new one - both callers get the same result, from one actual network call, and (critically for the "keep data consistent" half of the question) they're guaranteed to see the identical response rather than two separate calls that could theoretically race and return subtly different data if the resource changed between them.
+
+**Retry with backoff for a flaky/timing-out endpoint, without causing app-wide retry storms.** A single request retrying with EXPONENTIAL backoff (wait 1s, then 2s, then 4s, capped at some maximum, ideally with random JITTER added to avoid many clients retrying in lockstep after an outage) handles the "this one endpoint is being flaky" case correctly on its own. The "retry STORM across the app" case is different and needs a GLOBAL circuit breaker, not just per-request backoff: if MANY different requests across the app are all failing around the same time (a real outage, not one flaky endpoint), independently retrying every one of them with its own backoff still adds up to a large aggregate retry volume hitting an already-struggling server. A shared circuit-breaker object tracks the recent app-wide failure rate; once it crosses a threshold, it "opens" and makes ALL requests fail fast (no retry, immediate local failure) for a cooldown period, instead of letting every individual request keep hammering a server that's already known to be down - this protects both the server (less load during an outage) and the client (fails fast instead of a UI stuck retrying for a long time with no chance of success).
+""",
+                example: """
+// CANCELLATION: tie the request's lifetime to a Task; check
+// isCancelled explicitly before applying a result to the UI.
+final class ProfileViewController: UIViewController {
+    private var loadTask: Task<Void, Never>?
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        loadTask?.cancel()   // cancels the underlying URLSession request
+    }
+
+    func load(userID: String) {
+        loadTask?.cancel()
+        loadTask = Task {
+            do {
+                let profile = try await ProfileService.shared.fetchProfile(id: userID)
+                // Even after cancellation, code after an `await` can still
+                // resume - this explicit check is what actually prevents
+                // a now-irrelevant response from updating the UI.
+                guard !Task.isCancelled else { return }
+                self.updateUI(with: profile)
+            } catch is CancellationError {
+                // expected on navigation away - not a real error to surface
+            } catch {
+                self.showError(error)
+            }
+        }
+    }
+
+    private func updateUI(with profile: Profile) {}
+    private func showError(_ error: Error) {}
+}
+
+// REQUEST COALESCING: two screens requesting the SAME resource share
+// ONE in-flight network call and see identical results.
+actor RequestCoalescer {
+    private var inFlight: [String: Task<Profile, Error>] = [:]
+
+    func fetchProfile(id: String, using service: ProfileServicing) async throws -> Profile {
+        if let existing = inFlight[id] {
+            return try await existing.value   // second caller shares the SAME task
+        }
+        let task = Task<Profile, Error> {
+            defer { inFlight[id] = nil }
+            return try await service.fetchProfile(id: id)
+        }
+        inFlight[id] = task
+        return try await task.value
+    }
+}
+
+// RETRY WITH BACKOFF (per-request) + CIRCUIT BREAKER (app-wide storm
+// prevention) - two DIFFERENT mechanisms for two different problems.
+actor CircuitBreaker {
+    private var recentFailures = 0
+    private var openUntil: Date?
+    private let failureThreshold = 10
+    private let cooldown: TimeInterval = 30
+
+    func canAttempt() -> Bool {
+        if let openUntil, Date() < openUntil { return false }   // fail FAST,
+        return true                                               // no retry at all
+    }                                                              // while "open"
+
+    func recordSuccess() { recentFailures = 0 }
+
+    func recordFailure() {
+        recentFailures += 1
+        if recentFailures >= failureThreshold {
+            openUntil = Date().addingTimeInterval(cooldown)   // trip the breaker -
+            recentFailures = 0                                  // protects the server
+        }                                                        // AND the client
+    }
+}
+
+func fetchWithBackoff<T>(
+    maxAttempts: Int = 3,
+    breaker: CircuitBreaker,
+    operation: () async throws -> T
+) async throws -> T {
+    guard await breaker.canAttempt() else {
+        throw NetworkError.circuitOpen   // fails immediately - no point
+    }                                      // retrying a known-down server
+
+    var lastError: Error?
+    for attempt in 0..<maxAttempts {
+        do {
+            let result = try await operation()
+            await breaker.recordSuccess()
+            return result
+        } catch {
+            lastError = error
+            await breaker.recordFailure()
+            let baseDelay = pow(2.0, Double(attempt))           // exponential
+            let jitter = Double.random(in: 0...0.5)              // avoid lockstep
+            try? await Task.sleep(nanoseconds: UInt64((baseDelay + jitter) * 1_000_000_000))
+        }
+    }
+    throw lastError ?? NetworkError.unknown
+}
+
+protocol ProfileServicing { func fetchProfile(id: String) async throws -> Profile }
+final class ProfileService: ProfileServicing {
+    static let shared = ProfileService()
+    func fetchProfile(id: String) async throws -> Profile { Profile(id: id) }
+}
+struct Profile { let id: String }
+enum NetworkError: Error { case circuitOpen, unknown }
+""",
+                keyTakeaways: [
+                    "Tie a request's lifetime to a Swift Concurrency Task (cancellable natively) rather than a manually-tracked flag - cancel it in viewWillDisappear/deinit, or use SwiftUI's .task{} which cancels automatically when the view disappears.",
+                    "Cancellation stops the underlying request but code after an `await` can still resume - an explicit `Task.isCancelled` check right before applying a result to the UI is what actually prevents a slow, now-irrelevant response from overwriting current content.",
+                    "Request coalescing (a shared in-flight-task registry keyed by resource identity) fixes both duplicate network calls AND data consistency - two screens requesting the same resource share ONE call and are guaranteed to see identical results, not two calls that could race.",
+                    "Per-request retry uses exponential backoff with jitter (avoiding many clients retrying in lockstep after an outage) - this alone handles one flaky endpoint correctly.",
+                    "App-wide retry storms need a SEPARATE mechanism: a circuit breaker tracking aggregate recent failure rate that 'opens' (fails fast, no retry) once a threshold is crossed - protecting both an already-struggling server from added load and the client from a UI stuck retrying with no realistic chance of success."
+                ]
+            ),
+            QAItem(
+                id: "realtime_feature_polling_sse_websockets_push",
+                question: "How would you approach integrating a real-time feature on iOS - would you choose polling, server-sent events, WebSockets, or push notifications, and what factors drive that choice?",
+                topics: ["Networking", "Real-Time", "WebSockets", "Push Notifications", "Polling"],
+                explanation: """
+There's no universally "best" option here - each of the four sits at a different point on the tradeoff between implementation simplicity, battery/data cost, latency, and whether the app needs to receive updates while NOT in the foreground - and the right choice depends on which of those actually matters for the specific feature.
+
+**Polling - periodic `GET` requests on a timer.** The simplest to implement (no new infrastructure - it's just a repeating network call) and the easiest to reason about/debug, but the worst latency-to-cost ratio: to feel "real-time," you need a short interval, which means constant network/battery usage even when nothing has changed, and update latency is bounded by however long the interval is (a 30-second poll interval means updates can be up to 30 seconds stale). Appropriate when updates are infrequent, some staleness is genuinely fine (a dashboard that updates every few minutes), or you need something working quickly without new server infrastructure.
+
+**Server-Sent Events (SSE) - a long-lived HTTP connection, server pushes text events one-way.** Lower latency and less wasted traffic than polling (the server only sends when there's actually something new, over a connection that's already open), and it's just HTTP - simpler to implement and debug than a full WebSocket, works through most standard infrastructure (proxies, load balancers) without special handling. The real constraint: ONE-WAY only (server to client) - fine for "push me live updates" (a live score, a live feed), wrong for anything needing the client to also send frequent messages back (chat, collaborative editing).
+
+**WebSockets - a persistent, full-duplex connection.** The right choice when the client needs to send AND receive frequently with low latency (chat, multiplayer/collaborative features, live bidirectional trading data) - true bidirectional communication SSE can't provide. The cost is real implementation complexity: you own reconnection logic (networks drop, the app backgrounds, the connection needs re-establishing and any missed-message gap needs reconciling), heartbeat/keepalive handling, and message-ordering/backpressure concerns that a simple request/response model never has to think about at all.
+
+**Push notifications (APNs) - the ONLY option that works while the app isn't running or in the foreground at all.** Polling, SSE, and WebSockets all require the app to be alive with an active or recently-active process - iOS aggressively suspends background network activity for apps not actively in use, so none of the three "live connection" options can guarantee delivery to a backgrounded or terminated app. If the feature genuinely needs to reach the user when the app isn't open (a chat message, an order status change), APNs is the only mechanism that actually works - and it's commonly paired with one of the other three for the case where the app IS in the foreground and a live connection is worth maintaining for lower latency than a push notification's round trip through Apple's servers.
+
+**The actual decision framework:** (1) does this need to reach the user when the app isn't in the foreground? If yes, APNs is mandatory, possibly combined with a foreground live connection. (2) Does the client need to SEND frequently, not just receive? If yes, WebSockets; if receive-only, SSE is simpler and sufficient. (3) Is some staleness (seconds to minutes) genuinely acceptable, with no new server infrastructure wanted? Polling is the pragmatic, if unglamorous, answer. Reach for the SIMPLEST option that satisfies the feature's actual latency/directionality/foreground-vs-background requirements - WebSockets specifically are frequently over-chosen for features that would have been perfectly served, with far less implementation and operational complexity, by SSE or even polling.
+""",
+                example: """
+// Polling - simplest, appropriate when some staleness is fine.
+final class DashboardPoller {
+    private var timer: Timer?
+
+    func start(interval: TimeInterval = 30) {
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            Task { await self?.fetchLatest() }
+        }
+    }
+
+    func stop() { timer?.invalidate() }
+
+    private func fetchLatest() async {
+        // a plain GET request, repeated on the interval
+    }
+}
+
+// Server-Sent Events - one-way, lower latency than polling, simpler
+// than WebSockets, and works over plain HTTP.
+final class LiveScoreSSEClient: NSObject, URLSessionDataDelegate {
+    private var session: URLSession!
+
+    func connect(to url: URL) {
+        session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        var request = URLRequest(url: url)
+        request.setValue("text/event-stream", forHTTPHeaderField: "Accept")
+        session.dataTask(with: request).resume()
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        // parse "data: {...}\\n\\n" formatted SSE events as they arrive,
+        // no polling interval - the server pushes only when something changes
+        if let event = String(data: data, encoding: .utf8) {
+            handleServerEvent(event)
+        }
+    }
+
+    private func handleServerEvent(_ event: String) { /* ... */ }
+}
+
+// WebSockets - true bidirectional, low-latency, but you own reconnection.
+final class ChatWebSocketClient {
+    private var task: URLSessionWebSocketTask?
+
+    func connect(to url: URL) {
+        task = URLSession.shared.webSocketTask(with: url)
+        task?.resume()
+        receiveNextMessage()
+    }
+
+    func send(_ message: String) {
+        task?.send(.string(message)) { error in
+            if let error { print("Send failed: \\(error)") }
+        }
+    }
+
+    private func receiveNextMessage() {
+        task?.receive { [weak self] result in
+            switch result {
+            case .success(let message):
+                self?.handle(message)
+                self?.receiveNextMessage()   // keep listening
+            case .failure:
+                self?.reconnectWithBackoff()   // YOU own reconnection logic -
+            }                                    // networks drop, backgrounding
+        }                                         // happens, etc.
+    }
+
+    private func handle(_ message: URLSessionWebSocketTask.Message) { /* ... */ }
+    private func reconnectWithBackoff() { /* ... */ }
+}
+
+// Push notifications - the ONLY option reaching a backgrounded/terminated
+// app; commonly paired with a live connection for the foreground case.
+// (Registration/handling lives in AppDelegate + UNUserNotificationCenter,
+// not shown here - the point is architectural: APNs handles "app not
+// running", the live connection above handles "app is open, want low latency".)
+""",
+                keyTakeaways: [
+                    "Polling is simplest to implement (just a repeating GET) but has the worst latency-to-cost ratio - constant network/battery usage even when nothing changed, with staleness bounded by the poll interval.",
+                    "Server-Sent Events give lower latency than polling over plain HTTP (simpler than WebSockets, works through standard infrastructure) but are ONE-WAY only - right for 'push me live updates', wrong when the client also needs to send frequently.",
+                    "WebSockets provide true low-latency bidirectional communication (chat, multiplayer) but you own real complexity: reconnection logic, heartbeats, and message-ordering that a simple request/response model never has to consider.",
+                    "Push notifications (APNs) are the ONLY mechanism that works while the app isn't in the foreground or running at all - mandatory if the feature must reach the user in the background, often paired with a live connection for the foreground case.",
+                    "Decision framework: does it need to reach a backgrounded app (APNs, mandatory)? Does the client send frequently, not just receive (WebSockets) or receive-only (SSE)? Is some staleness fine with no new infrastructure wanted (polling)? Reach for the simplest option that satisfies the actual requirements - WebSockets are frequently over-chosen for features SSE or polling would have served with far less complexity."
+                ]
+            ),
+            QAItem(
+                id: "testing_networking_layer_and_secure_logging",
+                question: "How do you test your networking layer - URLProtocol stubs, dependency injection, or mock sessions - and what do you validate in those tests? Also, how do you ensure sensitive data like tokens or user identifiers aren't logged or persisted insecurely during networking and debugging on iOS, and what do you capture for debugging a failed request while keeping it safe for production logs?",
+                topics: ["Testing", "URLProtocol", "Networking", "Security", "Logging"],
+                explanation: """
+Both halves of this question are really about the same discipline applied at two different points: testing the networking layer means controlling exactly what a request receives back, without ever hitting a real server; keeping logs safe means controlling exactly what LEAVES the app in a log line, without accidentally including anything sensitive.
+
+**Testing the networking layer - three approaches, from most to least isolated:**
+
+1. **Dependency injection with a protocol-abstracted Service (the usual first line of defense).** `protocol ProductServicing { func fetchProducts() async throws -> [Product] }`, and a test injects a fake conforming to it, returning canned data or throwing a specific error. This tests everything ABOVE the Service (ViewModels, Controllers, Repositories) without touching real networking at all - fast, simple, but it doesn't test the Service's OWN implementation (its actual URL construction, header attachment, decoding logic).
+
+2. **`URLProtocol` stubs - intercepting at the URL Loading System level, testing the REAL Service implementation.** Subclassing `URLProtocol` and registering it on a test `URLSessionConfiguration` lets you intercept requests made by the ACTUAL Service code (real `URLSession`, real request construction) and return a canned response - this is what validates the Service's own logic (does it build the right URL? attach the right headers? correctly parse a real HTTP response?) without any real network call happening, and without needing a full mock-session abstraction layered on top of `URLSession` itself.
+
+3. **A full mock `URLSession` (protocol-wrapping `URLSession` itself)** - more invasive to set up (typically means the Service depends on a narrow protocol matching only the `URLSession` methods it actually uses, rather than the concrete class), but gives the most direct control over exactly what's returned per call, useful for testing more complex sequences (first call fails, retry succeeds).
+
+**What to validate, regardless of which approach:** the request is built CORRECTLY (right URL, right HTTP method, right headers/auth token attached, right body encoding) - not just that decoding a happy-path response works; explicit tests for EACH distinct error path (network failure, each meaningfully different non-2xx status code, malformed/undecodable JSON) - not just the success case, since these are exactly the paths most likely to be under-tested and under-handled in the actual implementation; and retry/backoff/cancellation behavior specifically, if the Service implements any (these have real, easy-to-get-wrong logic worth a dedicated test each).
+
+**Keeping sensitive data out of logs and insecure storage - the concrete techniques:**
+- Never `print()` a raw request/response containing an `Authorization` header or token - if you need visibility for debugging, log a REDACTED version (`Authorization: Bearer ***`) that confirms a token was attached without ever printing its actual value anywhere, including into a log file that might be attached to a bug report or crash log by a user.
+- `os_log`/`Logger`'s own PRIVACY-AWARE string interpolation (`Logger().info("token: \\(token, privacy: .private)")`) is the correct native mechanism specifically FOR this - it automatically redacts marked values in the persisted/exported unified log, without you having to manually remember to strip them at every call site.
+- Tokens/session identifiers belong in the Keychain, never `UserDefaults`, never a plain file - `UserDefaults` and plain files aren't specially protected beyond whole-device encryption, and are routinely included in UNencrypted app backups, unlike the Keychain.
+- Crash reporting/analytics SDKs need explicit configuration to scrub sensitive fields before a crash report or breadcrumb trail is ever transmitted off-device - don't assume a third-party SDK does this by default; verify and configure it.
+
+**What TO capture for a failed request, safely.** A request ID/correlation ID (a value with no sensitive meaning on its own, but lets you find the SAME request server-side in backend logs), the URL PATH (not query parameters, which often contain tokens or PII), the HTTP method, the response status code, and a bounded, REDACTED response body preview - enough to diagnose "this endpoint returned a 500 with this shape of error" without ever capturing the Authorization header or a response body containing another user's PII.
+""",
+                example: """
+// 1) DI with a fake Service - tests everything ABOVE the networking
+// layer without touching real networking at all.
+protocol ProductServicing { func fetchProducts() async throws -> [Product] }
+struct Product: Decodable { let id: String; let name: String }
+
+final class FakeProductService: ProductServicing {
+    var result: Result<[Product], Error> = .success([])
+    func fetchProducts() async throws -> [Product] { try result.get() }
+}
+
+// 2) URLProtocol stub - tests the REAL Service implementation (actual
+// URLSession, actual request construction) with no real network call.
+final class URLProtocolStub: URLProtocol {
+    static var stubResponseData: Data?
+    static var stubStatusCode: Int = 200
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        let response = HTTPURLResponse(
+            url: request.url!, statusCode: Self.stubStatusCode,
+            httpVersion: nil, headerFields: nil
+        )!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        if let data = Self.stubResponseData {
+            client?.urlProtocol(self, didLoad: data)
+        }
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
+func testProductServiceParsesRealResponseCorrectly() async throws {
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [URLProtocolStub.self]
+    let session = URLSession(configuration: config)
+
+    URLProtocolStub.stubResponseData = Data(#"[{"id": "1", "name": "Widget"}]"#.utf8)
+    URLProtocolStub.stubStatusCode = 200
+
+    let service = LiveProductService(session: session)   // REAL implementation,
+    let products = try await service.fetchProducts()     // stubbed transport only
+    assert(products.count == 1 && products[0].name == "Widget")
+}
+
+// Explicit test for a non-2xx error path - not just the happy path.
+func testProductServiceThrowsOnServerError() async {
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [URLProtocolStub.self]
+    let session = URLSession(configuration: config)
+    URLProtocolStub.stubStatusCode = 500
+
+    let service = LiveProductService(session: session)
+    do {
+        _ = try await service.fetchProducts()
+        assertionFailure("Expected an error for a 500 response")
+    } catch {
+        // confirms the Service correctly surfaces non-2xx as an error,
+        // not silently returning an empty/garbage result
+    }
+}
+
+final class LiveProductService: ProductServicing {
+    let session: URLSession
+    init(session: URLSession = .shared) { self.session = session }
+    func fetchProducts() async throws -> [Product] {
+        let (data, response) = try await session.data(from: URL(string: "https://api.example.com/products")!)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.badServerResponse)
+        }
+        return try JSONDecoder().decode([Product].self, from: data)
+    }
+}
+
+// SECURE LOGGING: privacy-aware interpolation redacts automatically -
+// never print a raw Authorization header or token value.
+import os
+let networkLogger = Logger(subsystem: "com.app.id", category: "networking")
+
+func logFailedRequest(requestID: String, path: String, statusCode: Int, token: String) {
+    // path and status are safe to log directly; the token is marked
+    // .private - os_log redacts it in the persisted/exported log
+    // automatically, without needing to remember to strip it by hand.
+    networkLogger.error("Request \\(requestID) to \\(path) failed with \\(statusCode). Auth: \\(token, privacy: .private)")
+}
+""",
+                keyTakeaways: [
+                    "DI with a fake Service tests everything above the networking layer without touching real networking; URLProtocol stubs test the REAL Service implementation (actual URLSession, real request construction) with no real network call - use both for different layers of confidence.",
+                    "Validate request construction (URL, method, headers/auth) AND every distinct error path (network failure, each meaningful non-2xx code, malformed JSON) explicitly - not just the happy-path decode, since error paths are the most commonly under-tested and under-handled code.",
+                    "Never print a raw Authorization header or token value - log a redacted form, or use os_log/Logger's own privacy-aware interpolation (`\\(token, privacy: .private)`), which redacts automatically in the persisted/exported unified log without relying on remembering to strip it manually.",
+                    "Tokens and session identifiers belong in the Keychain, never UserDefaults or a plain file - those aren't specially protected and are routinely included in unencrypted app backups.",
+                    "For a failed request, capture a request/correlation ID, URL PATH (not query parameters, which often carry tokens/PII), HTTP method, status code, and a bounded redacted body preview - enough to diagnose the failure without ever capturing an Authorization header or another user's PII."
+                ]
+            ),
+            QAItem(
+                id: "pagination_multipart_upload_api_versioning",
+                question: "When an API returns pagination (page/limit or cursor), how do you model pagination state and prevent duplicate items while loading the next page? How do you handle multipart uploads (e.g. image + metadata) with URLSession and report upload progress to the UI? And how do you manage API versioning and backward compatibility when the backend changes response fields or introduces new ones?",
+                topics: ["Pagination", "Multipart Upload", "API Versioning", "URLSession", "Networking"],
+                explanation: """
+Three separate, concrete API-integration patterns that come up in almost every real app - each has a specific, well-established correct shape worth knowing precisely rather than improvising per-project.
+
+**Modeling pagination state and preventing duplicates.** Track three pieces of state explicitly: the accumulated items array, whether a NEXT page is known to exist (`hasNextPage`, or the raw next cursor/page token itself), and whether a page fetch is CURRENTLY in flight (`isLoadingPage`, to prevent firing a second fetch for the same next page before the first one returns - a common bug when a fast-scrolling user triggers the "near the end" threshold multiple times before the first page finishes loading). For PAGE/LIMIT-based pagination, "next page" is simply `currentPage + 1`, and the boundary check is `returnedCount == limit` (possibly more pages) vs `returnedCount < limit` (this was the last page). For CURSOR-based pagination (more robust against the underlying data changing between page fetches - a common cause of the "duplicate items" problem with page/limit), the server returns an opaque cursor value alongside each page, and the NEXT request includes that exact cursor - the server-side cursor is what actually prevents duplicates/gaps even if items are being inserted/deleted concurrently, which naive page-NUMBER-based pagination can't guarantee (if row 20 gets deleted between fetching page 1 and page 2, everything shifts and a page/limit approach can skip or duplicate an item; a cursor is defined relative to a specific item's position, immune to this). Deduplication as a defensive SECOND layer (checking the new page's item IDs against a `Set` of already-seen IDs before appending) is worth adding regardless of which pagination style the API uses, since it's cheap and protects against a server-side bug or a race from double-triggering a page fetch.
+
+**Multipart uploads (image + metadata) with URLSession and progress reporting.** A `multipart/form-data` request body is manually constructed: each "part" (the image data, and each metadata field) is separated by a boundary string, with its own `Content-Disposition` header naming the field and (for the image) a filename and `Content-Type`. Use `URLSessionUploadTask` (via `session.uploadTask(with:from:)` or `uploadTask(with:fromFile:)`, NOT a plain data task) specifically because upload tasks support background execution (continuing even if the app is suspended) and expose upload PROGRESS, which a plain data task does not. Progress reporting back to the UI uses `URLSessionTaskDelegate`'s `urlSession(_:task:didSendBodyData:totalBytesSent:totalBytesExpectedToSend:)` callback (or, for Swift Concurrency's `upload(for:from:delegate:)`, an `AsyncSequence` of progress updates) - compute `Double(totalBytesSent) / Double(totalBytesExpectedToSend)` and publish it (via a closure, Combine, or an `@Published` property) for the UI to bind a progress bar to.
+
+**API versioning and backward compatibility.** The single most important defensive habit: model EVERY optional/possibly-new field as `Optional` in your `Codable` model, and NEVER let a genuinely new, unrecognized field in the response cause a hard decode failure for the WHOLE payload - `Codable`'s default behavior already handles this correctly (an unrecognized key is silently ignored by default; a decode only fails for a key/type your model explicitly expects but doesn't get, or gets in the wrong type). For a field the backend might RENAME or restructure without warning, wrapping decode logic to tolerate a missing/renamed field gracefully (falling back to a sensible default, or treating that ONE feature as degraded rather than failing the entire response) is more robust than letting one field's absence break loading the whole screen. For genuinely breaking changes (a field's TYPE changes, not just addition/removal), the real fix has to be server-side API versioning (a `/v2/` endpoint, or an `Accept` header specifying a version) - the client can be defensive about additive changes, but cannot safely paper over the server changing what a field fundamentally MEANS or is typed as without an explicit version negotiation.
+""",
+                example: """
+// PAGINATION: explicit state (items, hasNextPage, isLoadingPage) +
+// cursor-based fetching (robust against underlying data changing
+// between page fetches) + a defensive dedup layer.
+struct Image: Decodable, Identifiable {
+    let id: String
+    let url: String
+}
+
+struct PagedResponse: Decodable {
+    let items: [Image]
+    let nextCursor: String?   // nil means this was the last page
+}
+
+@MainActor
+final class ImageFeedPaginator: ObservableObject {
+    @Published private(set) var images: [Image] = []
+    @Published private(set) var isLoadingPage = false
+    private var nextCursor: String?
+    private var hasLoadedFirstPage = false
+    private var seenIDs: Set<String> = []   // defensive dedup layer
+
+    var hasNextPage: Bool { hasLoadedFirstPage ? nextCursor != nil : true }
+
+    func loadNextPageIfNeeded() async {
+        guard !isLoadingPage, hasNextPage else { return }   // prevents a
+        isLoadingPage = true                                  // second fetch
+        defer { isLoadingPage = false }                        // firing before
+                                                                 // the first returns
+        do {
+            let page = try await fetchPage(cursor: nextCursor)
+            let newItems = page.items.filter { !seenIDs.contains($0.id) }
+            newItems.forEach { seenIDs.insert($0.id) }
+            images.append(contentsOf: newItems)
+            nextCursor = page.nextCursor
+            hasLoadedFirstPage = true
+        } catch {
+            // handle error, leave state as-is so a retry is still possible
+        }
+    }
+
+    private func fetchPage(cursor: String?) async throws -> PagedResponse {
+        // GET /images?cursor=<cursor> - server-side cursor prevents
+        // duplicates/gaps even if items are inserted/deleted concurrently,
+        // unlike naive page-NUMBER pagination.
+        PagedResponse(items: [], nextCursor: nil)
+    }
+}
+
+// MULTIPART UPLOAD with progress reporting.
+final class ImageUploader: NSObject, URLSessionTaskDelegate {
+    private var progressHandler: ((Double) -> Void)?
+
+    func upload(imageData: Data, caption: String, progress: @escaping (Double) -> Void) async throws {
+        progressHandler = progress
+        let boundary = UUID().uuidString
+        var request = URLRequest(url: URL(string: "https://api.example.com/upload")!)
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+        // Metadata field part:
+        body.append("--\\(boundary)\\r\\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\\"caption\\"\\r\\n\\r\\n".data(using: .utf8)!)
+        body.append("\\(caption)\\r\\n".data(using: .utf8)!)
+        // Image field part:
+        body.append("--\\(boundary)\\r\\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\\"image\\"; filename=\\"photo.jpg\\"\\r\\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\\r\\n\\r\\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\\r\\n--\\(boundary)--\\r\\n".data(using: .utf8)!)
+
+        let session = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+        // uploadTask, not a plain data task - supports background
+        // execution and exposes upload progress via the delegate.
+        _ = try await session.upload(for: request, from: body, delegate: self)
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        let fraction = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+        progressHandler?(fraction)   // UI binds a progress bar to this
+    }
+}
+
+// API VERSIONING: Optional for anything possibly-new; Codable already
+// silently ignores UNRECOGNIZED keys by default - no crash from
+// additive backend changes.
+struct UserProfileResponse: Decodable {
+    let id: String
+    let name: String
+    let bio: String?           // added later by the backend - Optional
+                                 // means its ABSENCE doesn't break decoding
+    let verifiedBadge: Bool?    // same - a newer field, safely optional
+    // Any field the backend adds that ISN'T listed here at all is simply
+    // ignored by Codable's default decoding - no crash, no code change
+    // needed for purely additive backend changes.
+}
+""",
+                keyTakeaways: [
+                    "Track three explicit pieces of pagination state: accumulated items, whether a next page exists, and whether a fetch is CURRENTLY in flight - the last one prevents a fast-scrolling user from triggering duplicate concurrent fetches for the same next page.",
+                    "Cursor-based pagination is more robust against duplicates/gaps than page/limit, since the cursor is defined relative to a specific item's position - immune to items being inserted/deleted between page fetches, which page-NUMBER pagination can't guarantee.",
+                    "A defensive dedup layer (checking new items' IDs against a Set of already-seen IDs before appending) is cheap and worth adding regardless of pagination style, protecting against a server bug or a double-triggered fetch.",
+                    "Multipart uploads need URLSessionUploadTask (not a plain data task) specifically for background-execution support and progress exposure via URLSessionTaskDelegate's didSendBodyData callback.",
+                    "For API versioning, model every possibly-new field as Optional - Codable already silently ignores unrecognized keys by default, so additive backend changes never crash decoding; only a field's TYPE changing (not just addition) needs actual server-side API versioning to handle safely."
+                ]
+            ),
+            QAItem(
+                id: "triaging_slow_app_reports_and_scroll_stutter",
+                question: "At a high level, what iOS metrics or tools do you check first to diagnose a 'slow app' report before changing any code? And when you notice UI stutter during scrolling specifically, what's the first thing you try to rule out: main-thread work, layout, or image decoding?",
+                topics: ["Performance", "Instruments", "Triage", "Main Thread", "Scrolling"],
+                explanation: """
+A vague "slow app" report is a symptom, not a diagnosis - the entire point of a structured triage process is narrowing "slow" down to ONE specific, measurable cause before touching any code, since "optimize" without a specific target is how a week gets spent making changes that don't actually move the needle.
+
+**The triage order for a general "slow app" report:**
+
+1. **Reproduce it, if at all possible, with Instruments' Time Profiler attached to a RELEASE-configuration build** (not Debug - compiler optimizations change what's actually slow; a Debug-build profile can point at a "hot spot" that vanishes entirely under Release optimization, or hide a real one). Time Profiler's call-tree view, sorted by "self time," shows you exactly which function is consuming CPU - this is the single highest-value first step whenever the issue IS reproducible locally.
+
+2. **If it's NOT locally reproducible (a production-only report)**, MetricKit is the right tool - it collects real, on-device CPU/memory/disk/hang diagnostics from actual users with no debugger attached, delivered roughly daily. This is specifically what makes an UN-reproducible "slow" report tractable at all: you get real telemetry from the actual affected device/OS-version/conditions instead of guessing.
+
+3. **Check Allocations/Memory Graph for a memory-pressure angle** - "slow" sometimes actually means the app is under enough memory pressure that iOS is aggressively compacting/evicting, which manifests as generalized sluggishness rather than one obvious hot function; this is a different root cause from a CPU-bound hot path and needs a different fix (find and fix a leak/excessive retention, not optimize a function).
+
+4. **Check the Network instrument** if the "slowness" is actually a loading/waiting perception rather than genuine UI unresponsiveness - a screen that FEELS slow because it's waiting on a slow network call isn't a CPU/rendering problem at all, and profiling CPU usage for it would be looking in the wrong place entirely.
+
+**For UI stutter DURING SCROLLING specifically - the order to rule things out, and why THIS order:** main-thread work first, then layout, then image decoding - because each one is progressively more specific to diagnose, and ruling out the broader category first avoids wasted investigation time on a narrower cause that isn't actually the problem.
+
+1. **Main-thread work** - Instruments' Time Profiler, filtered to the main thread specifically, during the exact scroll interaction that stutters. ANY synchronous work blocking the main thread during a scroll (a synchronous network call, a heavy synchronous computation, blocking I/O) will show up immediately here as a clear, easy-to-spot spike - and this is the MOST common cause of scroll stutter by far, so it's checked first.
+
+2. **Layout** - if main-thread work looks clean, check whether cells are doing expensive Auto Layout PASSES on every scroll frame - a cell whose constraints get invalidated and re-solved on every single `cellForRowAt` (rather than being genuinely reusable with stable, pre-computed sizing) forces a full layout pass per row per frame, which is expensive at 60/120fps. Manually-computed frame-based layout for cells (or caching row heights instead of re-computing `intrinsicContentSize` on every layout pass) is the usual fix.
+
+3. **Image decoding** - if BOTH of the above are clean, check whether images are being decoded ON the main thread synchronously as cells scroll into view - loading and decoding a full-resolution image directly on the main thread during `cellForRowAt` is a classic, specific cause of exactly this symptom, and the fix is decoding off the main thread (a background queue) and/or pre-generating appropriately-sized thumbnails server-side or on first load, rather than decoding a full-resolution image just to display it at thumbnail size.
+
+The reason this specific order matters: main-thread work is the most common AND easiest to definitively rule in/out (one Time Profiler session, filtered to the main thread, tells you immediately); layout and image decoding are both narrower, more specific possible causes that are more efficiently investigated only once the broader "is anything blocking the main thread at all" question is already answered.
+""",
+                example: """
+// Diagnosing scroll stutter: the practical checklist, in the order
+// that actually narrows down the cause fastest.
+
+struct Message {
+    let date: Date
+    let thumbnailURL: URL
+}
+
+final class MessagesViewController: UIViewController {
+    var messages: [Message] = []
+    let tableView = UITableView()
+}
+
+// 1) MAIN-THREAD WORK - the most common cause. Look for synchronous
+// work inside cellForRowAt / willDisplay that blocks scrolling.
+extension MessagesViewController: UITableViewDataSource {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        messages.count
+    }
+
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! MessageCell
+        let message = messages[indexPath.row]
+
+        // BAD: synchronous, main-thread-blocking work during scroll -
+        // this is exactly what Time Profiler's main-thread filter
+        // would immediately flag as a spike during scrolling.
+        // let formatted = expensiveSynchronousFormat(message.date)
+
+        // GOOD: cheap, main-thread-safe formatting; anything expensive
+        // is precomputed or moved off the main thread entirely.
+        cell.configure(with: message)
+        return cell
+    }
+}
+
+// 2) LAYOUT - expensive Auto Layout passes recomputed on every scroll
+// frame instead of using stable, cached row heights.
+extension MessagesViewController: UITableViewDelegate {
+    // BAD: forces a full Auto Layout pass to compute height for EVERY
+    // row, on every layout pass, as cells scroll into view.
+    // func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    //     return cellForRowAt(indexPath).systemLayoutSizeFitting(...).height
+    // }
+
+    // GOOD: precomputed/cached heights, or UITableView.automaticDimension
+    // with `estimatedRowHeight` set, letting UIKit avoid a full
+    // synchronous layout pass for every offscreen row up front.
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 60   // a reasonable estimate - real height resolved lazily
+    }
+}
+
+// 3) IMAGE DECODING - decode off the main thread; never decode a
+// full-resolution image synchronously just to show it at thumbnail size.
+final class MessageCell: UITableViewCell {
+    private let thumbnailView = UIImageView()
+
+    func configure(with message: Message) {
+        thumbnailView.image = nil   // clear immediately - avoid showing
+                                      // a stale image from cell reuse
+        // BAD: UIImage(contentsOfFile:) / UIImage(data:) synchronously
+        // decodes on the CALLING thread - if called directly here on
+        // the main thread during scroll, this is a classic stutter cause.
+
+        // GOOD: decode on a background queue, hop back to main only to
+        // assign the already-decoded image.
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let data = try? Data(contentsOf: message.thumbnailURL),
+                  let image = UIImage(data: data) else { return }
+            DispatchQueue.main.async {
+                self?.thumbnailView.image = image
+            }
+        }
+    }
+}
+""",
+                keyTakeaways: [
+                    "Triage a vague 'slow app' report in order: reproduce with Instruments' Time Profiler on a RELEASE build first (Debug-build profiles can mislead); use MetricKit for production-only, non-reproducible reports; check Allocations/Memory Graph for a memory-pressure angle; check the Network instrument if the perceived slowness is actually a loading wait, not genuine unresponsiveness.",
+                    "Always profile Release, not Debug - compiler optimizations change what's actually slow, and a Debug-build hot spot can be entirely misleading.",
+                    "For scroll stutter specifically, rule out main-thread work FIRST (Time Profiler filtered to the main thread during the exact scroll interaction) - it's both the most common cause and the easiest to definitively rule in or out in one session.",
+                    "If main-thread work is clean, check layout next - cells recomputing expensive Auto Layout passes on every scroll frame instead of using cached/estimated row heights is a common, specific second cause.",
+                    "If both are clean, check image decoding last - synchronously decoding full-resolution images on the main thread as cells scroll into view is a classic, specific cause; the fix is decoding off the main thread and/or using appropriately pre-sized thumbnails."
+                ]
+            ),
+            QAItem(
+                id: "optimizing_app_startup_cold_start_time",
+                question: "When optimizing app startup time, which phases do you typically measure (cold start), and what kinds of work do you look to defer until after first render?",
+                topics: ["Performance", "Startup Time", "Cold Start", "Launch Optimization"],
+                explanation: """
+"Startup time" is actually several distinct phases with different owners and different optimization techniques - measuring it as one number hides which phase is actually the problem.
+
+**The phases of a cold start (app not already in memory), in order:**
+
+1. **Process launch / pre-`main()`** - dynamic linker loading the app binary and every linked framework/dylib, running any `+load` methods (Objective-C) and static initializers. This phase is dominated by the NUMBER of dynamic libraries linked and the amount of code that runs before `main()` is even reached - reducible mainly by minimizing dynamically-linked frameworks (static linking where reasonable, since it avoids per-dylib dynamic-loading overhead) and avoiding expensive work in `+load`/static initializers.
+
+2. **`main()` to `applicationDidFinishLaunching`** - `UIApplicationMain` setting up the app's core objects and calling into your `AppDelegate`/`SceneDelegate`. This is where a common startup-time mistake lives: doing expensive, synchronous work directly in `application(_:didFinishLaunchingWithOptions:)` - initializing every SDK, warming multiple caches, synchronously reading large files from disk - all before the FIRST FRAME has even been requested.
+
+3. **First frame rendered (`UIWindow` becomes visible)** - this is the point Apple's own official "Time to First Frame" measurement targets, and it's the phase users actually perceive as "the app opened" - everything before this point is invisible waiting; everything after it is visible content the user can already see and start interacting with.
+
+4. **Interactive / fully warmed up** - the app is visually present but may still be loading data, warming additional caches, or finishing background setup - this phase matters less for PERCEIVED speed (the user already sees something) but still matters for genuine usability if the visible content isn't actually functional yet.
+
+**Measuring these phases concretely:** Xcode's own Organizer has a "Launch Time" report aggregated across real user devices; `os_signpost`/`OSSignposter` intervals placed around specific startup phases in your own code let Instruments' Time Profiler visualize exactly how long each phase takes on your own dev device; and `MXAppLaunchMetric` via MetricKit gives you the real, aggregated distribution from actual users' devices in production - genuinely important since launch time varies a lot across device generations, and a fast launch on the newest iPhone can be a genuinely slow one on an older, still-widely-used device.
+
+**What to defer until after first render - the actual optimization technique, not just "make everything faster":** the guiding principle is that ONLY work required to render the FIRST screen's initial content should run before that first frame - everything else should be deferred to AFTER the window is visible, typically dispatched to run on the next run loop turn or in the background. Concretely: initialize THIRD-PARTY SDKs (analytics, crash reporting, ad networks) lazily or on a background queue rather than synchronously and eagerly at launch - most of them don't need to be ready before the very first frame; defer any CACHE-WARMING work (pre-loading data the user probably won't need in the first few seconds) until after the initial screen is interactive; avoid reading/parsing large local files (a big JSON config, a large Core Data migration) synchronously on the main thread before the first frame - move to background execution or defer until actually needed; and be honest about what the FIRST screen actually needs to render its initial state - loading data for a DIFFERENT screen the user might navigate to later has no business delaying the first frame at all.
+""",
+                example: """
+// Startup phase measurement with os_signpost - visualizes exactly how
+// long each phase takes in Instruments' Time Profiler / Points of
+// Interest track, on top of Xcode Organizer's aggregated device data
+// and MetricKit's MXAppLaunchMetric for real production telemetry.
+import os
+
+let launchSignposter = OSSignposter(subsystem: "com.app.id", category: "launch")
+
+@main
+final class AppDelegate: UIResponder, UIApplicationDelegate {
+    private var launchState: OSSignpostIntervalState?
+
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        launchState = launchSignposter.beginInterval("ColdStart")
+
+        // ONLY what's needed to render the FIRST screen's initial
+        // content happens here, synchronously, before the first frame.
+        configureFirstScreenEssentials()
+
+        // Everything else is explicitly DEFERRED - dispatched to run
+        // AFTER the window is already visible to the user.
+        DispatchQueue.main.async { [weak self] in
+            self?.performDeferredStartupWork()
+        }
+
+        return true
+    }
+
+    private func configureFirstScreenEssentials() {
+        // e.g. constructing the root view controller with whatever
+        // minimal data it needs to show ITS initial state - nothing more.
+    }
+
+    private func performDeferredStartupWork() {
+        // Third-party SDKs that don't need to be ready before the first
+        // frame - analytics, crash reporting warm-up, ad network init:
+        AnalyticsSDK.initialize()
+        CrashReportingSDK.initialize()
+
+        // Cache-warming the user probably won't need in the first few
+        // seconds - deferred, not blocking the visible first screen:
+        Task.detached(priority: .background) {
+            await ImageCacheWarmer.preloadCommonAssets()
+        }
+
+        // Large local file parsing (e.g. a big local config/JSON) moved
+        // off the main thread and off the critical startup path entirely:
+        Task.detached(priority: .utility) {
+            await ConfigLoader.loadAndParseLargeLocalConfig()
+        }
+
+        if let launchState = self.launchState {
+            launchSignposter.endInterval("ColdStart", launchState)
+        }
+    }
+}
+
+enum AnalyticsSDK { static func initialize() {} }
+enum CrashReportingSDK { static func initialize() {} }
+enum ImageCacheWarmer { static func preloadCommonAssets() async {} }
+enum ConfigLoader { static func loadAndParseLargeLocalConfig() async {} }
+""",
+                keyTakeaways: [
+                    "Cold start has distinct phases with different owners: pre-main() dynamic linking, main() to didFinishLaunching, first frame rendered (what users perceive as 'the app opened'), and interactive/fully warmed up - measuring startup as one number hides which phase is the actual problem.",
+                    "Measure with Xcode Organizer's aggregated Launch Time report, `os_signpost`/OSSignposter intervals around specific phases for local profiling, and MetricKit's `MXAppLaunchMetric` for real production telemetry across the actual device/OS distribution your users have.",
+                    "The optimization principle: only work required to render the FIRST screen's initial content should run before the first frame - everything else is deferred to after the window is visible.",
+                    "Common deferral candidates: eager third-party SDK initialization (analytics, crash reporting, ad networks), cache-warming for data the user won't need in the first few seconds, and synchronous parsing of large local files.",
+                    "Be honest about what the first screen actually needs - loading data for a DIFFERENT screen the user might navigate to later has no business delaying the first frame at all, and is a common, easy-to-miss source of unnecessary startup work."
+                ]
+            ),
+            QAItem(
+                id: "instruments_metrickit_automated_performance_tests_ci",
+                question: "How do you decide between using Instruments' Time Profiler versus os_signpost/MetricKit to investigate performance regressions, and what's the main benefit of each? When adding automated performance tests, what would you measure and how would you set a regression threshold so CI can fail a build without too many false positives?",
+                topics: ["Instruments", "MetricKit", "os_signpost", "Performance Testing", "CI"],
+                explanation: """
+These tools sit at different points on the "how do I even know there's a regression, and where is it" spectrum - Time Profiler answers "where is time going, right now, on my machine"; `os_signpost`/MetricKit answer "did something get worse, in production, over time." Automated performance tests in CI are the mechanism for catching a regression BEFORE it ever reaches production at all, closing the loop.
+
+**Instruments' Time Profiler - deep, LOCAL, single-session investigation.** You attach it to a running app (on a real device ideally, Release configuration) and get a full sampled call tree showing exactly where CPU time is going RIGHT NOW, in this session - the best tool once you already know (or suspect) a regression exists and need to find the EXACT function/call path responsible. Its limitation is exactly its strength inverted: it only shows you THIS session, on THIS device, under THIS specific set of conditions - it tells you nothing about whether this is representative of what real users experience, or whether things have gotten WORSE over time versus always having been this way.
+
+**`os_signpost`/`OSSignposter` - lightweight, NAMED interval markers you place in your own code.** Unlike Time Profiler's broad sampling, a signpost marks a SPECIFIC, developer-chosen interval ("time from tapping this button to the resulting screen appearing") with a name, visible directly in Instruments' Points of Interest track, and low-overhead enough to reasonably leave compiled into production builds. The benefit over Time Profiler specifically: it measures a PRECISE, meaningful-to-your-app interval you defined, rather than needing to visually correlate a broad CPU sample against what the user was actually doing at that moment.
+
+**MetricKit - real production telemetry, aggregated over TIME, from ACTUAL users' devices.** This is the only one of the three that answers "did this get worse over time in production" - `MXMetricPayload`/`MXDiagnosticPayload` deliver real CPU/memory/hang data from real devices roughly daily, with the OS itself doing the sampling (negligible overhead, no debugger needed). The benefit over the other two: it's the only source of truth for whether a regression is REAL and REPRESENTATIVE (affecting actual users, at real scale) versus something only observed in one local profiling session that might not generalize.
+
+**The decision, put together:** MetricKit is how you'd first NOTICE a real regression exists in production (aggregate hang-rate or CPU-time metrics trending worse release over release); `os_signpost` intervals (already placed around meaningful operations) narrow down WHICH specific user-facing interval got slower; Time Profiler is how you then dig into WHY, at the function level, once you've narrowed down where to look.
+
+**Automated performance tests in CI - what to measure and how to set a threshold without false positives.** XCTest's `measure { }` (or `XCTMetric`/`XCTClockMetric`/`XCTCPUMetric` for more targeted measurement) runs a block multiple times and reports statistics - the RIGHT things to measure are specific, meaningful operations (a cold-launch-to-first-frame proxy, decoding a large realistic JSON payload, laying out a complex screen with a representative dataset), not vague "is the app fast" checks. The false-positive problem is real: CI runners have variable, often-shared hardware, so a single run's timing is noisy - a naive "must be faster than X milliseconds, exactly" threshold WILL intermittently fail for reasons having nothing to do with your code. The standard fix is a BASELINE + PERCENTAGE-TOLERANCE approach: XCTest's own performance test baselines let you record an expected baseline (from a representative environment) and fail only when a run's STANDARD DEVIATION-aware comparison exceeds a percentage tolerance (commonly configured around 10-20%) from that baseline, rather than a single hard threshold - averaged across multiple runs within the same test invocation specifically to smooth out CI-runner noise, catching genuine regressions (a change that's now reliably, meaningfully slower) while tolerating normal run-to-run variance.
+""",
+                example: """
+// os_signpost: a precise, named, low-overhead interval marker for a
+// specific user-facing operation - the middle layer between broad
+// Time Profiler sampling and aggregate MetricKit production telemetry.
+import os
+
+let signposter = OSSignposter(subsystem: "com.app.id", category: "checkout")
+
+func handleCheckoutButtonTapped() {
+    let state = signposter.beginInterval("CheckoutFlow")
+    Task {
+        await performCheckout()
+        signposter.endInterval("CheckoutFlow", state)   // visible directly
+    }                                                      // in Instruments'
+}                                                            // Points of Interest track
+
+func performCheckout() async { /* ... */ }
+
+// MetricKit: real production telemetry - the only source that answers
+// "did this get WORSE over time, for real users."
+final class PerformanceMonitor: NSObject, MXMetricManagerSubscriber {
+    static let shared = PerformanceMonitor()
+
+    func start() {
+        MXMetricManager.shared.add(self)
+    }
+
+    func didReceive(_ payloads: [MXMetricPayload]) {
+        for payload in payloads {
+            if let cpu = payload.cpuMetrics {
+                // Aggregate, real-device CPU data - compare release over
+                // release to notice a genuine regression exists at all.
+                logAggregateMetric("cpu_time", value: cpu.cumulativeCPUTime.description)
+            }
+        }
+    }
+
+    func didReceive(_ payloads: [MXDiagnosticPayload]) {
+        for payload in payloads {
+            payload.hangDiagnostics?.forEach { hang in
+                logAggregateMetric("hang", value: hang.callStackTree.description)
+            }
+        }
+    }
+
+    private func logAggregateMetric(_ name: String, value: String) { /* ... */ }
+}
+
+// AUTOMATED PERFORMANCE TEST IN CI: measure a specific, meaningful
+// operation, with a baseline + percentage tolerance (not a single hard
+// millisecond threshold) to avoid CI-runner noise causing false positives.
+import XCTest
+
+final class JSONDecodingPerformanceTests: XCTestCase {
+    func testDecodingLargeProductCatalogPerformance() {
+        let data = loadRepresentativeProductCatalogJSON()   // realistic size
+
+        measure(metrics: [XCTClockMetric()]) {
+            _ = try? JSONDecoder().decode([Product].self, from: data)
+        }
+        // XCTest averages multiple runs within this invocation, and
+        // compares against a recorded baseline with a configured
+        // percentage tolerance (set via the test's baseline file /
+        // Xcode's "Edit..." on the recorded metric) - catching a
+        // genuine, reliable regression while tolerating normal
+        // run-to-run noise on shared CI hardware.
+    }
+
+    private func loadRepresentativeProductCatalogJSON() -> Data {
+        Data()   // load a real, representative fixture in practice
+    }
+}
+
+struct Product: Decodable { let id: String }
+""",
+                keyTakeaways: [
+                    "Instruments' Time Profiler gives deep, LOCAL, single-session investigation - the best tool once you already suspect a regression and need to find the exact function/call path responsible, but tells you nothing about whether it's representative of real users.",
+                    "os_signpost/OSSignposter marks precise, named, low-overhead intervals you define ('time from tap to screen appearing') - low-overhead enough to leave in production, and more targeted than Time Profiler's broad sampling.",
+                    "MetricKit is the only one that answers 'did this get worse over time, for real users' - aggregate production telemetry with the OS doing the sampling, negligible overhead, no debugger needed.",
+                    "The practical workflow: MetricKit notices a regression exists in aggregate (worse release over release); signposts narrow down WHICH interval got slower; Time Profiler digs into WHY at the function level.",
+                    "Automated CI performance tests need a baseline + percentage-tolerance comparison (XCTest's own performance baselines, ~10-20% tolerance), not a single hard millisecond threshold - CI hardware is noisy enough that a hard threshold produces frequent false positives unrelated to actual code changes."
+                ]
+            ),
+            QAItem(
+                id: "xctest_unit_test_vs_ui_test",
+                question: "In XCTest, what's the difference between a unit test and a UI test, and when would you choose each?",
+                topics: ["XCTest", "Unit Testing", "UI Testing", "Testing Strategy"],
+                explanation: """
+They test at fundamentally different levels of the app, run through completely different mechanisms, and have very different cost/speed/confidence tradeoffs - the choice between them is really a choice about WHAT you're trying to verify, not a stylistic preference.
+
+**Unit tests (`XCTestCase` subclasses, running IN-PROCESS)** instantiate and call your actual Swift types directly, in the SAME process as the test runner - a unit test for `ShoppingCart.total` constructs a `ShoppingCart`, adds items, and asserts on the computed value, all in milliseconds, with no UI, no simulator boot, no app launch involved at all. This makes them fast (a full suite of hundreds of unit tests commonly runs in seconds), precise (a failure points at EXACTLY which piece of logic broke, often down to the specific assertion), and cheap to run constantly (on every save, in a pre-commit hook, on every CI push) - but they can only test logic that's actually EXTRACTED into testable units (Models, Services, ViewModels) in the first place; a unit test cannot verify that a button is actually tappable on screen, correctly positioned, or that a multi-screen flow behaves correctly end-to-end.
+
+**UI tests (`XCUITest`, driving the app as a SEPARATE, black-box process)** launch the actual compiled app in a simulator/device and interact with it through the ACCESSIBILITY tree - tapping buttons, typing into fields, asserting that specific elements exist and show expected text - exactly the way a real user (or VoiceOver) would interact with it, with the test runner as a completely separate process observing and driving the app externally. This is the only way to verify what a unit test structurally cannot: that the actual RENDERED UI correctly reflects the underlying state, that a multi-step user flow (login, then navigate, then complete a purchase) works end-to-end through real screens, and that accessibility actually works (since UI tests drive through the SAME accessibility tree VoiceOver uses). The cost is real: UI tests are slow (seconds to tens of seconds per test, since a real app boots and real animations/network-ish delays occur), FLAKY relative to unit tests (timing-dependent - an element not being present YET versus not existing at all are easy to conflate), and a failure tells you WHERE in the user flow something broke, not precisely WHY (that requires separate investigation, unlike a unit test's precise assertion failure).
+
+**The practical ratio, and why:** the well-known "testing pyramid" principle - MANY fast unit tests covering business logic exhaustively (cheap enough to run constantly, and this is where MOST bugs are actually caught, since most bugs are logic bugs, not rendering bugs), and a SMALL number of UI tests covering only the most critical, must-never-break end-to-end flows (login, checkout, the app's core value-proposition flow) - not attempting to UI-test every possible interaction, since the slowness and flakiness compound badly at scale. A common, valuable middle ground: extract as much logic as possible OUT of Views/ViewControllers specifically so it becomes unit-testable (see the MVC testability question), leaving only a genuinely thin UI layer that needs the SMALL number of UI tests to verify it's wired up correctly - rather than needing exhaustive UI tests to cover logic that could have been unit-tested directly instead.
+""",
+                example: """
+// UNIT TEST: in-process, fast, precise - tests business logic directly.
+import XCTest
+@testable import MyApp
+
+final class ShoppingCartTests: XCTestCase {
+    func testFreeShippingThreshold() {
+        var cart = ShoppingCart()
+        cart.add(CartItem(name: "Widget", unitPrice: 50, quantity: 1))
+
+        // Milliseconds to run, no simulator boot, no UI involved -
+        // a failure here points EXACTLY at the total-calculation logic.
+        XCTAssertTrue(cart.qualifiesForFreeShipping)
+        XCTAssertEqual(cart.total, cart.subtotal)
+    }
+
+    func testBelowThresholdIncursShippingFee() {
+        var cart = ShoppingCart()
+        cart.add(CartItem(name: "Small Item", unitPrice: 10, quantity: 1))
+
+        XCTAssertFalse(cart.qualifiesForFreeShipping)
+        XCTAssertEqual(cart.total, cart.subtotal + 5.99)
+    }
+}
+
+// UI TEST: separate process, drives the REAL app through the
+// accessibility tree - the only way to verify actual rendered UI and
+// a real multi-screen flow end-to-end.
+final class CheckoutFlowUITests: XCTestCase {
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    func testUserCanCompleteCheckout() throws {
+        let app = XCUIApplication()
+        app.launch()   // boots the REAL app in the simulator - seconds,
+                        // not milliseconds, and genuinely exercises the
+                        // rendered UI, not just the underlying logic
+
+        app.buttons["Add to Cart"].tap()
+        app.tabBars.buttons["Cart"].tap()
+
+        XCTAssertTrue(app.staticTexts["Free Shipping"].waitForExistence(timeout: 5))
+        // .waitForExistence, not a bare assertion - UI tests are
+        // inherently timing-dependent, since real animations/transitions
+        // take real time; asserting immediately is a common flakiness source.
+
+        app.buttons["Checkout"].tap()
+        app.buttons["Confirm Purchase"].tap()
+
+        XCTAssertTrue(app.staticTexts["Order Confirmed"].waitForExistence(timeout: 10))
+        // This end-to-end flow is exactly what a unit test structurally
+        // CANNOT verify - real screens, real navigation, real rendering.
+    }
+}
+
+struct CartItem { let name: String; let unitPrice: Decimal; let quantity: Int }
+struct ShoppingCart {
+    private(set) var items: [CartItem] = []
+    mutating func add(_ item: CartItem) { items.append(item) }
+    var subtotal: Decimal { items.reduce(0) { $0 + $1.unitPrice * Decimal($1.quantity) } }
+    var qualifiesForFreeShipping: Bool { subtotal >= 50 }
+    var total: Decimal { subtotal + (qualifiesForFreeShipping ? 0 : 5.99) }
+}
+""",
+                keyTakeaways: [
+                    "Unit tests run IN-PROCESS, calling your actual types directly (Models, Services, ViewModels) - fast (milliseconds), precise (a failure points at the exact broken assertion), but can only test logic that's actually extracted into testable units.",
+                    "UI tests (XCUITest) launch the real app as a SEPARATE process and drive it through the accessibility tree, exactly like a real user or VoiceOver - the only way to verify actual rendered UI and multi-screen flows end-to-end, at the cost of being slow and inherently timing-dependent.",
+                    "UI test assertions should use `.waitForExistence(timeout:)`, not bare immediate assertions - real animations and transitions take real time, and asserting immediately is a common, avoidable flakiness source.",
+                    "Follow the testing pyramid: many fast unit tests covering business logic exhaustively (most bugs are logic bugs, not rendering bugs), and a small number of UI tests covering only the most critical end-to-end flows (login, checkout) - not exhaustive UI coverage, since slowness/flakiness compound badly at scale.",
+                    "Extracting logic out of Views/ViewControllers (see MVC testability) makes more of it unit-testable directly, leaving a genuinely thin UI layer that needs only a small number of UI tests to verify it's wired up correctly."
+                ]
+            ),
+            QAItem(
+                id: "debugging_intermittent_flaky_ui_tests",
+                question: "What's your approach to debugging intermittent flakiness in iOS UI tests - what do you inspect first to determine whether it's timing, app state, or test environment?",
+                topics: ["XCUITest", "Flaky Tests", "Debugging", "Testing"],
+                explanation: """
+Flaky UI tests (pass most of the time, fail intermittently with no code change) are frustrating specifically because the failure isn't reliably reproducible - the right approach is a structured process of elimination across the three most common ROOT CAUSES, rather than randomly re-running the test and hoping it passes.
+
+**1. Timing - check this first, since it's the most common cause by far.** UI tests are inherently timing-dependent: real animations, real network-ish delays (even against a mocked backend, there's SOME asynchronous delay), and real system load on the CI runner all introduce variable timing that a test written with bare, immediate assertions doesn't account for. The single most common flakiness bug: `app.buttons["Submit"].tap()` immediately followed by an assertion, when the button hasn't actually finished animating into its final tappable state yet, or a `waitForExistence(timeout:)` with a timeout that's JUST barely long enough on a fast local machine but not on a slower/busier CI runner. The fix is almost always more RIGOROUS waiting - `waitForExistence(timeout:)` before every interaction with an element that might not be present yet (not just before assertions), and being honest about a genuinely adequate timeout for CI-runner conditions specifically, not just what "feels instant" on a fast local dev machine.
+
+**2. App state - the second most common cause, showing up as "this test passes in isolation but fails when run after test X."** UI tests sharing state ACROSS test runs (leftover data from a previous test's run persisting in the app, a login session left active from an earlier test, a database/UserDefaults value a previous test wrote and never cleaned up) is a classic cause of a test that passes standalone but fails as part of a full suite run. The fix: each UI test should launch the app with EXPLICIT, controlled starting conditions - passing launch arguments/environment variables that tell the app under test to reset to a known clean state, log out, clear local storage, or use a specific mock backend configuration - rather than relying on whatever state happens to be left over from test execution order (which itself can vary, especially if tests run in parallel or in a randomized order, both common in CI).
+
+**3. Test environment - the least common, but the one most likely to be dismissed as "just flaky" without actually being investigated.** Differences between local and CI execution environments - a different simulator OS version than what's used locally, real resource contention on a CI runner executing many parallel test suites simultaneously (making genuinely timing-sensitive tests fail there specifically even with reasonable local timeouts), or network conditions if a test isn't FULLY mocking its backend calls (a test with unmocked real network dependencies is inherently at the mercy of real network flakiness/latency, unrelated to the app's own code at all). Checking whether a "flaky" test ONLY fails on CI and never locally is a strong signal to investigate this category specifically, rather than assuming it must be a timing issue in the test's own code.
+
+**A practical diagnostic step that helps distinguish all three quickly:** run the SPECIFIC failing test many times in a tight loop, in ISOLATION (not as part of the full suite) - if it fails even in isolation, timing is the most likely culprit; if it only fails as part of the full suite (not in isolation), app state/test-ordering contamination is the likely cause; if it never fails locally but reliably fails specifically on CI, the environment itself is the difference worth investigating.
+""",
+                example: """
+import XCTest
+
+// 1) TIMING: wait explicitly before EVERY interaction with an element
+// that might not be present/ready yet - not just before assertions.
+final class LoginUITests: XCTestCase {
+    func testLoginFlakyVersion() {
+        let app = XCUIApplication()
+        app.launch()
+
+        // BAD: no wait before tapping - if the button hasn't finished
+        // animating in yet, this either fails or taps the wrong spot.
+        app.textFields["Email"].tap()
+        app.textFields["Email"].typeText("user@example.com")
+        app.buttons["Log In"].tap()
+        XCTAssertTrue(app.staticTexts["Welcome"].exists)   // immediate,
+    }                                                         // no wait at all -
+                                                                // classic flakiness
+
+    func testLoginRobustVersion() {
+        let app = XCUIApplication()
+        app.launch()
+
+        let emailField = app.textFields["Email"]
+        XCTAssertTrue(emailField.waitForExistence(timeout: 5))   // wait BEFORE
+        emailField.tap()                                          // every interaction,
+        emailField.typeText("user@example.com")                   // not just assertions
+
+        let loginButton = app.buttons["Log In"]
+        XCTAssertTrue(loginButton.waitForExistence(timeout: 5))
+        loginButton.tap()
+
+        let welcomeText = app.staticTexts["Welcome"]
+        XCTAssertTrue(welcomeText.waitForExistence(timeout: 10))   // generous
+    }                                                                // enough for a
+}                                                                     // busy CI runner
+
+// 2) APP STATE: launch with EXPLICIT, controlled starting conditions -
+// never rely on leftover state from a previous test's run.
+final class CheckoutUITests: XCTestCase {
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    func testCheckoutFromCleanState() {
+        let app = XCUIApplication()
+        // Launch arguments the app under test explicitly checks for -
+        // resets to a known clean state regardless of what any PREVIOUS
+        // test in the suite did (logged in, left items in cart, etc.).
+        app.launchArguments = ["-UITEST_RESET_STATE", "-UITEST_USE_MOCK_BACKEND"]
+        app.launch()
+
+        // Test proceeds from a GUARANTEED clean state, independent of
+        // execution order, parallelization, or what ran before it.
+    }
+}
+
+// In the app's own code, reading those launch arguments at startup:
+// if ProcessInfo.processInfo.arguments.contains("-UITEST_RESET_STATE") {
+//     UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
+//     KeychainStore.clearAll()
+// }
+
+// 3) TEST ENVIRONMENT: fully mock backend calls in UI tests - an
+// unmocked real network dependency is at the mercy of real network
+// flakiness, unrelated to the app's own code at all.
+// app.launchEnvironment["API_BASE_URL"] = "http://localhost:8080/mock"
+
+// DIAGNOSTIC: run the failing test alone, in a tight loop, to narrow
+// down the category:
+//   xcodebuild test -only-testing:MyAppUITests/LoginUITests/testLogin \\
+//     -destination 'platform=iOS Simulator,name=iPhone 15' | repeat 20x
+// - Fails even in isolation -> likely TIMING in the test itself.
+// - Only fails as part of the full suite -> likely APP STATE contamination.
+// - Never fails locally, reliably fails on CI -> likely ENVIRONMENT difference.
+""",
+                keyTakeaways: [
+                    "Check timing first - it's the most common cause: bare immediate assertions or timeouts tuned only for a fast local machine break under real CI-runner load. Use `waitForExistence(timeout:)` before every interaction with an element that might not be ready yet, not just before final assertions.",
+                    "App state contamination shows up as 'passes in isolation, fails as part of the full suite' - fix by launching each UI test with explicit launch arguments/environment that force a known clean starting state, rather than relying on whatever state a previous test happened to leave behind.",
+                    "Test environment differences (simulator OS version, CI resource contention, unmocked real network calls) are the least common cause but most likely to be dismissed as 'just flaky' without investigation - a test that only fails on CI and never locally is a strong signal to check this category specifically.",
+                    "A practical diagnostic: run the failing test alone in a tight loop. Fails even in isolation -> timing; only fails as part of the full suite -> app state/ordering; never fails locally but reliably fails on CI -> environment.",
+                    "Fully mock backend calls in UI tests via launch arguments/environment pointing at a mock server - an unmocked real network dependency makes a test flaky for reasons entirely unrelated to the app's own code."
+                ]
+            ),
+            QAItem(
+                id: "ci_pipeline_commit_to_testflight_dsym_management",
+                question: "In a CI pipeline for iOS, what steps would you include from commit to TestFlight, and where would automated tests run? How do you ensure dSYM files are generated, stored, and available for symbolication across CI builds and App Store/TestFlight releases?",
+                topics: ["CI/CD", "TestFlight", "dSYM", "Symbolication", "Fastlane"],
+                explanation: """
+A well-structured iOS CI pipeline has a clear STAGE ORDER (cheap, fast checks first; expensive, slow steps last) and dSYM handling needs to be treated as a FIRST-CLASS pipeline concern, not an afterthought - a crash report that can't be symbolicated because the matching dSYM was never saved anywhere is a surprisingly common, entirely preventable failure.
+
+**The pipeline, roughly in order, from commit to TestFlight:**
+
+1. **Lint/static analysis** (SwiftLint or similar) - fastest possible feedback, catches style/simple correctness issues before spending any real build time at all.
+2. **Build for testing + run UNIT tests** - compile once, run the fast, numerous unit test suite. This should be the FIRST real gate, since it's both fast and catches the majority of logic bugs.
+3. **Run UI tests** - slower, run AFTER unit tests specifically so a UI test suite (expensive: boots simulators, takes minutes) doesn't run at all if the fast unit tests already caught a regression - failing fast on the cheap check first saves real CI time and money on every push that has an obvious break.
+4. **Build for release/archive** (`xcodebuild archive`) - produces the actual `.xcarchive`, with proper code signing (typically via `fastlane match` for consistent, team-shared certificates rather than every CI run generating its own).
+5. **Export the `.ipa`** from the archive, with the correct distribution provisioning profile.
+6. **Upload to TestFlight** (via `fastlane pilot`/`altool`/`xcrun notarytool` depending on toolchain) - this is also the point where release notes and the build number get attached.
+7. **Notify** (Slack/similar) with a link to the new TestFlight build.
+
+**Where automated tests run, precisely:** unit tests run on EVERY commit/PR push (they're fast enough to run constantly, and are the highest-value gate to catch most regressions immediately); UI tests commonly run on every PR too, but teams under real time/cost pressure sometimes run the full UI suite only on merges to the main/release branch, or nightly, specifically because of their slower speed - the tradeoff is faster PR feedback vs. slightly delayed detection of UI-level regressions, a reasonable one many teams make deliberately.
+
+**dSYM generation, storage, and availability - handled correctly across BOTH CI builds and App Store/TestFlight releases:** `xcodebuild archive` generates dSYMs automatically as part of the `.xcarchive` bundle (as long as `DEBUG_INFORMATION_FORMAT` is set to `dwarf-with-dsym` for Release builds, which is Xcode's own default - a common CI misconfiguration is accidentally overriding this). The critical discipline: dSYMs must be ARCHIVED somewhere durable, keyed by build number/version, EVERY time a build is uploaded - not just relying on Xcode Organizer's local cache (which only has dSYMs for builds archived on THAT specific machine) or App Store Connect's own dSYM download (available for App Store builds, but with real latency, and NOT automatically available for crash-reporting SDKs that need dSYMs uploaded to THEM directly and promptly, like Crashlytics/Sentry). The correct CI step: immediately after archiving, upload the dSYM bundle to whatever crash-reporting service you use (most have a dedicated CLI step for exactly this, run automatically as part of CI) AND separately archive it to your own durable storage (S3/similar, keyed by build number) as a backup source of truth - so that a crash report for ANY previously-shipped build, at ANY point in the future, can always be symbolicated, not just recent ones still cached somewhere convenient.
+""",
+                example: """
+// Illustrative Fastlane lane (fastlane/Fastfile) showing the pipeline
+// order and explicit dSYM handling - not the only way to structure CI,
+// but shows the concrete steps and why they're ordered this way.
+//
+// lane :ci_pipeline do
+//   # 1) Fast, cheap check first
+//   swiftlint(strict: true)
+//
+//   # 2) Fast unit tests - the first REAL gate; fails here means UI
+//   # tests (slow, expensive) never even run for this push.
+//   run_tests(
+//     scheme: "MyApp",
+//     only_testing: ["MyAppTests"]
+//   )
+//
+//   # 3) Slower UI tests - only reached if unit tests already passed.
+//   run_tests(
+//     scheme: "MyApp",
+//     only_testing: ["MyAppUITests"]
+//   )
+//
+//   # 4) Consistent, team-shared signing via match - not each CI run
+//   # generating its own certificate.
+//   match(type: "appstore", readonly: true)
+//
+//   # 5) Archive - dSYMs generated automatically as part of THIS step,
+//   # as long as DEBUG_INFORMATION_FORMAT = dwarf-with-dsym (Xcode's
+//   # own Release default - watch for CI config accidentally overriding it).
+//   build_app(
+//     scheme: "MyApp",
+//     export_method: "app-store"
+//   )
+//
+//   # 6) dSYM handling - the step most pipelines forget: upload to BOTH
+//   # the crash reporter AND your own durable, build-number-keyed storage,
+//   # not just relying on App Store Connect's own (delayed) dSYM store.
+//   upload_symbols_to_crashlytics(
+//     dsym_path: lane_context[SharedValues::DSYM_OUTPUT_PATH]
+//   )
+//
+//   sh("aws s3 cp #{lane_context[SharedValues::DSYM_OUTPUT_PATH]} " \\
+//      "s3://my-app-dsyms/#{lane_context[SharedValues::BUILD_NUMBER]}/")
+//
+//   # 7) Upload to TestFlight, with release notes + build number attached.
+//   upload_to_testflight(
+//     changelog: "Automated build from CI - see PR ##{ENV['PR_NUMBER']}"
+//   )
+//
+//   slack(message: "New TestFlight build available: #{lane_context[SharedValues::BUILD_NUMBER]}")
+// end
+
+// Concretely, the Xcode build setting that must be correct for dSYMs
+// to even be generated in the first place (Release configuration):
+// DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+""",
+                keyTakeaways: [
+                    "Pipeline order matters for cost/speed: lint first (fastest feedback), then fast unit tests (the first real gate), then slower UI tests only if unit tests already passed, then archive/export/upload - failing fast on cheap checks saves real CI time and money.",
+                    "Unit tests typically run on every commit/PR push; UI tests often run on every PR too, but some teams defer the full UI suite to merges/nightly specifically because of their slower speed - a deliberate tradeoff between PR feedback speed and detection latency.",
+                    "dSYMs are generated automatically by `xcodebuild archive` as long as `DEBUG_INFORMATION_FORMAT = dwarf-with-dsym` (Xcode's Release default) - a common CI misconfiguration accidentally overrides this.",
+                    "dSYMs must be archived to durable, build-number-keyed storage EVERY time a build is uploaded - not just relying on Xcode Organizer's local cache (only has dSYMs for builds archived on that specific machine) or App Store Connect's own delayed dSYM availability.",
+                    "Upload dSYMs to your crash-reporting service (Crashlytics/Sentry, usually via a dedicated CI step) AND separately to your own storage as a backup - so any previously-shipped build's crash reports can be symbolicated at any point in the future, not just recent ones."
+                ]
+            ),
+            QAItem(
+                id: "investigating_production_only_crashes",
+                question: "If a crash happens only in production, what information would you collect first (e.g. crash logs, symbolication, breadcrumbs), and how would you prioritize reproducing it?",
+                topics: ["Crash Reporting", "Debugging", "Symbolication", "Production"],
+                explanation: """
+A crash that ONLY happens in production and never locally means, by definition, that something about the real environment (device model, OS version, data state, user action sequence, memory pressure) is different from your dev setup - the investigation has to work backward from whatever evidence production actually left behind, in a specific order of usefulness.
+
+**What to collect first, in priority order:**
+
+1. **The symbolicated crash log/stack trace itself** - the raw crash report is nearly useless without symbolication (translating memory addresses back into function names/line numbers using the matching dSYM for that EXACT build) - this is why dSYM archival discipline (see the CI/dSYM question) directly determines whether a production crash is even investigable at all. A properly symbolicated stack trace tells you the exact function, and often exact line, where the crash occurred - the single highest-value piece of evidence, and the first thing to secure.
+
+2. **Device model, OS version, and app version/build number** - crashes are very often NOT universal; a crash specific to one OS version (a new OS's changed API behavior) or one device class (older devices under more memory pressure, or a hardware-specific API) narrows the reproduction space enormously - attempting to reproduce on the WRONG device/OS combination wastes real time.
+
+3. **Breadcrumbs / an event trail leading up to the crash** - most crash-reporting SDKs (Crashlytics, Sentry) support logging lightweight breadcrumbs (screen navigation events, key user actions, significant state changes) that get attached to a crash report automatically - this is what turns "the app crashed in `parseResponse`" into "the app crashed in `parseResponse` immediately after the user tapped Retry for the third time on a slow connection," which is a MUCH more reproducible, specific scenario.
+
+4. **Frequency and pattern (crash-free rate impact, affected user percentage, whether it's clustered around a specific release)** - a crash affecting 0.01% of sessions on one specific build, immediately after a release, points at something introduced in THAT release specifically; a crash affecting a stable percentage across many releases points at a longer-standing, environment-triggered issue (a specific device/OS combination that's always been vulnerable, just infrequently triggered).
+
+5. **Memory/resource state at the time of the crash**, if available (MetricKit's `MXCrashDiagnostic` includes some of this) - a crash that's actually an out-of-memory termination (which looks different in a crash log than a genuine code-level crash - it's a `jetsam` event, not a signal/exception) needs an entirely different investigation (memory usage/leak hunting) than a null-pointer-style crash does, and conflating the two wastes investigation time on the wrong category of fix.
+
+**Prioritizing WHICH crash to reproduce first, when there are several:** prioritize by (a) crash-free-rate IMPACT (a crash affecting many sessions beats an equally-mysterious one affecting a handful), (b) RECENCY/regression status (a crash that just started appearing after the latest release is both more urgent - something you just shipped broke something - and easier to investigate, since you can correlate it against a specific, recent diff), and (c) REPRODUCIBILITY signal strength (a crash with a clear, consistent breadcrumb pattern leading up to it is worth tackling before a crash with no discernible pattern at all, since the LATTER needs more data collection before it's even tractable to start reproducing).
+""",
+                example: """
+// Breadcrumbs: lightweight, attached automatically to any crash report,
+// turning a bare stack trace into a reconstructable sequence of events
+// leading up to the crash.
+enum CrashBreadcrumbs {
+    static func log(_ event: String, metadata: [String: Any] = [:]) {
+        // In practice, this calls into whatever crash-reporting SDK is
+        // in use (Crashlytics.crashlytics().log(...), SentrySDK.addBreadcrumb, etc.)
+        CrashReportingSDK.addBreadcrumb(event, metadata: metadata)
+    }
+}
+
+final class CheckoutViewController: UIViewController {
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        CrashBreadcrumbs.log("Viewed checkout screen", metadata: ["cart_item_count": cartItemCount])
+    }
+
+    func retryButtonTapped() {
+        retryCount += 1
+        CrashBreadcrumbs.log("Retry tapped", metadata: ["attempt": retryCount, "network_status": networkStatusDescription])
+        // If a crash happens shortly after this, the crash report now
+        // shows "3rd retry attempt, on a degraded network connection"
+        // instead of just a bare stack trace with no context at all.
+    }
+
+    private var cartItemCount = 0
+    private var retryCount = 0
+    private var networkStatusDescription = "unknown"
+}
+
+// Distinguishing an out-of-memory termination (jetsam) from a genuine
+// code-level crash - MXCrashDiagnostic vs a plain signal/exception -
+// they need ENTIRELY different investigation approaches.
+final class CrashDiagnosticsCollector: NSObject, MXMetricManagerSubscriber {
+    func didReceive(_ payloads: [MXDiagnosticPayload]) {
+        for payload in payloads {
+            if let crashDiagnostics = payload.crashDiagnostics {
+                for crash in crashDiagnostics {
+                    // A genuine code-level crash - symbolicate the stack
+                    // trace, investigate as a logic/memory-safety bug.
+                    logCrash(crash.callStackTree.description, deviceInfo: crash.metaData)
+                }
+            }
+        }
+    }
+
+    private func logCrash(_ stackTrace: String, deviceInfo: MXMetaData) {
+        // Capture device model, OS version, app version alongside the
+        // stack trace - narrows the reproduction space significantly
+        // before attempting to reproduce on the wrong device/OS combo.
+    }
+}
+
+enum CrashReportingSDK {
+    static func addBreadcrumb(_ event: String, metadata: [String: Any]) {}
+}
+""",
+                keyTakeaways: [
+                    "A symbolicated stack trace is the highest-value evidence and depends entirely on dSYM archival discipline being correct - without the matching dSYM for that exact build, a production crash log is nearly uninvestigable.",
+                    "Device model, OS version, and build number narrow the reproduction space significantly - crashes are often specific to one OS version's changed API behavior or one device class's memory constraints, not universal.",
+                    "Breadcrumbs (screen navigation, key user actions, state changes leading up to the crash) turn a bare stack trace into a reconstructable, specific scenario - the difference between 'crashed in parseResponse' and 'crashed after the third retry tap on a slow connection'.",
+                    "Distinguish an out-of-memory jetsam termination (needs memory/leak investigation) from a genuine code-level crash (needs logic/memory-safety investigation) early - conflating the two wastes time investigating the wrong category of fix.",
+                    "Prioritize which crash to reproduce first by impact (affected session percentage), recency (a regression just after the latest release is both more urgent and easier to correlate against a specific diff), and reproducibility signal strength (a clear breadcrumb pattern is more tractable than one with no discernible pattern)."
+                ]
+            ),
+            QAItem(
+                id: "release_process_versioning_rollout_rollback_reliability",
+                question: "In your release process, how do you handle versioning/build numbers, release notes, and phased rollout so you can quickly stop or rollback a bad release? If you had to pick one reliability practice to reduce production issues most - crash-free rate monitoring, stricter QA gates, or feature flags - which would you choose and why?",
+                topics: ["Release Management", "Phased Rollout", "Versioning", "Feature Flags", "Reliability"],
+                explanation: """
+A release process's real job is minimizing the BLAST RADIUS and REACTION TIME when something ships broken - versioning discipline, phased rollout, and rollback capability are three complementary pieces of that same goal, not independent checkboxes.
+
+**Versioning and build numbers.** `CFBundleShortVersionString` (the user-facing "1.4.2", typically semantic: major.minor.patch) and `CFBundleVersion` (the build number, which must be UNIQUE and monotonically increasing across every single upload to App Store Connect for a given version, including TestFlight builds) are two DIFFERENT numbers serving different purposes - the version is what users/release-notes reference; the build number is what uniquely identifies exactly which binary is running when investigating a crash report or support ticket ("which build number were they on" is often the very first triage question). Automating build-number incrementing in CI (rather than manual, error-prone bumping) avoids the class of bug where two different binaries accidentally ship under the same build number, making crash reports ambiguous about which one actually produced them.
+
+**Release notes** - beyond the user-facing App Store text, maintaining INTERNAL release notes (what changed, which PRs/tickets, who to contact for which area) tied to each build number is what makes "which build introduced this regression" answerable quickly during an incident, rather than needing to manually dig through git history under time pressure.
+
+**Phased rollout - the actual mechanism for limiting blast radius.** App Store Connect's phased release (or Apple's newer rollout controls) releases a new version to a small percentage of users first, automatically increasing over roughly a week if no one intervenes - critically, this means a bad release is caught while affecting a SMALL fraction of your user base, not everyone simultaneously. The key operational discipline this requires: actively WATCH crash-free rate and key metrics during the early rollout percentage specifically (not just after full rollout) - the entire value of phased rollout is lost if nobody's monitoring during the phase where stopping it still matters.
+
+**Stopping/rolling back a bad release - what's actually possible on iOS, and its real limitation.** You CAN pause a phased rollout (via App Store Connect) to stop it from reaching more users, and you CAN release a new version with a fix - but you CANNOT force already-updated users to downgrade back to the previous binary; Apple provides no rollback mechanism to a previous build once users have already installed the new one. This asymmetry (stop the bleeding forward, but can't undo what's already landed) is exactly why FEATURE FLAGS matter so much for iOS specifically - a flag can be flipped OFF server-side, instantly, for users who ALREADY have the new binary installed, without needing a NEW App Store submission/review cycle at all, which is otherwise the only way to "undo" something already shipped.
+
+**Picking ONE reliability practice with the most leverage: feature flags, and here's the reasoning, not just the pick.** Crash-free rate monitoring is purely DETECTIVE - it tells you something is wrong AFTER it's already affecting users, with no built-in way to stop it faster than a new release cycle allows. Stricter QA gates are PREVENTIVE, but imperfect and with real cost (more manual QA time, slower release cadence) - they reduce the RATE of bad releases but can never bring it to zero, and once a bad release does slip through despite QA, they offer no help at all for the "now what" question. Feature flags are the only one of the three that provides a genuine, FAST recovery mechanism AFTER a bad change has already shipped and is already running on users' devices - the practice that most directly shrinks the WINDOW during which a bad release is actively hurting users, precisely because it doesn't depend on a new binary reaching devices at all. The strongest reasoning: crash-free monitoring and QA gates both work on the "prevent or detect" side of the problem; feature flags are the one lever that works on the "STOP it fast, without waiting for App Store review" side - and for a platform where you can't force a rollback, that recovery speed is the single highest-leverage thing to have.
+""",
+                example: """
+// Feature flags: the mechanism that lets a bad change be turned OFF
+// server-side, INSTANTLY, for users who already have the new binary -
+// without a new App Store submission/review cycle at all.
+protocol FeatureFlagProviding {
+    func isEnabled(_ flag: FeatureFlag) -> Bool
+}
+
+enum FeatureFlag: String {
+    case newCheckoutFlow
+    case aggressiveImagePrefetching
+}
+
+final class RemoteFeatureFlagProvider: FeatureFlagProviding {
+    private var cachedFlags: [String: Bool] = [:]
+
+    func refresh() async {
+        // Fetched from a lightweight remote config endpoint - can be
+        // flipped server-side in seconds, completely independent of
+        // whether users have updated to a new build or not.
+        cachedFlags = (try? await fetchRemoteFlags()) ?? cachedFlags
+    }
+
+    func isEnabled(_ flag: FeatureFlag) -> Bool {
+        cachedFlags[flag.rawValue] ?? false   // safe default if the
+    }                                           // remote fetch hasn't
+                                                  // completed yet
+
+    private func fetchRemoteFlags() async throws -> [String: Bool] { [:] }
+}
+
+final class CheckoutViewController: UIViewController {
+    private let flags: FeatureFlagProviding
+
+    init(flags: FeatureFlagProviding) {
+        self.flags = flags
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func presentCheckout() {
+        if flags.isEnabled(.newCheckoutFlow) {
+            // A regression discovered here can be turned OFF for every
+            // user who already has this binary installed - within
+            // minutes, not the days a new App Store review takes.
+            presentNewCheckoutFlow()
+        } else {
+            presentLegacyCheckoutFlow()
+        }
+    }
+
+    private func presentNewCheckoutFlow() {}
+    private func presentLegacyCheckoutFlow() {}
+}
+
+// Build numbers: automated, monotonically increasing, unique per
+// upload - avoids ambiguous crash reports from two binaries sharing
+// a build number. (Illustrative CI step, e.g. in a Fastlane lane.)
+// lane :bump_build_number do
+//   increment_build_number(build_number: latest_testflight_build_number + 1)
+// end
+//
+// CFBundleShortVersionString: "1.4.2"   <- user-facing, semantic
+// CFBundleVersion: "1487"                <- unique per upload, used to
+//                                            identify EXACTLY which
+//                                            binary produced a given
+//                                            crash report or ticket
+""",
+                keyTakeaways: [
+                    "CFBundleShortVersionString (user-facing, semantic) and CFBundleVersion (build number, must be unique/monotonic per upload) serve different purposes - the build number is what precisely identifies which binary produced a given crash report, and should be incremented automatically in CI, not manually.",
+                    "Phased rollout limits blast radius by releasing to a small percentage first - its entire value depends on actively monitoring crash-free rate DURING the early rollout percentage, not just checking after full rollout.",
+                    "iOS has no true rollback mechanism - you can pause a phased rollout and ship a NEW fixed version, but you cannot force already-updated users back to the previous binary at all.",
+                    "Feature flags are the one practice that provides a genuine FAST recovery mechanism after a bad change has already shipped - flipped server-side instantly for users who already have the new binary, without a new App Store review cycle.",
+                    "Given a choice of one reliability practice: feature flags, because crash-free monitoring is purely detective and QA gates are preventive-but-imperfect - only feature flags directly shrink the window during which an already-shipped bad release is actively hurting users."
+                ]
+            ),
+            QAItem(
+                id: "app_store_compliance_rejections_att_privacy_manifests_sdk_audits",
+                question: "When you submit an iOS app to the App Store, what are the most common rejection reasons related to privacy, permissions, or Apple guidelines? What are the key steps to ensure compliance with App Tracking Transparency and privacy manifest requirements, including specific checks in the app and App Store Connect? And how do you audit third-party SDKs to ensure they don't introduce prohibited tracking, excessive background work, or performance regressions before you ship?",
+                topics: ["App Store Review", "App Tracking Transparency", "Privacy Manifest", "Third-Party SDKs", "Compliance"],
+                explanation: """
+These three questions form a natural progression: knowing WHAT commonly gets an app rejected, knowing the SPECIFIC compliance mechanics for the most common privacy-related category, and knowing how to catch a violation from a DEPENDENCY (not just your own code) before it ever reaches review at all.
+
+**Common App Store rejection reasons related to privacy/permissions/guidelines:**
+- **Missing or inadequate permission usage-description strings** (`NSCameraUsageDescription`, `NSLocationWhenInUseUsageDescription`, etc.) - Apple requires these to be genuinely SPECIFIC about why the app needs that permission, not a generic placeholder ("this app needs your location" gets rejected more often than "used to show nearby stores on the map").
+- **Requesting a permission before explaining why**, or requesting a permission the app doesn't actually meaningfully use - reviewers actively test that a requested permission corresponds to real, used functionality.
+- **Missing or incorrect privacy manifest / missing required-reason API declarations** (see below) - an increasingly common, newer rejection category as Apple has ramped up enforcement.
+- **App Tracking Transparency violations** - tracking (in Apple's specific technical definition) without having shown the ATT prompt and received authorization, most commonly via a bundled THIRD-PARTY SDK doing something tracking-related the app's own team wasn't fully aware of.
+- **Broken core functionality during review** - crashes, or features that don't work as described, remain one of the single most common rejection reasons overall, unrelated to privacy specifically.
+- **Metadata/screenshot mismatches** - screenshots or descriptions depicting functionality the submitted build doesn't actually have.
+
+**App Tracking Transparency and privacy manifest compliance - the concrete steps:**
+1. Determine whether the app actually performs "tracking" under Apple's specific definition (linking user/device data with a THIRD PARTY for advertising/measurement purposes, or sharing it with a data broker) - not every use of an identifier counts; this determination should be made deliberately, not assumed.
+2. If it does, show the ATT prompt (`ATTrackingManager.requestTrackingAuthorization`) BEFORE any tracking-related SDK initialization or identifier collection happens, with a clear system permission dialog - and genuinely branch behavior on the result (don't track anyway if the user denies, or collect any tracking-purpose identifier).
+3. Declare accurate "app privacy" information in App Store Connect (the privacy "nutrition label") - what data is collected, whether it's linked to identity, whether it's used for tracking - accurately matching what the app and its THIRD-PARTY SDKs actually do, not just what your own first-party code does.
+4. Include a `PrivacyInfo.xcprivacy` manifest file declaring: data types collected, "required reason" API usage (specific APIs - like accessing file timestamps, or `UserDefaults` - that Apple now requires an approved, specific justification code for, since they've historically been abused for CROSS-APP fingerprinting even without explicit tracking APIs), and, since some Xcode/App Store Connect versions, a listing of tracking domains contacted.
+5. **Specific checks to run before submission:** actually trigger the ATT prompt in a fresh install and confirm it fires at the RIGHT moment (not on first launch before any relevant context, which Apple also scrutinizes) and confirm behavior is genuinely different when denied; run Xcode's own "Privacy Report" (Product menu, or via `xcrun` build analysis) which lists every required-reason API actually used across the app AND its linked SDKs, cross-checked against your manifest's declared reasons; and verify App Store Connect's own "App Privacy" section matches the actual, current behavior of the current build, not a stale answer from months ago.
+
+**Auditing third-party SDKs before shipping - since the majority of ATT/tracking violations in practice come from a bundled DEPENDENCY, not first-party code:**
+- Check each SDK's OWN privacy manifest (Apple requires SDKs that are popular/widely-used "signature" third-party SDKs to ship their own `PrivacyInfo.xcprivacy` as of recent Xcode versions) - if a required SDK doesn't have one, that's now a build-breaking or review-blocking issue on its own, not just a compliance risk to investigate.
+- Read the SDK's actual network traffic during a QA pass (Proxyman/Charles Proxy, or Instruments' Network template) to see EXACTLY what domains it contacts and what data it sends - don't just trust the SDK's own documentation, since undocumented/underdocumented tracking behavior in third-party code is a real, recurring category of surprise.
+- Check background behavior specifically (Instruments' Energy Log / Background Activity) - a chatty SDK that keeps waking the app in the background for its own analytics/sync purposes is both a battery/performance liability AND a category Apple actively reviews for.
+- Pin SDK versions and review changelogs on every update, rather than blindly auto-updating - an SDK can introduce NEW tracking behavior or new required-reason API usage in a minor version bump with no warning, silently turning a previously-compliant app into a non-compliant one.
+""",
+                example: """
+// 1) ATT: show the prompt at a deliberate moment, BEFORE any
+// tracking-related SDK initialization, and genuinely branch on the result.
+import AppTrackingTransparency
+import AdSupport
+
+final class TrackingConsentCoordinator {
+    func requestTrackingAuthorizationIfNeeded() async -> ATTrackingManager.AuthorizationStatus {
+        // Only meaningful to call once, and only if the app genuinely
+        // performs "tracking" under Apple's definition - not a blanket
+        // call made just because the API exists.
+        let status = await ATTrackingManager.requestTrackingAuthorization()
+
+        switch status {
+        case .authorized:
+            initializeTrackingSDKs()   // ONLY initialize tracking-purpose
+        case .denied, .restricted, .notDetermined:   // SDKs after explicit
+            configureNonTrackingAnalyticsOnly()        // authorization -
+        @unknown default:                              // never track anyway
+            configureNonTrackingAnalyticsOnly()
+        }
+        return status
+    }
+
+    private func initializeTrackingSDKs() {
+        // e.g. an ad attribution SDK that links device data with a
+        // third party - only started AFTER authorization, never before.
+    }
+
+    private func configureNonTrackingAnalyticsOnly() {
+        // First-party, non-tracking analytics (aggregate, not linked to
+        // identity/device across apps/companies) remain fine either way.
+    }
+}
+
+// 2) PrivacyInfo.xcprivacy - declares data collection, required-reason
+// API usage, and tracking domains. (Illustrative structure - authored
+// as a property list in Xcode, not raw Swift code.)
+/*
+PrivacyInfo.xcprivacy:
+  NSPrivacyTracking: false   // or true, matching REAL current behavior
+  NSPrivacyTrackingDomains: []
+  NSPrivacyCollectedDataTypes: [
+    { NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeCrashData",
+      NSPrivacyCollectedDataTypeLinked: false,
+      NSPrivacyCollectedDataTypeTracking: false,
+      NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"] }
+  ]
+  NSPrivacyAccessedAPITypes: [
+    { NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryUserDefaults",
+      NSPrivacyAccessedAPITypeReasons: ["CA92.1"] }   // an Apple-approved
+  ]                                                      // reason code -
+*/                                                        // required, not optional,
+                                                            // for this API category
+
+// 3) Auditing a third-party SDK's ACTUAL behavior before shipping -
+// don't trust documentation alone.
+final class SDKAuditChecklist {
+    // Run during a dedicated QA pass, not assumed from the SDK's docs:
+    //  - Proxyman/Charles Proxy session: what domains does the SDK
+    //    actually contact, and what data does each request send?
+    //  - Instruments' Energy Log / Background Activity: does the SDK
+    //    wake the app in the background for its OWN purposes?
+    //  - Does the SDK ship its OWN PrivacyInfo.xcprivacy? (Required
+    //    for many "signature" third-party SDKs as of recent Xcode
+    //    versions - its absence can now block the build/review outright.)
+    //  - Pin the exact SDK version; review the changelog on every
+    //    update rather than auto-updating blindly - new tracking
+    //    behavior can appear in a minor version bump with no warning.
+}
+""",
+                keyTakeaways: [
+                    "Common rejection reasons: vague/generic permission usage-description strings, requesting a permission the app doesn't meaningfully use, missing or incorrect privacy manifest/required-reason declarations, ATT violations (often via a bundled third-party SDK), and broken core functionality during review.",
+                    "ATT compliance requires determining whether the app performs 'tracking' under Apple's specific definition first, showing the prompt BEFORE any tracking-related SDK initialization, and genuinely branching behavior on a denial - not tracking anyway.",
+                    "PrivacyInfo.xcprivacy declares data types collected, required-reason API usage (e.g. UserDefaults access needs an Apple-approved reason code), and tracking domains - it must match the app's REAL current behavior, not a stale declaration.",
+                    "Specific pre-submission checks: trigger ATT in a fresh install and confirm it fires at the right moment with genuinely different behavior on denial; run Xcode's Privacy Report to cross-check required-reason API usage against your manifest; verify App Store Connect's privacy nutrition label matches the current build.",
+                    "Most real ATT/tracking violations come from bundled third-party SDKs, not first-party code - audit each SDK's actual network traffic (Proxyman/Charles/Instruments), background behavior, and whether it ships its own privacy manifest, and pin versions rather than auto-updating blindly."
+                ]
+            )
+,
+            QAItem(
+                id: "struct_vs_class_practical_difference_and_choice",
+                question: "In Swift, what's the practical difference between `struct` and `class`, and when would you choose one over the other in an app architecture?",
+                topics: ["Struct", "Class", "Value Types", "Reference Types", "Architecture"],
+                explanation: """
+The textbook answer - "struct is a value type, class is a reference type" - is correct but incomplete for an interview; the practical difference is about what each guarantee actually BUYS or COSTS you in real app architecture, and the choice should follow from that, not from a rule of thumb like "always prefer struct."
+
+**The core mechanical difference.** A `struct` instance is copied on assignment, parameter passing, and return - `var b = a` gives `b` its own independent value (subject to copy-on-write for anything backed by a buffer, see below), so mutating `b` can never affect `a`. A `class` instance is a reference - `var b = a` makes `b` and `a` two names for the SAME underlying object, so mutating through `b` is visible through `a` too. This single fact cascades into everything else: identity, mutability rules, thread-safety, and inheritance.
+
+**Identity.** A `class` instance has identity distinct from its value - two different `Person` objects can hold identical name/age but still be different PEOPLE (`===` answers "is this the same instance?"). A `struct` has no identity apart from its value - two `Point(x: 1, y: 2)` values are simply equal, there's no meaningful sense in which they're "the same instance" vs. "two different instances that happen to be equal." Reach for `class` specifically when identity matters to the domain: a `UIViewController`, a `URLSession` task, a bank account object that must be the single source of truth being mutated from multiple places.
+
+**Mutability and `mutating`.** Struct methods that change `self` must be marked `mutating`, and you can't mutate a `struct` stored in a `let` at all - the compiler enforces at the call site that mutation is a deliberate, visible act. A `class` instance's properties can be mutated through a `let` reference (the reference itself is constant; what it points to is not) - convenient, but it means mutation can happen far from where the reference was declared, through any code holding a copy of that reference.
+
+**Thread-safety implications.** Because a `struct` is copied on assignment/parameter-passing, passing one across threads/closures inherently gives each side its own independent copy - no shared mutable state, no data race on the struct itself (though a struct containing a class-typed property doesn't get this for free - the reference inside is still shared). A `class` instance shared across threads is exactly the shared-mutable-state scenario that needs a lock, an `actor`, or serial-queue confinement to stay safe.
+
+**Inheritance and polymorphism.** Only `class` supports subclassing and can participate in Objective-C/UIKit-style inheritance hierarchies (`UIView`, `UIViewController` themselves are classes, non-negotiably, since they're defined that way by the frameworks). If the design genuinely needs "an `Animal` reference that might actually be a `Dog` or `Cat` at runtime, with shared base behavior," that's a `class` (or a `protocol` with existential/generic dispatch, often the more Swift-idiomatic alternative to inheritance).
+
+**Performance.** Small structs (a few `Int`/`Double`/`Bool` fields) are typically cheaper than classes: no heap allocation, no ARC retain/release traffic, better cache locality since they're stored inline. A `class` instance is always heap-allocated and ARC-managed, with retain/release calls at every copy - measurable overhead at scale (e.g., millions of collection elements). This is WHY Swift's own standard library types (`Array`, `String`, `Dictionary`) are structs internally optimized with copy-on-write, not classes.
+
+**The practical decision, in app architecture terms:**
+- **Model/data types with no identity** (a `Product`, a `Coordinate`, a `Money` amount, anything Codable representing a JSON payload) - `struct`. They're values; two products with identical fields ARE the same product for the app's purposes, and value semantics prevent an accidental shared-mutation bug where changing a "copy" in one screen silently changes another screen's data.
+- **Anything with a lifecycle, identity, or that must be the single shared source of truth** (a `ViewModel`/`ObservableObject` that a View subscribes to, a `Session`/`AuthManager`, a `Cache`, anything UIKit-mandated) - `class`. SwiftUI's own `ObservableObject` conformance REQUIRES a class specifically because subscribers need a stable reference to observe - a struct copy would break the observation relationship the instant it was copied.
+- **When in doubt for a NEW data type with no inheritance need:** default to `struct` - it's the safer default (no accidental shared mutation, no need to reason about retain cycles), and Swift's own API design guidelines explicitly recommend this; reach for `class` only when the specific capability (identity, inheritance, shared mutable reference) is actually needed, not preemptively.
+""",
+                example: """
+// STRUCT: value semantics - safe to pass around without fear of
+// hidden shared mutation. Good fit: no identity, just data.
+struct Product: Codable, Equatable {
+    let id: String
+    var name: String
+    var price: Decimal
+}
+
+var original = Product(id: "1", name: "Widget", price: 9.99)
+var copy = original          // independent copy
+copy.name = "Gadget"
+print(original.name)          // "Widget" - unaffected by the copy's mutation
+print(copy.name)               // "Gadget"
+
+// CLASS: reference semantics - needed here because SwiftUI's
+// ObservableObject requires subscribers to observe a STABLE
+// reference, not an independent copy.
+import Combine
+
+final class CartViewModel: ObservableObject {
+    @Published var items: [Product] = []
+
+    func add(_ product: Product) {
+        items.append(product)
+    }
+}
+
+let vm = CartViewModel()
+let sameVM = vm               // NOT a copy - both names refer to the
+                               // SAME CartViewModel instance.
+sameVM.add(original)
+print(vm.items.count)          // 1 - visible through `vm` too, since
+                                // `vm` and `sameVM` are the same object.
+print(vm === sameVM)           // true - identity comparison, only
+                                // meaningful for reference types.
+
+// A struct CONTAINING a class-typed property does NOT get full
+// value-semantics protection for free - the reference inside is
+// still shared even though the struct wrapper is copied:
+struct Wrapper {
+    var vm: CartViewModel     // reference type stored inside a struct
+}
+var w1 = Wrapper(vm: CartViewModel())
+var w2 = w1                    // copies the STRUCT, but w1.vm and w2.vm
+                                // still point at the SAME CartViewModel.
+w2.vm.add(original)
+print(w1.vm.items.count)       // 1 - w1 sees w2's mutation, because the
+                                // class instance itself was never copied.
+""",
+                keyTakeaways: [
+                    "The mechanical difference (value vs. reference semantics on assignment/parameter-passing) is the root cause of every other difference - identity, mutability rules, thread-safety, and inheritance support all follow from it, not the other way around.",
+                    "Default to struct for new data types with no identity or inheritance need - it's Swift's own recommended default and prevents an entire class of accidental-shared-mutation bugs; reach for class only when a specific capability (identity, shared mutable reference, inheritance) is actually required.",
+                    "SwiftUI's ObservableObject conformance REQUIRES a class - a struct copy would break the subscription relationship the instant SwiftUI copied the view, which is exactly why every ViewModel/ObservableObject in a SwiftUI app is a class even though the app's data models are structs.",
+                    "A struct containing a class-typed stored property does not get full value-semantics protection - the struct wrapper is copied, but the class reference inside is still shared, a common source of 'I thought this was a value type so it couldn't have shared state' bugs.",
+                    "Struct instances passed across threads/closures inherently get independent copies with no shared mutable state, whereas a class instance shared across threads is the classic data-race scenario needing a lock, actor, or serial-queue confinement."
+                ]
+            ),
+            QAItem(
+                id: "swiftui_sheet_presentation_stateobject_vs_observedobject_lifecycle",
+                question: "When you present a sheet using `sheet(isPresented:)`, what's the lifecycle difference between using `@StateObject` versus `@ObservedObject` inside the sheet content?",
+                topics: ["SwiftUI", "StateObject", "ObservedObject", "Sheet", "Lifecycle", "State Management"],
+                explanation: """
+This is one of SwiftUI's sharpest lifecycle gotchas, because both property wrappers compile fine and often APPEAR to work identically in casual testing - the bug only shows up under re-presentation, and by then it's easy to misdiagnose as something else entirely.
+
+**The rule that explains everything else.** `@StateObject` tells SwiftUI "I, this View, own the lifecycle of this object - create it once, the first time this View identity appears, and keep the SAME instance alive across every body re-evaluation for as long as this View exists." `@ObservedObject` makes no such promise - it just subscribes to whatever instance is HANDED to it, with zero opinion about who created it or when. The property wrapper you choose is really a statement about OWNERSHIP, not just "which one refreshes the view" (both do).
+
+**Applied to a sheet's content view, concretely.** Consider a sheet presenting `EditProfileView`, which needs its own `ProfileEditViewModel` to hold in-progress edits (a text field draft, a "has unsaved changes" flag) that should be fresh every time the sheet is opened, and safely discarded when it's dismissed:
+
+- If `EditProfileView` declares `@StateObject private var viewModel = ProfileEditViewModel()`, SwiftUI creates exactly ONE `ProfileEditViewModel` the first time `EditProfileView`'s identity appears (when the sheet is presented), and reuses that SAME instance across every re-render while the sheet stays open - even if the PARENT view re-renders for unrelated reasons (which would otherwise re-run the initializer expression). When the sheet is dismissed, `EditProfileView` and its `@StateObject` are torn down together. Re-present the sheet, and a genuinely FRESH `ProfileEditViewModel` is created - exactly the "fresh draft every time" behavior wanted.
+
+- If `EditProfileView` instead declares `@ObservedObject var viewModel: ProfileEditViewModel` and the PARENT constructs it inline at the call site (`.sheet(isPresented: $showEditor) { EditProfileView(viewModel: ProfileEditViewModel()) }`), the expression `ProfileEditViewModel()` re-runs EVERY time the parent's body re-evaluates while the sheet happens to be presented - not just once. Any unrelated `@State` change in the parent (a scroll position, an unrelated toggle) silently creates a BRAND NEW `ProfileEditViewModel`, discarding whatever the user had already typed into the still-open sheet. This is the classic symptom: "my sheet's text field randomly clears itself while I'm still typing" - caused by the parent re-rendering, not by anything wrong in the sheet's own code.
+
+**The corollary: `@ObservedObject` is still correct, just for a DIFFERENT ownership shape.** If the view model is created and owned by the PARENT (e.g., the parent already has an `@StateObject var viewModel` for a longer-lived object that the sheet should read/mutate, like an existing `Profile` being edited in place, not a fresh draft), passing that SAME already-existing instance into the sheet's content view via `@ObservedObject` is exactly right - the sheet doesn't own its lifecycle, it just observes an object someone else is responsible for. The bug is specifically about accidentally using `@ObservedObject` with an instance CONSTRUCTED INLINE at the presentation call site, not about `@ObservedObject` being wrong in general.
+
+**The fix, and how to spot it in review.** Any time you see `SomeType(...)` constructed directly inside a `.sheet { }`/`.fullScreenCover { }` closure and handed to an `@ObservedObject` parameter, that's the red flag - the constructor call is inside a closure that re-runs on every relevant re-render, not a stable one-time initializer. Either switch the CONTENT view's property to `@StateObject` (letting SwiftUI own creation-once semantics), or - if the object genuinely needs to be created and held by the presenting view first - hoist an `@StateObject` up to the PARENT (created once, outside the sheet closure) and pass that stable instance down via `@ObservedObject`.
+""",
+                example: """
+import SwiftUI
+import Combine
+
+final class ProfileEditViewModel: ObservableObject {
+    @Published var draftName: String
+    let originalName: String
+
+    init(originalName: String) {
+        self.originalName = originalName
+        self.draftName = originalName
+    }
+
+    var hasUnsavedChanges: Bool { draftName != originalName }
+}
+
+// BUGGY: @ObservedObject with an inline-constructed instance.
+// ProfileEditViewModel(originalName:) re-runs on EVERY re-evaluation
+// of ParentView's body while the sheet is presented - not just once -
+// silently discarding in-progress edits whenever the parent re-renders
+// for any unrelated reason (e.g. `unrelatedToggle` below).
+struct BuggyEditSheetContent: View {
+    @ObservedObject var viewModel: ProfileEditViewModel   // doesn't own lifecycle
+    var body: some View {
+        TextField("Name", text: $viewModel.draftName)
+    }
+}
+
+struct BuggyParentView: View {
+    @State private var showEditor = false
+    @State private var unrelatedToggle = false   // any change here re-renders body
+
+    var body: some View {
+        VStack {
+            Toggle("Unrelated setting", isOn: $unrelatedToggle)
+            Button("Edit Profile") { showEditor = true }
+        }
+        .sheet(isPresented: $showEditor) {
+            // Constructed INLINE - re-created every time this closure
+            // re-runs, which happens whenever BuggyParentView.body does.
+            BuggyEditSheetContent(viewModel: ProfileEditViewModel(originalName: "Sachin"))
+        }
+    }
+}
+
+// FIXED: @StateObject - SwiftUI creates this ProfileEditViewModel
+// exactly once, the first time FixedEditSheetContent's identity
+// appears (sheet presentation), and keeps that SAME instance alive
+// for the sheet's whole lifetime regardless of how many times the
+// PARENT re-renders. Dismissing the sheet tears it down; re-presenting
+// creates a genuinely fresh draft, which is the desired behavior here.
+struct FixedEditSheetContent: View {
+    @StateObject private var viewModel: ProfileEditViewModel
+    init(originalName: String) {
+        _viewModel = StateObject(wrappedValue: ProfileEditViewModel(originalName: originalName))
+    }
+    var body: some View {
+        TextField("Name", text: $viewModel.draftName)
+    }
+}
+
+struct FixedParentView: View {
+    @State private var showEditor = false
+    @State private var unrelatedToggle = false
+
+    var body: some View {
+        VStack {
+            Toggle("Unrelated setting", isOn: $unrelatedToggle)
+            Button("Edit Profile") { showEditor = true }
+        }
+        .sheet(isPresented: $showEditor) {
+            FixedEditSheetContent(originalName: "Sachin")   // safe to
+            // construct here too - @StateObject inside the content
+            // view ignores re-invocations of this initializer after
+            // the first one, for as long as the View's identity persists.
+        }
+    }
+}
+
+// CORRECT @ObservedObject usage: the PARENT owns a longer-lived
+// object with its own @StateObject, and the sheet just observes it.
+struct ParentOwnsTheObject: View {
+    @StateObject private var profile = ProfileEditViewModel(originalName: "Sachin")
+    @State private var showEditor = false
+
+    var body: some View {
+        Button("Edit Profile") { showEditor = true }
+            .sheet(isPresented: $showEditor) {
+                // Passing the SAME stable instance the parent already
+                // owns - @ObservedObject is correct here, since this
+                // content view does not create or own the lifecycle.
+                ObservingSheetContent(viewModel: profile)
+            }
+    }
+}
+
+struct ObservingSheetContent: View {
+    @ObservedObject var viewModel: ProfileEditViewModel
+    var body: some View {
+        TextField("Name", text: $viewModel.draftName)
+    }
+}
+""",
+                keyTakeaways: [
+                    "@StateObject means 'this View owns the object's lifecycle - create it once on first appearance, keep the same instance alive across re-renders'; @ObservedObject means 'I just subscribe to whatever instance I'm handed, with no opinion about who created it or when' - the choice is fundamentally about ownership, not just which one triggers updates (both do).",
+                    "The classic bug: constructing an object inline inside a `.sheet { }` closure and handing it to a content view's @ObservedObject property - that constructor expression re-runs on every re-evaluation of the PRESENTING view's body while the sheet is open, silently discarding in-progress user input whenever the parent re-renders for any unrelated reason.",
+                    "@StateObject is not just 'the right one for sheets' - it specifically guarantees single creation tied to the View's OWN identity, immune to how many times the initializer expression is re-evaluated, which is exactly the guarantee a sheet's own draft/form state needs.",
+                    "@ObservedObject is still correct when the PARENT already owns a longer-lived object (its own @StateObject) and passes that same stable, already-existing instance down into the sheet to be observed/mutated in place - the bug is specifically about combining @ObservedObject with INLINE construction, not @ObservedObject in general.",
+                    "Code-review heuristic: any `SomeType(...)` constructed directly inside a `.sheet`/`.fullScreenCover` closure and passed to an @ObservedObject parameter is a red flag worth double-checking - either move that property to @StateObject, or hoist a stable @StateObject up to the parent and pass it down instead."
+                ]
+            ),
+            QAItem(
+                id: "mvc_shared_app_state_models_vs_global_managers",
+                question: "How do you manage shared app state in an MVC app - what do you keep in Models versus global managers, and how do you avoid hidden dependencies?",
+                topics: ["MVC", "Shared State", "Singleton", "Dependency Injection", "Architecture"],
+                explanation: """
+"Shared app state" covers two genuinely different things that get conflated under one name, and conflating them is exactly what produces hidden dependencies - separating them is the actual answer.
+
+**Domain state belongs in Models, always.** A `ShoppingCart`'s line items, a logged-in `User`'s profile fields, a `Playlist`'s tracks - this is data with domain meaning that some part of the UI displays or mutates. It belongs in a Model type (see the Model-responsibilities discussion), regardless of whether exactly one screen uses it or five do.
+
+**Cross-cutting infrastructure belongs in a "manager"/"service" - but the word "global" is the trap.** Things like "which user is currently authenticated," "is the network reachable," "what's the current feature-flag configuration" are not domain data any one Model owns - they're infrastructure that many unrelated parts of the app need to read. The natural instinct is a singleton (`AuthManager.shared`, `NetworkMonitor.shared`) - convenient to reach from anywhere, which is precisely the problem: "reachable from anywhere" is indistinguishable from "creates an invisible dependency from anywhere," and that invisibility is what causes real damage later.
+
+**What "hidden dependency" concretely costs you.** A `ProductListViewController` that internally calls `AuthManager.shared.currentUser` deep inside some method has a dependency on authentication state that is invisible from its interface - nothing in its initializer, its public API, or a quick read of `ProductListViewController.swift`'s type signature reveals that dependency exists. Consequences: (1) you cannot unit test this controller without `AuthManager.shared` being in some specific real (or carefully faked) global state, since there's no seam to inject a test double through; (2) two tests that both touch `AuthManager.shared` and run in the same process can interfere with each other via that shared mutable global, producing order-dependent test flakiness; (3) six months later, nobody reading `ProductListViewController`'s declaration has any way to know it needs auth state at all - the dependency is discoverable only by reading every method body.
+
+**The fix: make the dependency EXPLICIT via initializer injection, even if the underlying implementation is still "basically one instance app-wide."**
+
+```swift
+protocol AuthProviding {
+    var currentUser: User? { get }
+}
+
+final class ProductListViewController: UIViewController {
+    private let auth: AuthProviding
+    init(auth: AuthProviding) {
+        self.auth = auth
+        super.init(nibName: nil, bundle: nil)
+    }
+}
+```
+
+Now the dependency is visible in the type signature, satisfiable with a fake `AuthProviding` in tests (no real auth state needed), and the "one instance app-wide in production" behavior is achieved by constructing `ProductListViewController(auth: AppContainer.shared.authManager)` at the ONE composition-root call site (wherever the app assembles its view controller hierarchy - a coordinator, `SceneDelegate`, or an explicit `AppContainer`) - not by every consumer reaching for a global independently.
+
+**A pragmatic middle ground for MVC codebases that can't do full DI everywhere.** Not every last object needs constructor injection - for something truly ambient and low-risk to test around (e.g., `UserDefaults.standard` itself), a singleton is a reasonable pragmatic choice. The judgment call: if a global's state can meaningfully affect what a UNIT TEST asserts, or if more than one clearly-separable component needs genuinely different behavior from it (a per-tenant configuration in a multi-tenant app, for instance), that's the signal to inject it explicitly rather than reach for `.shared`.
+
+**Summary rule for "what goes where":** Models own domain state with clear ownership by a specific feature/screen area. A small number of explicitly-injected, protocol-abstracted services own cross-cutting infrastructure state, assembled at one composition root - never accessed as ambient globals from inside business logic that needs to stay testable.
+""",
+                example: """
+// ANTI-PATTERN: a singleton reached for from deep inside a
+// Controller's method body - invisible from the type's own interface.
+final class AuthManager {
+    static let shared = AuthManager()
+    private(set) var currentUser: User?
+    func signIn(as user: User) { currentUser = user }
+}
+
+struct User { let id: String; let isPremium: Bool }
+
+final class BuggyProductListViewController: UIViewController {
+    func loadProducts() {
+        // Hidden dependency: nothing in this type's declaration reveals
+        // that it needs AuthManager's state. Untestable without real
+        // (or globally-mutated-fake) AuthManager.shared state, and
+        // fragile if two tests both touch the same shared singleton.
+        if AuthManager.shared.currentUser?.isPremium == true {
+            fetchPremiumCatalog()
+        } else {
+            fetchStandardCatalog()
+        }
+    }
+    func fetchPremiumCatalog() { }
+    func fetchStandardCatalog() { }
+}
+
+// FIXED: explicit constructor injection through a narrow protocol -
+// the dependency is now part of the type's own visible contract.
+protocol AuthProviding {
+    var currentUser: User? { get }
+}
+extension AuthManager: AuthProviding {}
+
+final class FixedProductListViewController: UIViewController {
+    private let auth: AuthProviding
+
+    init(auth: AuthProviding) {
+        self.auth = auth
+        super.init(nibName: nil, bundle: nil)
+    }
+    required init?(coder: NSCoder) { fatalError("init(coder:) not used") }
+
+    func loadProducts() {
+        if auth.currentUser?.isPremium == true {
+            fetchPremiumCatalog()
+        } else {
+            fetchStandardCatalog()
+        }
+    }
+    func fetchPremiumCatalog() { }
+    func fetchStandardCatalog() { }
+}
+
+// Test double - only possible because the dependency is injectable,
+// not a hardcoded reach for AuthManager.shared.
+struct FakeAuth: AuthProviding {
+    let currentUser: User?
+}
+
+func test_loadsCorrectCatalogForPremiumUser() {
+    let sut = FixedProductListViewController(
+        auth: FakeAuth(currentUser: User(id: "1", isPremium: true))
+    )
+    sut.loadProducts()
+    // assert premium catalog path was taken - no real AuthManager
+    // singleton state involved at all, and this test cannot be
+    // affected by (or interfere with) any OTHER test's auth state.
+}
+
+// Composition root: the ONE place production code wires the real
+// singleton's instance into the type that needs it - every OTHER
+// call site never touches AuthManager.shared directly.
+enum AppContainer {
+    static func makeProductList() -> FixedProductListViewController {
+        FixedProductListViewController(auth: AuthManager.shared)
+    }
+}
+""",
+                keyTakeaways: [
+                    "Domain state (a cart's items, a user's profile fields) belongs in Models; cross-cutting infrastructure state (auth status, network reachability, feature flags) belongs in a small number of explicitly-injected services - conflating the two is what leads to reaching for singletons out of convenience.",
+                    "A singleton reached for from deep inside a method body is a HIDDEN dependency - invisible from the type's own interface, undiscoverable without reading every method body, and impossible to substitute with a test double.",
+                    "The concrete cost of hidden dependencies: untestable code (no seam to inject a fake), order-dependent test flakiness (two tests mutating the same shared global can interfere with each other), and a maintenance trap (nobody six months later can tell from a type's declaration what global state it secretly needs).",
+                    "The fix is initializer injection through a narrow protocol, even when production still only ever constructs ONE real instance - the dependency becomes visible in the type signature and swappable in tests, while a single composition root (a coordinator, SceneDelegate, or explicit AppContainer) still wires the real singleton in for production.",
+                    "This isn't an argument for injecting literally everything - a low-risk, truly ambient dependency (UserDefaults.standard) is a reasonable pragmatic singleton; the signal to inject explicitly is when a global's state can affect what a unit test asserts, or when genuinely different behavior might be needed per-consumer."
+                ]
+            ),
+            QAItem(
+                id: "urlsession_request_decode_pipeline_and_unified_error_type",
+                question: "When integrating a REST API in iOS, what are the main steps you follow from creating a URLSession request to decoding the response into a model, and how would you design error handling so your API client distinguishes transport errors, non-2xx HTTP responses, and JSON decoding failures in a single, consistent type?",
+                topics: ["URLSession", "Networking", "Error Handling", "Codable", "Architecture"],
+                explanation: """
+This is the foundational shape every other networking question in this app builds on top of (token refresh, retries, pagination) - getting the basic request-to-model pipeline and its error taxonomy right once, in one place, is what makes all of those additional concerns easy to layer on afterward instead of duplicated at every call site.
+
+**The pipeline, step by step.**
+1. **Build a `URLRequest`** - URL (often via `URLComponents` for query items, since string-concatenating a URL is error-prone with special characters), HTTP method, headers (`Content-Type`, `Authorization`), and an encoded body for writes (`JSONEncoder`).
+2. **Execute it** via `URLSession.shared.data(for:)` (the modern `async throws` API - no completion-handler pyramid, and cancellation propagates naturally through `Task` cancellation).
+3. **Inspect the transport result.** `URLSession` throws its own `URLError` for genuine transport failures (no connectivity, DNS failure, timeout) BEFORE you ever see a response - this is a distinct failure category from anything about the response's CONTENT.
+4. **Check the HTTP status code.** A transport-level SUCCESS (bytes came back) says nothing about whether the server considered the request successful - `response as? HTTPURLResponse` and its `statusCode` must be checked explicitly; a 404 or 500 still "succeeds" as far as `URLSession` itself is concerned, since it got a well-formed HTTP response.
+5. **Decode the body** with `JSONDecoder`, only once the status code is confirmed to be in the success range - decoding a 500 error page's HTML or a different error-shaped JSON body as if it were the expected model produces a confusing `DecodingError`, not a meaningful signal about what actually went wrong.
+
+**Why these three failure categories need to be ONE type, not three uncaught, ad-hoc error types scattered across call sites.** If transport failures throw `URLError`, decoding failures throw `DecodingError`, and HTTP-status failures are checked with a manual `if` that maybe throws a locally-defined error (or maybe doesn't, if a call site forgets), every single call site needs its own bespoke `catch` logic to tell these apart - and it's easy for a call site to silently forget one category (most commonly: forgetting to check `statusCode` at all, silently treating a 404 as success and trying to decode its error body as the expected model). A single `enum NetworkError` that EVERY networking-layer function funnels its failures into, mapping each of these three source errors into one case with structured context, makes handling uniform and impossible to accidentally skip a category:
+
+```swift
+enum NetworkError: Error {
+    case transport(URLError)                    // no connectivity, timeout, etc.
+    case httpError(statusCode: Int, data: Data)  // non-2xx, with the raw body for logging/parsing
+    case decoding(DecodingError)                 // response body didn't match the expected model
+}
+```
+
+**Why this specific split matters for how the UI reacts** - each category genuinely warrants DIFFERENT user-facing behavior, which is the real payoff of keeping them distinguishable all the way up to the UI layer rather than collapsing everything into "request failed": a `.transport` error with `URLError.notConnectedToInternet` should show an offline banner with a retry action; a `.httpError` with `statusCode: 401` should trigger a re-authentication flow (see the token-refresh discussion) while `503` might warrant an automatic retry with backoff; a `.decoding` failure is a BUG (client/server contract mismatch) that should be logged/reported, not shown to the user as if it were their fault, and definitely not silently swallowed.
+
+**A single generic function is the natural place to centralize all of this**, so every call site gets the same behavior for free instead of re-implementing status-code checking and decode-error-wrapping by hand each time - shown in the example below.
+""",
+                example: """
+import Foundation
+
+enum NetworkError: Error {
+    case transport(URLError)
+    case httpError(statusCode: Int, data: Data)
+    case decoding(DecodingError)
+    case unknown(Error)
+}
+
+struct APIClient {
+    let session: URLSession = .shared
+    let baseURL: URL
+    let decoder: JSONDecoder = {
+        let d = JSONDecoder()
+        d.dateDecodingStrategy = .iso8601
+        return d
+    }()
+
+    // Centralizes ALL three failure categories into one NetworkError,
+    // so no call site can accidentally skip checking one of them.
+    func fetch<T: Decodable>(_ path: String) async throws -> T {
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await session.data(for: request)
+        } catch let urlError as URLError {
+            // Category 1: transport failure - never even got a response.
+            throw NetworkError.transport(urlError)
+        } catch {
+            throw NetworkError.unknown(error)
+        }
+
+        guard let http = response as? HTTPURLResponse else {
+            throw NetworkError.unknown(
+                URLError(.badServerResponse)
+            )
+        }
+
+        // Category 2: transport SUCCEEDED, but the server rejected the
+        // request. Checked explicitly - never assumed just because
+        // bytes came back successfully at the URLSession level.
+        guard (200...299).contains(http.statusCode) else {
+            throw NetworkError.httpError(statusCode: http.statusCode, data: data)
+        }
+
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch let decodingError as DecodingError {
+            // Category 3: got a 2xx, but the body didn't match the
+            // expected model - a client/server contract bug, not a
+            // transport or HTTP-status problem.
+            throw NetworkError.decoding(decodingError)
+        }
+    }
+}
+
+// Call site: uniform handling, one switch covers every category -
+// impossible to accidentally forget to check HTTP status, since the
+// function itself already guarantees it before decoding is attempted.
+struct Product: Decodable { let id: String; let name: String }
+
+func loadProduct(id: String, client: APIClient) async {
+    do {
+        let product: Product = try await client.fetch("products/\\(id)")
+        print("Loaded:", product.name)
+    } catch NetworkError.transport(let urlError) where urlError.code == .notConnectedToInternet {
+        // Show an offline banner with a retry action.
+        print("Offline - show retry banner")
+    } catch NetworkError.httpError(let statusCode, _) where statusCode == 401 {
+        // Trigger re-authentication (see token-refresh interceptor).
+        print("Unauthorized - trigger re-auth")
+    } catch NetworkError.httpError(let statusCode, _) where (500...599).contains(statusCode) {
+        // Server error - safe to retry with backoff.
+        print("Server error \\(statusCode) - retry with backoff")
+    } catch NetworkError.decoding(let decodingError) {
+        // A BUG, not a user-facing failure - log/report it, don't
+        // blame the user's connection or input.
+        print("Contract mismatch bug: \\(decodingError)")
+    } catch {
+        print("Unhandled: \\(error)")
+    }
+}
+""",
+                keyTakeaways: [
+                    "URLSession succeeding (bytes came back) says NOTHING about whether the server considered the request successful - HTTP status code must be checked explicitly, since a 404/500 still completes as a well-formed HTTP response as far as URLSession itself is concerned.",
+                    "Decode the body only AFTER confirming a 2xx status - attempting to decode an error page or differently-shaped error JSON as if it were the expected model produces a confusing DecodingError instead of a meaningful signal about what actually went wrong.",
+                    "A single NetworkError enum funneling all three failure categories (transport/HTTP-status/decoding) makes handling uniform across every call site and makes it impossible to accidentally skip checking one category - the most common real bug is forgetting to check statusCode at all and silently mistreating a 404 as success.",
+                    "Each failure category warrants genuinely different UI behavior: transport failure -> offline banner with retry; 401 -> re-authentication flow; 5xx -> automatic retry with backoff; decoding failure -> a BUG to log/report, never shown to the user as if it were their fault.",
+                    "Centralizing this pipeline in one generic fetch function (or a small API-client type) means every future networking concern - token refresh, retry/backoff, request cancellation - can be layered on in ONE place rather than duplicated and potentially inconsistently implemented at every call site."
+                ]
+            ),
+            QAItem(
+                id: "validating_network_layer_efficiency_battery_appstore_policy",
+                question: "How do you validate that your app's network layer is efficient and reliable - caching, retries, timeouts, and background behavior - without hurting battery or violating App Store policies?",
+                topics: ["Networking", "Performance", "Battery", "Caching", "App Store Review Guidelines"],
+                explanation: """
+"Efficient and reliable" networking is not one property to check but four separate, genuinely independent axes - caching, retry behavior, timeouts, and background execution - each with its own specific validation approach and its own way of silently going wrong; treating it as one vague thing to "test" is why real problems in this area tend to ship unnoticed until a battery/network complaint or an App Store rejection surfaces them.
+
+**Caching: validate hit rate and staleness, not just "is there a cache."** `URLSession`'s default `URLCache` respects standard HTTP caching headers (`Cache-Control`, `ETag`) automatically for GET requests, but this only works AT ALL if the backend actually sends correct caching headers - many internal APIs don't, silently making every request a full network round-trip regardless of client-side caching code. Validate concretely: log cache hits vs. misses (`URLSession`'s `URLSessionTaskMetrics.transactionMetrics[].resourceFetchType` reports `.localCache` vs `.networkLoad` per request) and confirm the hit rate matches expectations for genuinely-static content (a product catalog that changes rarely should show high cache-hit rates on repeat views within the same session); for data with app-specific freshness requirements beyond what standard HTTP caching expresses, an explicit app-level cache layer (a repository that checks a last-fetched timestamp before deciding to hit the network) is more reliable than relying on backend cache headers you don't control.
+
+**Retries: validate that a flaky backend doesn't turn into a battery/data drain, not just that retries "work."** A naive retry-on-failure loop with no cap, or with a FIXED short interval, can turn one struggling endpoint into a tight request loop that burns battery and cellular data far out of proportion to the user-visible problem - the single most common way "retry logic" becomes it own reliability problem instead of solving one. Validate: confirm there's a maximum retry count (not infinite), confirm the backoff is exponential with jitter (not a fixed interval - a fixed interval across many simultaneously-affected clients synchronizes into a "thundering herd" hitting the backend at the same moments), and specifically test the scenario of a temporarily-down backend to confirm the app backs off to a low, sustainable request rate rather than hammering it.
+
+**Timeouts: validate they're tuned to the operation, not one blanket default.** `URLSessionConfiguration`'s default `timeoutIntervalForRequest` (60s) is often far too generous for a small JSON GET (a user staring at a spinner for 60 seconds before any error surfaces is a bad experience) and can simultaneously be too SHORT for a large upload on a slow connection (aborting a nearly-complete multi-minute upload right before it finishes). Validate by setting per-request-type-appropriate timeouts explicitly rather than accepting the session-wide default everywhere, and test under Xcode's Network Link Conditioner (simulating 3G/high-latency/lossy conditions) to confirm the chosen timeouts behave sensibly rather than either firing too eagerly on normal cellular latency or leaving the user waiting far too long on genuine failures.
+
+**Background behavior: this is where battery AND App Store policy violations concretely happen, and it's the axis most worth deliberate validation.** A few concrete failure modes: (1) A `URLSession` background-refresh task or silent push handler that does substantial network work but never calls its completion handler, or takes too long - iOS terminates the app and penalizes it with REDUCED background execution time going forward, a self-inflicted reliability problem. (2) Aggressive background polling (a fixed-interval timer firing network requests even while backgrounded/suspended) is both a battery drain the user will notice in Settings > Battery's per-app breakdown, and is exactly the behavior `BGTaskScheduler`'s API is designed to replace with OS-arbitrated, opportunistic scheduling instead. (3) On the App Store Review Guidelines side specifically: Guideline 2.5.4 explicitly restricts background execution to its stated purpose - registering for silent push and then using that mechanism to justify persistent, frequent background refreshing unrelated to what was actually communicated to the user is a real, specific rejection reason, not a hypothetical one. Validate by using Instruments' Energy Log / Background Activity template to confirm background network activity is bounded, infrequent, and stops promptly when there's genuinely nothing to do - not a disguised polling loop.
+
+**The unifying validation approach: profile under REAL constrained conditions, not just "does it work on Wi-Fi in the simulator."** Test with Network Link Conditioner set to 3G/Edge/high-packet-loss profiles, monitor Instruments' Energy Log across a realistic usage session, and specifically exercise the "backend goes down for 30 seconds" and "app is backgrounded mid-request" scenarios explicitly - these are exactly the conditions under which naive caching/retry/timeout/background-task code reveals problems that a happy-path Wi-Fi test on a plugged-in device never surfaces.
+""",
+                example: """
+import Foundation
+import BackgroundTasks
+
+// TIMEOUTS: per-request-type-appropriate, not one blanket default.
+func makeRequest(for purpose: RequestPurpose) -> URLRequest {
+    var request = URLRequest(url: purpose.url)
+    switch purpose {
+    case .smallJSONFetch:
+        request.timeoutInterval = 10   // fail fast; user is watching a spinner
+    case .largeUpload:
+        request.timeoutInterval = 300  // don't abort a near-complete upload
+    }
+    return request
+}
+enum RequestPurpose {
+    case smallJSONFetch, largeUpload
+    var url: URL { URL(string: "https://api.example.com")! }
+}
+
+// RETRIES: bounded count + exponential backoff + jitter - never an
+// unbounded loop or a fixed interval (which synchronizes many clients
+// into a "thundering herd" against a recovering backend).
+func fetchWithBackoff<T>(
+    maxAttempts: Int = 3,
+    operation: @escaping () async throws -> T
+) async throws -> T {
+    var lastError: Error?
+    for attempt in 0..<maxAttempts {
+        do {
+            return try await operation()
+        } catch {
+            lastError = error
+            guard attempt < maxAttempts - 1 else { break }
+            let base = pow(2.0, Double(attempt))          // 1s, 2s, 4s...
+            let jitter = Double.random(in: 0...0.5)
+            let delay = base + jitter
+            try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+        }
+    }
+    throw lastError ?? URLError(.unknown)
+}
+
+// CACHING: validate hit rate via URLSessionTaskMetrics, don't just
+// assume default URLCache is doing something useful.
+final class MetricsLoggingDelegate: NSObject, URLSessionTaskDelegate {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didFinishCollecting metrics: URLSessionTaskMetrics
+    ) {
+        for transaction in metrics.transactionMetrics {
+            let hitOrMiss = transaction.resourceFetchType == .localCache
+                ? "CACHE HIT" : "NETWORK LOAD"
+            print("\\(task.originalRequest?.url?.absoluteString ?? "?"): \\(hitOrMiss)")
+        }
+    }
+}
+
+// BACKGROUND BEHAVIOR: BGTaskScheduler - OS-arbitrated, opportunistic,
+// respects App Store Guideline 2.5.4 (background work stays bounded
+// and tied to its stated purpose), unlike a disguised polling timer.
+func scheduleBackgroundRefresh() {
+    let request = BGAppRefreshTaskRequest(identifier: "com.example.refresh")
+    request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
+    try? BGTaskScheduler.shared.submit(request)
+}
+
+func handleBackgroundRefresh(task: BGAppRefreshTask) {
+    // MUST call setTaskCompleted promptly and for EVERY code path,
+    // including the expiration handler - failing to do so gets the
+    // app penalized with reduced future background execution time.
+    task.expirationHandler = {
+        task.setTaskCompleted(success: false)
+    }
+    Task {
+        do {
+            _ = try await fetchWithBackoff { try await performLightweightSync() }
+            task.setTaskCompleted(success: true)
+        } catch {
+            task.setTaskCompleted(success: false)
+        }
+        scheduleBackgroundRefresh()   // reschedule the NEXT opportunistic run
+    }
+}
+func performLightweightSync() async throws -> Bool { true }
+""",
+                keyTakeaways: [
+                    "Caching, retries, timeouts, and background behavior are four independent axes, each with its own specific validation approach - treating 'network efficiency' as one vague thing to test is how real problems in each area ship unnoticed.",
+                    "Retry logic without a bounded max-attempt count and exponential backoff-with-jitter can itself become a reliability/battery problem - a fixed retry interval synchronizes many clients into a thundering herd against a backend that's already struggling, and an unbounded loop drains battery/cellular data far out of proportion to the original failure.",
+                    "Timeouts should be tuned per request TYPE, not one session-wide default - 60s is both needlessly long for a small JSON GET (bad spinner experience) and can be too short for a large upload on a slow connection (aborting a near-complete transfer).",
+                    "Background execution is where battery drain and App Store rejections concretely happen: a background task that never calls its completion handler gets the app penalized with reduced future background time, and disguising persistent frequent polling as legitimate background refresh violates Guideline 2.5.4 (background work must stay tied to its stated purpose) - a real, specific rejection reason.",
+                    "Validate under REALISTIC constrained conditions, not happy-path Wi-Fi: Network Link Conditioner (3G/high-latency/lossy profiles), Instruments' Energy Log for background activity, URLSessionTaskMetrics for actual cache hit/miss rates, and explicit tests of 'backend down for 30s' and 'app backgrounded mid-request' scenarios."
+                ]
+            )
+        ]
+    }
     // MARK: - Resilient Fallback Machine Round Questions
     private var fallbackMachineRoundQuestions: [Question] {
         return [
@@ -4447,6 +12243,17 @@ final class AtomicStore<T: Codable>: ObservableObject {
     private let debounceInterval: TimeInterval
     private var pendingPersist: DispatchWorkItem?
 
+    // Requirement 3 ("Main Thread Hygiene") scopes its background-thread
+    // rule to PERSISTENCE specifically -- "JSON encoding and file writing"
+    // -- which is the SAVE path implemented by persistToDisk() below, run
+    // entirely on ioQueue. This initial LOAD is a separate, one-time,
+    // synchronous read at construction time; it is not "persistence" and
+    // the requirements never ask for it to be async. An async-loading
+    // init would also change this type's whole shape (no synchronous
+    // `AtomicStore(fileURL:)` initializer could then return a fully-
+    // populated instance at all -- every existing caller pattern like
+    // `@StateObject var store = AtomicStore<T>(fileURL: ...)` depends on
+    // exactly that), which the requirements do not ask for either.
     public init(fileURL: URL, debounceInterval: TimeInterval = 2.0) {
         self.fileURL = fileURL
         self.debounceInterval = debounceInterval
@@ -4539,6 +12346,2184 @@ let decoded = try! JSONDecoder().decode(DemoRecord.self, from: encoded)
 print("Round-tripped through Codable: \\(decoded.name), score \\(decoded.score)")
 """,
                 testHarness: ""
+            ),
+            Question(
+                id: "ebay_github_repo_viewer_machine_coding",
+                title: "Machine Coding Round: GitHub Repository Viewer (4-Tier Assessment)",
+                category: "machineRound",
+                difficulty: "Hard",
+                topics: ["Machine Coding", "Networking", "SwiftUI", "Codable", "Concurrency"],
+                description: """
+This is a real 4-tier iOS take-home "Machine Coding Round" assessment (eBay-style): build a GitHub Repository Viewer in SwiftUI, one tier at a time. Each tier is gradeable independently — a real assessment like this scores your highest submission across attempts and gives partial credit, so an incomplete Tier 3/4 attempt with a solid Tier 1/2 still earns real points. You do not need fully "runnable" UI code to get credit for the later tiers — demonstrating correct Swift/SwiftUI/networking patterns is what's graded, and in fact this app's own console runner can't execute SwiftUI view code or make real network calls either, so — matching the real assessment's own grading model — only Tier 1 (JSON decoding) actually executes in the console below; Tiers 2-4 are graded by reading correct, idiomatic code, not by running it.
+
+TIER 1 — Data Modeling & Basic UI
+Create a Swift struct named Repository conforming to both Codable and Identifiable, with:
+  • id (Int)
+  • name (String)
+  • language (String?) — optional
+  • description (String?) — optional
+  • stargazersCount (Int) — note the JSON key is "stargazers_count", not "stargazersCount"
+Then decode the sample JSON below into [Repository] and display it in a List: repository name, description (if present), language, and star count with a ★ icon.
+
+Sample JSON:
+[
+  { "id": 1, "name": "AwesomeProject", "language": "Swift", "description": "An awesome Swift project.", "stargazers_count": 42 },
+  { "id": 2, "name": "MissingLanguage", "description": "No language provided.", "stargazers_count": 10 },
+  { "id": 3, "name": "NoDescription", "language": "Objective-C", "stargazers_count": 15 }
+]
+
+TIER 2 — Networking Service Implementation
+Create NetworkingService.swift with:
+  func fetchRepositories(for username: String) async throws -> [Repository]
+Use URLSession + async/await against https://api.github.com/users/{username}/repos. Handle invalid URLs, network errors, non-2xx HTTP responses, and decoding failures as distinct, clearly-reported error cases — not a single generic catch-all. Update ContentView to call it and show a loading indicator while the request is in flight.
+
+TIER 3 — Caching & Retries
+Enhance the networking service with:
+  • An in-memory cache keyed by username — a repeated fetch for the same username returns the cached array instead of making a new network call.
+  • A retry mechanism: if the first attempt fails, retry exactly once before propagating the error.
+Keep using async/await throughout.
+
+TIER 4 — Dynamic Search & State Management
+Update the view to add a TextField ("Enter GitHub username") and a "Fetch" button, and handle all of: idle, loading (ProgressView), success (the list), and error (a clear message) states, with correct transitions between them as the user searches for different usernames.
+
+EXPECTED UI LAYOUT
+  • Header: large title "Repositories".
+  • Search bar: TextField placeholder "Enter GitHub username" + a "Fetch" button next to it.
+  • Each list cell: bold repository name, description below it, then a footer row with "Language: [Name]" on the left and "★ [Count]" on the right (language shows "N/A" when absent; the description line is simply omitted when absent, as in "NoDescription" above).
+
+TIER 4 REFERENCE IMPLEMENTATION (SwiftUI — not part of the editable/runnable file; see above for why)
+
+    enum LoadState {
+        case idle
+        case loading
+        case success([Repository])
+        case failure(String)
+    }
+
+    struct ContentView: View {
+        @State private var username: String = ""
+        @State private var state: LoadState = .idle
+
+        var body: some View {
+            NavigationView {
+                VStack(spacing: 0) {
+                    HStack {
+                        TextField("Enter GitHub username", text: $username)
+                            .textFieldStyle(.roundedBorder)
+                        Button("Fetch") { fetch() }
+                            .disabled(username.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                    .padding()
+
+                    switch state {
+                    case .idle:
+                        Spacer()
+                        Text("Enter a username and tap Fetch.").foregroundColor(.secondary)
+                        Spacer()
+                    case .loading:
+                        Spacer()
+                        ProgressView("Loading...")
+                        Spacer()
+                    case .success(let repos):
+                        List(repos) { repo in
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(repo.name).font(.headline)
+                                if let description = repo.description {
+                                    Text(description).font(.subheadline)
+                                }
+                                HStack {
+                                    Text("Language: \\(repo.language ?? "N/A")")
+                                        .font(.caption).foregroundColor(.secondary)
+                                    Spacer()
+                                    Text("★ \\(repo.stargazersCount)").font(.caption)
+                                }
+                            }
+                        }
+                    case .failure(let message):
+                        Spacer()
+                        Text(message).foregroundColor(.red).padding()
+                        Spacer()
+                    }
+                }
+                .navigationTitle("Repositories")
+            }
+        }
+
+        private func fetch() {
+            state = .loading
+            let requestedUsername = username
+            Task {
+                do {
+                    let repos = try await NetworkingService.shared.fetchRepositories(for: requestedUsername)
+                    state = .success(repos)
+                } catch {
+                    state = .failure(error.localizedDescription)
+                }
+            }
+        }
+    }
+""",
+                templateCode: """
+import Foundation
+
+// MARK: - Tier 1: Data Model
+// TODO: Create a Repository struct conforming to Codable and Identifiable.
+// Properties: id (Int), name (String), language (String? optional),
+// description (String? optional), stargazersCount (Int, JSON key "stargazers_count")
+struct Repository {
+    // TODO: implement your solution here
+}
+
+// MARK: - Tier 2 & 3: Networking Service
+// TODO: Implement fetchRepositories(for:) using async/await against
+// https://api.github.com/users/{username}/repos, with:
+//  - proper error handling (invalid URL, network errors, HTTP errors, decoding errors)
+//  - an in-memory cache keyed by username
+//  - exactly one retry before propagating a failure
+//
+// Tier 4 (the SwiftUI view: a TextField + "Fetch" button, and
+// idle/loading/success/error states) is described in the PROBLEM
+// DESCRIPTION above along with a complete reference implementation to
+// compare against — it's not part of this file, since this app's console
+// runner has no way to execute SwiftUI view code either way.
+class NetworkingService {
+    static let shared = NetworkingService()
+    // TODO: implement your solution here
+}
+
+// MARK: - Runnable demo — decode the sample JSON and print each repository
+// in the format: Name | Description | Language: X | ★ Count
+let sampleJSON = "[{\\"id\\": 1, \\"name\\": \\"AwesomeProject\\", \\"language\\": \\"Swift\\", \\"description\\": \\"An awesome Swift project.\\", \\"stargazers_count\\": 42}, {\\"id\\": 2, \\"name\\": \\"MissingLanguage\\", \\"description\\": \\"No language provided.\\", \\"stargazers_count\\": 10}, {\\"id\\": 3, \\"name\\": \\"NoDescription\\", \\"language\\": \\"Objective-C\\", \\"stargazers_count\\": 15}]"
+// TODO: decode sampleJSON into [Repository] and print each one
+""",
+                solutionCode: """
+import Foundation
+
+// MARK: - Tier 1: Data Model
+
+struct Repository: Codable, Identifiable {
+    let id: Int
+    let name: String
+    let language: String?
+    let description: String?
+    let stargazersCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, language, description
+        case stargazersCount = "stargazers_count"
+    }
+}
+
+// MARK: - Tier 2 & 3: Networking Service (async/await, in-memory cache, single retry)
+
+enum NetworkingError: Error {
+    case invalidURL
+    case networkError(Error)
+    case invalidResponse
+    case httpError(Int)
+    case decodingError(Error)
+}
+
+func describe(_ error: NetworkingError) -> String {
+    switch error {
+    case .invalidURL: return "Invalid URL."
+    case .networkError(let err): return "Network error: \\(err.localizedDescription)"
+    case .invalidResponse: return "Invalid server response."
+    case .httpError(let code): return "Server returned HTTP \\(code)."
+    case .decodingError(let err): return "Failed to decode response: \\(err)"
+    }
+}
+
+actor NetworkingService {
+    static let shared = NetworkingService()
+
+    private var cache: [String: [Repository]] = [:]
+
+    func fetchRepositories(for username: String) async throws -> [Repository] {
+        if let cached = cache[username] {
+            return cached
+        }
+        do {
+            let repos = try await performFetch(for: username)
+            cache[username] = repos
+            return repos
+        } catch {
+            // Exactly one retry before propagating the error.
+            let repos = try await performFetch(for: username)
+            cache[username] = repos
+            return repos
+        }
+    }
+
+    private func performFetch(for username: String) async throws -> [Repository] {
+        guard let url = URL(string: "https://api.github.com/users/\\(username)/repos") else {
+            throw NetworkingError.invalidURL
+        }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch {
+            // A genuine connectivity failure (no internet, timeout, DNS
+            // failure, ...) throws a raw URLError from URLSession itself —
+            // without this catch it would propagate un-wrapped, unlike the
+            // other three required error categories (invalid URL, HTTP
+            // errors, decoding failures), which all already get their own
+            // distinct, clearly-reported case below.
+            throw NetworkingError.networkError(error)
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NetworkingError.invalidResponse
+        }
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            throw NetworkingError.httpError(httpResponse.statusCode)
+        }
+        do {
+            return try JSONDecoder().decode([Repository].self, from: data)
+        } catch {
+            throw NetworkingError.decodingError(error)
+        }
+    }
+}
+
+// MARK: - Runnable demo (Tier 1 decode, console-verifiable)
+//
+// NetworkingService above is real, correct Tier 2/3 reference code — read it
+// to see the async/await + cache + single-retry implementation — but it
+// deliberately isn't CALLED from this executable section. This app's runner
+// transpiles console-style Swift to JS to execute it, and that JS engine has
+// no real networking at all (every URLSession call anywhere in this app is a
+// hardcoded canned response, never an actual HTTP request), so a "live"
+// fetch here could only ever print fake, meaningless data — not a
+// meaningful demonstration either way. Tier 4's SwiftUI view is likewise not
+// part of this executable file, for the same reason SwiftUI's View
+// protocol/property wrappers have no JS representation at all. Both are
+// fully shown above/in the PROBLEM DESCRIPTION as correct reference code to
+// read and compare against — matching the real assessment this is modeled
+// on, which never executes ANY of your code either, only reviews it.
+
+print("=== Tier 1: Decoding sample JSON ===")
+let sampleJSON = "[{\"id\": 1, \"name\": \"AwesomeProject\", \"language\": \"Swift\", \"description\": \"An awesome Swift project.\", \"stargazers_count\": 42}, {\"id\": 2, \"name\": \"MissingLanguage\", \"description\": \"No language provided.\", \"stargazers_count\": 10}, {\"id\": 3, \"name\": \"NoDescription\", \"language\": \"Objective-C\", \"stargazers_count\": 15}]"
+let decodedRepos = try! JSONDecoder().decode([Repository].self, from: sampleJSON.data(using: .utf8)!)
+for repo in decodedRepos {
+    print("\\(repo.name) | \\(repo.description ?? "(no description)") | Language: \\(repo.language ?? "N/A") | \u{2605} \\(repo.stargazersCount)")
+}
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "ios_local_cache",
+                title: "iOS Local Cache",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["Data Structures", "Dictionary"],
+                description: """
+Implement a simple key-value cache class with add, get, and size functions.
+
+add(key, value) adds the pair to the cache. Returns "added" if the key is new, or "overwritten" if the key already existed (and updates its value either way).
+get(key) returns the stored value for that key, or "miss" if the key isn't present.
+size() returns the number of items currently stored.
+
+The final program output should be a single string with each function call's result, separated by a space.
+
+EXAMPLE (illustrates the semantics only — the actual starter code below uses a different, specific call sequence that must be kept as-is)
+Input:
+  cache.add("a", "value1")
+  cache.add("b", "value2")
+  cache.add("b", "value2")
+  cache.add("rrrrr", "nothing")
+  cache.get("hello")
+  cache.get("world")
+  cache.get("b")
+  cache.get("rrrrr")
+  cache.size()
+Output: added added overwritten added miss miss value2 nothing 3
+""",
+                templateCode: """
+import Foundation
+
+class Cache {
+    // TODO: implement add, get, and size
+
+    func add(_ key: String, _ value: String) -> String {
+        return ""
+    }
+
+    func get(_ key: String) -> String {
+        return ""
+    }
+
+    func size() -> Int {
+        return 0
+    }
+}
+
+// modifying the cache (keep this here)
+let cache = Cache()
+var results: [String] = []
+results.append(cache.add("article-123", "https://coderbyte.com/article-123"))
+results.append(cache.add("article-456", "https://coderbyte.com/article-456"))
+results.append(cache.add("how-to-code-444", "https://coderbyte.com/how-to-code-444"))
+results.append(cache.get("first-article"))
+results.append(cache.get("second-article"))
+results.append(cache.get("article-456"))
+results.append(cache.add("article-123", "https://coderbyte.com/article-123"))
+results.append("\\(cache.size())")
+print(results.joined(separator: " "))
+""",
+                solutionCode: """
+import Foundation
+
+class Cache {
+    private var storage: [String: String] = [:]
+
+    func add(_ key: String, _ value: String) -> String {
+        let existed = storage[key] != nil
+        storage[key] = value
+        return existed ? "overwritten" : "added"
+    }
+
+    func get(_ key: String) -> String {
+        return storage[key] ?? "miss"
+    }
+
+    func size() -> Int {
+        return storage.count
+    }
+}
+
+// modifying the cache (keep this here)
+let cache = Cache()
+var results: [String] = []
+results.append(cache.add("article-123", "https://coderbyte.com/article-123"))
+results.append(cache.add("article-456", "https://coderbyte.com/article-456"))
+results.append(cache.add("how-to-code-444", "https://coderbyte.com/how-to-code-444"))
+results.append(cache.get("first-article"))
+results.append(cache.get("second-article"))
+results.append(cache.get("article-456"))
+results.append(cache.add("article-123", "https://coderbyte.com/article-123"))
+results.append("\\(cache.size())")
+print(results.joined(separator: " "))
+""",
+                testHarness: """
+enum Op {
+    case add(String, String)
+    case get(String)
+    case size
+}
+struct TestCase {
+    let ops: [Op]
+    let expected: [String]
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(ops: [.add("a", "value1"), .add("b", "value2"), .add("b", "value2"), .add("rrrrr", "nothing"), .get("hello"), .get("world"), .get("b"), .get("rrrrr"), .size], expected: ["added", "added", "overwritten", "added", "miss", "miss", "value2", "nothing", "3"], name: "Example (a/b/rrrrr)"),
+    TestCase(ops: [.add("article-123", "https://coderbyte.com/article-123"), .add("article-456", "https://coderbyte.com/article-456"), .add("how-to-code-444", "https://coderbyte.com/how-to-code-444"), .get("first-article"), .get("second-article"), .get("article-456"), .add("article-123", "https://coderbyte.com/article-123"), .size], expected: ["added", "added", "added", "miss", "miss", "https://coderbyte.com/article-456", "overwritten", "3"], name: "Required Starter Block (article-*)"),
+    TestCase(ops: [.size], expected: ["0"], name: "Size On Empty Cache"),
+    TestCase(ops: [.get("nope")], expected: ["miss"], name: "Get On Empty Cache"),
+    TestCase(ops: [.add("x", "1"), .get("x"), .size], expected: ["added", "1", "1"], name: "Single Add Then Get"),
+    TestCase(ops: [.add("x", "1"), .add("x", "2"), .get("x")], expected: ["added", "overwritten", "2"], name: "Overwrite Changes Value"),
+    TestCase(ops: [.add("x", "1"), .add("y", "2"), .add("z", "3"), .size], expected: ["added", "added", "added", "3"], name: "Three Distinct Keys"),
+    TestCase(ops: [.add("x", "1"), .add("x", "1"), .add("x", "1"), .size], expected: ["added", "overwritten", "overwritten", "1"], name: "Same Key Added Three Times"),
+    TestCase(ops: [.add("", "empty-key-value"), .get("")], expected: ["added", "empty-key-value"], name: "Empty String Key"),
+    TestCase(ops: [.add("k", "")], expected: ["added"], name: "Empty String Value"),
+    TestCase(ops: [.add("k4", "v61"), .add("k2", "v13"), .get("k4"), .add("k2", "v86"), .add("k4", "v95"), .get("k2"), .size, .get("k4")], expected: ["added", "added", "v61", "overwritten", "overwritten", "v86", "2", "v95"], name: "Random Case 1 (n=8)"),
+    TestCase(ops: [.get("k8"), .add("k6", "v39"), .add("k8", "v94")], expected: ["miss", "added", "added"], name: "Random Case 2 (n=3)"),
+    TestCase(ops: [.size, .add("k7", "v94"), .add("k1", "v96"), .add("k2", "v27"), .add("k6", "v40")], expected: ["0", "added", "added", "added", "added"], name: "Random Case 3 (n=5)"),
+    TestCase(ops: [.size, .add("k1", "v59"), .add("k6", "v91"), .add("k2", "v72"), .get("k1"), .size, .get("k1"), .size], expected: ["0", "added", "added", "added", "v59", "3", "v59", "3"], name: "Random Case 4 (n=8)")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let cache = Cache()
+    var actual: [String] = []
+    for op in tc.ops {
+        switch op {
+        case .add(let k, let v):
+            actual.append(cache.add(k, v))
+        case .get(let k):
+            actual.append(cache.get(k))
+        case .size:
+            actual.append("\\(cache.size())")
+        }
+    }
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    let resultStr = actual.joined(separator: " ")
+    let expectedStr = tc.expected.joined(separator: " ")
+    if resultStr == expectedStr {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "packed_age_counter",
+                title: "Count Ages From a Packed Key-Value String",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["Codable", "String Parsing"],
+                description: """
+Decode a JSON object with a single "data" key whose value is a string containing repeated "key=STRING, age=INTEGER" entries. Count how many entries have an age greater than or equal to 50 and print the result.
+
+EXAMPLE (illustrates the format only — the actual starter code below embeds a full, realistic 300-entry dataset, not this tiny example)
+Input:  {"data": "key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47"}
+Output: 2
+""",
+                templateCode: """
+import Foundation
+
+struct DataObject: Decodable {
+    let data: String
+}
+
+class Solution {
+    func countAgesAtLeast50(_ raw: String) -> Int {
+        // TODO: Write your solution here
+        return 0
+    }
+}
+
+let json = "{\"data\":\"key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47, key=0Sr4C, age=68, key=CGEqo, age=76, key=IxKVQ, age=79, key=eD221, age=29, key=XZbHV, age=32, key=k1SN5, age=88, key=4SCsU, age=65, key=q3kG6, age=33, key=MGQpf, age=13, key=Kj6xW, age=14, key=tg2VM, age=30, key=WSnCU, age=24, key=f1Vvz, age=46, key=dOS7A, age=72, key=tDojg, age=82, key=nZyJA, age=48, key=R8JTk, age=29, key=005Ot, age=66, key=HHROm, age=12, key=5yzG8, age=51, key=xMJ5D, age=38, key=TXtVu, age=82, key=Hz38B, age=84, key=WfObU, age=27, key=mmqYB, age=14, key=4Z3Ay, age=62, key=x3B0i, age=55, key=QCiQB, age=72, key=zGtmR, age=66, key=nlIN9, age=8, key=hKalB, age=50, key=Na33O, age=17, key=jMeXm, age=15, key=OO2Mc, age=32, key=hhowx, age=34, key=gLMJf, age=60, key=PblX6, age=66, key=8Vm5W, age=22, key=oZKd6, age=88, key=RXNfQ, age=25, key=3yy0p, age=64, key=FrQbL, age=80, key=vlUkk, age=55, key=DP8po, age=80, key=EroX6, age=84, key=3bsll, age=86, key=QhZjA, age=85, key=wm6uc, age=74, key=MC1FM, age=75, key=AMxZr, age=64, key=ee03Q, age=4, key=9fGea, age=41, key=3TE9U, age=74, key=FoSMR, age=13, key=4To0X, age=57, key=5CZY3, age=33, key=qFvKG, age=79, key=W7bUh, age=2, key=htab7, age=15, key=KRyu2, age=77, key=GLkk7, age=80, key=jnXf6, age=51, key=YBTJ9, age=43, key=auL0J, age=30, key=ZHmmd, age=4, key=01iNV, age=7, key=7ldyh, age=55, key=TjXbT, age=88, key=ochyW, age=3, key=lsGXW, age=1, key=5o7Bd, age=45, key=APWEf, age=79, key=LRmKc, age=81, key=uZIoQ, age=12, key=Zf79H, age=42, key=NrpEI, age=6, key=XzYKx, age=22, key=kk0sU, age=62, key=p5uue, age=74, key=WscQQ, age=75, key=tRogh, age=19, key=ur4rW, age=60, key=IkCeS, age=19, key=vtGK4, age=11, key=C87cQ, age=38, key=0qXDb, age=39, key=KtBjN, age=46, key=f2h36, age=3, key=tGzgU, age=38, key=hIrPv, age=0, key=Tq7IX, age=25, key=F4k9K, age=46, key=9duxK, age=17, key=jTHDj, age=68, key=6GHpE, age=1, key=ye9us, age=9, key=eOfZO, age=72, key=I25vO, age=88, key=nqtBH, age=38, key=Dwn6b, age=70, key=4Qkdc, age=37, key=xvOa3, age=77, key=dg4rX, age=30, key=S9YbW, age=73, key=WhQqH, age=22, key=fexMF, age=88, key=Gzr0n, age=16, key=yFfjA, age=73, key=EfAKS, age=88, key=5Enyf, age=12, key=DK3HU, age=25, key=iGEBf, age=13, key=7r5UR, age=27, key=TQx1J, age=33, key=VlFwT, age=26, key=gnEgG, age=10, key=6P8gz, age=3, key=JnQLt, age=14, key=D3WJv, age=58, key=EXPMD, age=66, key=RzIDx, age=17, key=m6oYq, age=46, key=XTKAk, age=78, key=ZPLrJ, age=33, key=pDktp, age=10, key=TE9BG, age=18, key=7IS0l, age=35, key=yMY5X, age=58, key=jniwe, age=29, key=eb7lG, age=6, key=uzaoH, age=2, key=pUQoE, age=64, key=JZcuo, age=20, key=XwKBi, age=73, key=Zv4q9, age=31, key=HMD5T, age=76, key=rA4bI, age=75, key=PAMR7, age=86, key=tb8mz, age=2, key=vPcXk, age=18, key=c0Ixk, age=5, key=nkRrD, age=63, key=ISzFh, age=7, key=kcC1y, age=71, key=6J0WQ, age=27, key=FgiVY, age=72, key=Z8M30, age=50, key=Ep2Br, age=48, key=w9MRR, age=1, key=GI7oe, age=49, key=3ehsB, age=67, key=UW3dX, age=87, key=094dk, age=64, key=6tW4g, age=83, key=dT9IK, age=39, key=AofBp, age=27, key=7flGb, age=71, key=IBDqH, age=18, key=K2qn9, age=60, key=Qe7YJ, age=13, key=jqCHl, age=1, key=3R2IN, age=1, key=oVzfV, age=22, key=3yGCN, age=47, key=DOMm4, age=89, key=7EFRj, age=33, key=t1qsV, age=39, key=CBal1, age=14, key=BC0vr, age=68, key=0yY6L, age=47, key=Z8kX8, age=62, key=5oH1d, age=66, key=w0r3A, age=6, key=Bu8uK, age=55, key=vyqhK, age=35, key=7Zgz6, age=58, key=T573t, age=18, key=Rr4WR, age=48, key=kxnBU, age=39, key=XI3Jo, age=45, key=IAE95, age=43, key=rfSBT, age=59, key=znDPW, age=57, key=mBDDN, age=4, key=2hL0t, age=35, key=MbHM6, age=33, key=bS5oR, age=88, key=Rav2A, age=24, key=aLQO7, age=74, key=QCTUi, age=81, key=0HZlb, age=39, key=zshkO, age=5, key=q5EUd, age=75, key=WwgjN, age=20, key=LzTMa, age=3, key=uumoL, age=32, key=m3LJI, age=80, key=rU10P, age=39, key=gVTQz, age=79, key=wZjna, age=47, key=3d1E0, age=77, key=Ra74M, age=89, key=FJXHG, age=11, key=MckmR, age=37, key=tSqfN, age=2, key=HHkpI, age=40, key=S7rIA, age=34, key=vnpjJ, age=2, key=t8WSa, age=84, key=38fyp, age=11, key=Znot2, age=72, key=OGqoG, age=65, key=7VKiL, age=58, key=UdlEG, age=79, key=BXxIS, age=47, key=eW6F8, age=10, key=GASTN, age=86, key=SP0yy, age=53, key=ysN9w, age=17, key=KVGGz, age=76, key=yhEVk, age=47, key=vvlgV, age=67, key=aIMuS, age=21, key=KcHZk, age=41, key=6n8pa, age=35, key=ADTut, age=3, key=WNJXO, age=37, key=qta1A, age=67, key=cJOTp, age=67, key=1Bgd3, age=71, key=sHepZ, age=67, key=JoMvH, age=65, key=h1gF0, age=53, key=we7hP, age=41, key=Ztl8x, age=8, key=7pkQj, age=43, key=fkBah, age=21, key=FWETS, age=55, key=Gb4IY, age=26, key=U88H6, age=57, key=iExWE, age=8, key=7sl6v, age=8, key=iwI1x, age=9, key=cdKUG, age=60, key=xb127, age=57, key=dqYi8, age=15, key=opO2h, age=80, key=RNux0, age=37, key=cooLT, age=7, key=qhzQn, age=18, key=uowal, age=10, key=YR8Oy, age=17, key=GwEwr, age=15, key=WIXKE, age=53, key=aeem8, age=88, key=UPYoP, age=85, key=IF1pO, age=11, key=R6pUy, age=37, key=vYADh, age=0, key=TIq4k, age=35, key=dCekr, age=56, key=HBbXO, age=84, key=Lo9h5, age=36, key=fqBW3, age=87, key=OQWCL, age=52, key=nlYrf, age=6, key=cUS5f, age=32, key=A5gR0, age=32, key=HpUXl, age=84, key=nOuUT, age=18, key=mfvjr, age=12, key=24FH4, age=13, key=2rQei, age=51, key=EGAAV, age=8, key=Q5ifr, age=50, key=AVpil, age=87, key=vRcjt, age=51, key=G53C3, age=53, key=bsZAz, age=66, key=a8rVi, age=28, key=qPs5m, age=48, key=hF1kt, age=78, key=GIDFA, age=32, key=d2Mg4, age=12, key=EoYwt, age=30, key=DL7zx, age=14, key=lsA6c, age=17, key=ExutD, age=82, key=YOSNP, age=53, key=PEfma, age=49, key=EA8Go, age=18, key=fGTSM, age=60, key=lRf1j, age=13, key=0iJGV, age=50, key=cFCfU, age=5, key=J8an1, age=48, key=dkSlj, age=5\"}"
+let jsonData = json.data(using: .utf8)!
+let dataObject = try! JSONDecoder().decode(DataObject.self, from: jsonData)
+print(Solution().countAgesAtLeast50(dataObject.data))
+""",
+                solutionCode: """
+import Foundation
+
+struct DataObject: Decodable {
+    let data: String
+}
+
+class Solution {
+    func countAgesAtLeast50(_ raw: String) -> Int {
+        let tokens = raw.components(separatedBy: ", ")
+        var count = 0
+        for token in tokens {
+            if token.hasPrefix("age=") {
+                let numberPart = token.replacingOccurrences(of: "age=", with: "")
+                if let age = Int(numberPart), age >= 50 {
+                    count += 1
+                }
+            }
+        }
+        return count
+    }
+}
+
+let json = "{\"data\":\"key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47, key=0Sr4C, age=68, key=CGEqo, age=76, key=IxKVQ, age=79, key=eD221, age=29, key=XZbHV, age=32, key=k1SN5, age=88, key=4SCsU, age=65, key=q3kG6, age=33, key=MGQpf, age=13, key=Kj6xW, age=14, key=tg2VM, age=30, key=WSnCU, age=24, key=f1Vvz, age=46, key=dOS7A, age=72, key=tDojg, age=82, key=nZyJA, age=48, key=R8JTk, age=29, key=005Ot, age=66, key=HHROm, age=12, key=5yzG8, age=51, key=xMJ5D, age=38, key=TXtVu, age=82, key=Hz38B, age=84, key=WfObU, age=27, key=mmqYB, age=14, key=4Z3Ay, age=62, key=x3B0i, age=55, key=QCiQB, age=72, key=zGtmR, age=66, key=nlIN9, age=8, key=hKalB, age=50, key=Na33O, age=17, key=jMeXm, age=15, key=OO2Mc, age=32, key=hhowx, age=34, key=gLMJf, age=60, key=PblX6, age=66, key=8Vm5W, age=22, key=oZKd6, age=88, key=RXNfQ, age=25, key=3yy0p, age=64, key=FrQbL, age=80, key=vlUkk, age=55, key=DP8po, age=80, key=EroX6, age=84, key=3bsll, age=86, key=QhZjA, age=85, key=wm6uc, age=74, key=MC1FM, age=75, key=AMxZr, age=64, key=ee03Q, age=4, key=9fGea, age=41, key=3TE9U, age=74, key=FoSMR, age=13, key=4To0X, age=57, key=5CZY3, age=33, key=qFvKG, age=79, key=W7bUh, age=2, key=htab7, age=15, key=KRyu2, age=77, key=GLkk7, age=80, key=jnXf6, age=51, key=YBTJ9, age=43, key=auL0J, age=30, key=ZHmmd, age=4, key=01iNV, age=7, key=7ldyh, age=55, key=TjXbT, age=88, key=ochyW, age=3, key=lsGXW, age=1, key=5o7Bd, age=45, key=APWEf, age=79, key=LRmKc, age=81, key=uZIoQ, age=12, key=Zf79H, age=42, key=NrpEI, age=6, key=XzYKx, age=22, key=kk0sU, age=62, key=p5uue, age=74, key=WscQQ, age=75, key=tRogh, age=19, key=ur4rW, age=60, key=IkCeS, age=19, key=vtGK4, age=11, key=C87cQ, age=38, key=0qXDb, age=39, key=KtBjN, age=46, key=f2h36, age=3, key=tGzgU, age=38, key=hIrPv, age=0, key=Tq7IX, age=25, key=F4k9K, age=46, key=9duxK, age=17, key=jTHDj, age=68, key=6GHpE, age=1, key=ye9us, age=9, key=eOfZO, age=72, key=I25vO, age=88, key=nqtBH, age=38, key=Dwn6b, age=70, key=4Qkdc, age=37, key=xvOa3, age=77, key=dg4rX, age=30, key=S9YbW, age=73, key=WhQqH, age=22, key=fexMF, age=88, key=Gzr0n, age=16, key=yFfjA, age=73, key=EfAKS, age=88, key=5Enyf, age=12, key=DK3HU, age=25, key=iGEBf, age=13, key=7r5UR, age=27, key=TQx1J, age=33, key=VlFwT, age=26, key=gnEgG, age=10, key=6P8gz, age=3, key=JnQLt, age=14, key=D3WJv, age=58, key=EXPMD, age=66, key=RzIDx, age=17, key=m6oYq, age=46, key=XTKAk, age=78, key=ZPLrJ, age=33, key=pDktp, age=10, key=TE9BG, age=18, key=7IS0l, age=35, key=yMY5X, age=58, key=jniwe, age=29, key=eb7lG, age=6, key=uzaoH, age=2, key=pUQoE, age=64, key=JZcuo, age=20, key=XwKBi, age=73, key=Zv4q9, age=31, key=HMD5T, age=76, key=rA4bI, age=75, key=PAMR7, age=86, key=tb8mz, age=2, key=vPcXk, age=18, key=c0Ixk, age=5, key=nkRrD, age=63, key=ISzFh, age=7, key=kcC1y, age=71, key=6J0WQ, age=27, key=FgiVY, age=72, key=Z8M30, age=50, key=Ep2Br, age=48, key=w9MRR, age=1, key=GI7oe, age=49, key=3ehsB, age=67, key=UW3dX, age=87, key=094dk, age=64, key=6tW4g, age=83, key=dT9IK, age=39, key=AofBp, age=27, key=7flGb, age=71, key=IBDqH, age=18, key=K2qn9, age=60, key=Qe7YJ, age=13, key=jqCHl, age=1, key=3R2IN, age=1, key=oVzfV, age=22, key=3yGCN, age=47, key=DOMm4, age=89, key=7EFRj, age=33, key=t1qsV, age=39, key=CBal1, age=14, key=BC0vr, age=68, key=0yY6L, age=47, key=Z8kX8, age=62, key=5oH1d, age=66, key=w0r3A, age=6, key=Bu8uK, age=55, key=vyqhK, age=35, key=7Zgz6, age=58, key=T573t, age=18, key=Rr4WR, age=48, key=kxnBU, age=39, key=XI3Jo, age=45, key=IAE95, age=43, key=rfSBT, age=59, key=znDPW, age=57, key=mBDDN, age=4, key=2hL0t, age=35, key=MbHM6, age=33, key=bS5oR, age=88, key=Rav2A, age=24, key=aLQO7, age=74, key=QCTUi, age=81, key=0HZlb, age=39, key=zshkO, age=5, key=q5EUd, age=75, key=WwgjN, age=20, key=LzTMa, age=3, key=uumoL, age=32, key=m3LJI, age=80, key=rU10P, age=39, key=gVTQz, age=79, key=wZjna, age=47, key=3d1E0, age=77, key=Ra74M, age=89, key=FJXHG, age=11, key=MckmR, age=37, key=tSqfN, age=2, key=HHkpI, age=40, key=S7rIA, age=34, key=vnpjJ, age=2, key=t8WSa, age=84, key=38fyp, age=11, key=Znot2, age=72, key=OGqoG, age=65, key=7VKiL, age=58, key=UdlEG, age=79, key=BXxIS, age=47, key=eW6F8, age=10, key=GASTN, age=86, key=SP0yy, age=53, key=ysN9w, age=17, key=KVGGz, age=76, key=yhEVk, age=47, key=vvlgV, age=67, key=aIMuS, age=21, key=KcHZk, age=41, key=6n8pa, age=35, key=ADTut, age=3, key=WNJXO, age=37, key=qta1A, age=67, key=cJOTp, age=67, key=1Bgd3, age=71, key=sHepZ, age=67, key=JoMvH, age=65, key=h1gF0, age=53, key=we7hP, age=41, key=Ztl8x, age=8, key=7pkQj, age=43, key=fkBah, age=21, key=FWETS, age=55, key=Gb4IY, age=26, key=U88H6, age=57, key=iExWE, age=8, key=7sl6v, age=8, key=iwI1x, age=9, key=cdKUG, age=60, key=xb127, age=57, key=dqYi8, age=15, key=opO2h, age=80, key=RNux0, age=37, key=cooLT, age=7, key=qhzQn, age=18, key=uowal, age=10, key=YR8Oy, age=17, key=GwEwr, age=15, key=WIXKE, age=53, key=aeem8, age=88, key=UPYoP, age=85, key=IF1pO, age=11, key=R6pUy, age=37, key=vYADh, age=0, key=TIq4k, age=35, key=dCekr, age=56, key=HBbXO, age=84, key=Lo9h5, age=36, key=fqBW3, age=87, key=OQWCL, age=52, key=nlYrf, age=6, key=cUS5f, age=32, key=A5gR0, age=32, key=HpUXl, age=84, key=nOuUT, age=18, key=mfvjr, age=12, key=24FH4, age=13, key=2rQei, age=51, key=EGAAV, age=8, key=Q5ifr, age=50, key=AVpil, age=87, key=vRcjt, age=51, key=G53C3, age=53, key=bsZAz, age=66, key=a8rVi, age=28, key=qPs5m, age=48, key=hF1kt, age=78, key=GIDFA, age=32, key=d2Mg4, age=12, key=EoYwt, age=30, key=DL7zx, age=14, key=lsA6c, age=17, key=ExutD, age=82, key=YOSNP, age=53, key=PEfma, age=49, key=EA8Go, age=18, key=fGTSM, age=60, key=lRf1j, age=13, key=0iJGV, age=50, key=cFCfU, age=5, key=J8an1, age=48, key=dkSlj, age=5\"}"
+let jsonData = json.data(using: .utf8)!
+let dataObject = try! JSONDecoder().decode(DataObject.self, from: jsonData)
+print(Solution().countAgesAtLeast50(dataObject.data))
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let raw: String
+    let expected: Int
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(raw: "key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47", expected: 2, name: "Example (three entries)"),
+    TestCase(raw: "key=IAfpK, age=58, key=WNVdi, age=64, key=jp9zt, age=47, key=0Sr4C, age=68, key=CGEqo, age=76, key=IxKVQ, age=79, key=eD221, age=29, key=XZbHV, age=32, key=k1SN5, age=88, key=4SCsU, age=65, key=q3kG6, age=33, key=MGQpf, age=13, key=Kj6xW, age=14, key=tg2VM, age=30, key=WSnCU, age=24, key=f1Vvz, age=46, key=dOS7A, age=72, key=tDojg, age=82, key=nZyJA, age=48, key=R8JTk, age=29, key=005Ot, age=66, key=HHROm, age=12, key=5yzG8, age=51, key=xMJ5D, age=38, key=TXtVu, age=82, key=Hz38B, age=84, key=WfObU, age=27, key=mmqYB, age=14, key=4Z3Ay, age=62, key=x3B0i, age=55, key=QCiQB, age=72, key=zGtmR, age=66, key=nlIN9, age=8, key=hKalB, age=50, key=Na33O, age=17, key=jMeXm, age=15, key=OO2Mc, age=32, key=hhowx, age=34, key=gLMJf, age=60, key=PblX6, age=66, key=8Vm5W, age=22, key=oZKd6, age=88, key=RXNfQ, age=25, key=3yy0p, age=64, key=FrQbL, age=80, key=vlUkk, age=55, key=DP8po, age=80, key=EroX6, age=84, key=3bsll, age=86, key=QhZjA, age=85, key=wm6uc, age=74, key=MC1FM, age=75, key=AMxZr, age=64, key=ee03Q, age=4, key=9fGea, age=41, key=3TE9U, age=74, key=FoSMR, age=13, key=4To0X, age=57, key=5CZY3, age=33, key=qFvKG, age=79, key=W7bUh, age=2, key=htab7, age=15, key=KRyu2, age=77, key=GLkk7, age=80, key=jnXf6, age=51, key=YBTJ9, age=43, key=auL0J, age=30, key=ZHmmd, age=4, key=01iNV, age=7, key=7ldyh, age=55, key=TjXbT, age=88, key=ochyW, age=3, key=lsGXW, age=1, key=5o7Bd, age=45, key=APWEf, age=79, key=LRmKc, age=81, key=uZIoQ, age=12, key=Zf79H, age=42, key=NrpEI, age=6, key=XzYKx, age=22, key=kk0sU, age=62, key=p5uue, age=74, key=WscQQ, age=75, key=tRogh, age=19, key=ur4rW, age=60, key=IkCeS, age=19, key=vtGK4, age=11, key=C87cQ, age=38, key=0qXDb, age=39, key=KtBjN, age=46, key=f2h36, age=3, key=tGzgU, age=38, key=hIrPv, age=0, key=Tq7IX, age=25, key=F4k9K, age=46, key=9duxK, age=17, key=jTHDj, age=68, key=6GHpE, age=1, key=ye9us, age=9, key=eOfZO, age=72, key=I25vO, age=88, key=nqtBH, age=38, key=Dwn6b, age=70, key=4Qkdc, age=37, key=xvOa3, age=77, key=dg4rX, age=30, key=S9YbW, age=73, key=WhQqH, age=22, key=fexMF, age=88, key=Gzr0n, age=16, key=yFfjA, age=73, key=EfAKS, age=88, key=5Enyf, age=12, key=DK3HU, age=25, key=iGEBf, age=13, key=7r5UR, age=27, key=TQx1J, age=33, key=VlFwT, age=26, key=gnEgG, age=10, key=6P8gz, age=3, key=JnQLt, age=14, key=D3WJv, age=58, key=EXPMD, age=66, key=RzIDx, age=17, key=m6oYq, age=46, key=XTKAk, age=78, key=ZPLrJ, age=33, key=pDktp, age=10, key=TE9BG, age=18, key=7IS0l, age=35, key=yMY5X, age=58, key=jniwe, age=29, key=eb7lG, age=6, key=uzaoH, age=2, key=pUQoE, age=64, key=JZcuo, age=20, key=XwKBi, age=73, key=Zv4q9, age=31, key=HMD5T, age=76, key=rA4bI, age=75, key=PAMR7, age=86, key=tb8mz, age=2, key=vPcXk, age=18, key=c0Ixk, age=5, key=nkRrD, age=63, key=ISzFh, age=7, key=kcC1y, age=71, key=6J0WQ, age=27, key=FgiVY, age=72, key=Z8M30, age=50, key=Ep2Br, age=48, key=w9MRR, age=1, key=GI7oe, age=49, key=3ehsB, age=67, key=UW3dX, age=87, key=094dk, age=64, key=6tW4g, age=83, key=dT9IK, age=39, key=AofBp, age=27, key=7flGb, age=71, key=IBDqH, age=18, key=K2qn9, age=60, key=Qe7YJ, age=13, key=jqCHl, age=1, key=3R2IN, age=1, key=oVzfV, age=22, key=3yGCN, age=47, key=DOMm4, age=89, key=7EFRj, age=33, key=t1qsV, age=39, key=CBal1, age=14, key=BC0vr, age=68, key=0yY6L, age=47, key=Z8kX8, age=62, key=5oH1d, age=66, key=w0r3A, age=6, key=Bu8uK, age=55, key=vyqhK, age=35, key=7Zgz6, age=58, key=T573t, age=18, key=Rr4WR, age=48, key=kxnBU, age=39, key=XI3Jo, age=45, key=IAE95, age=43, key=rfSBT, age=59, key=znDPW, age=57, key=mBDDN, age=4, key=2hL0t, age=35, key=MbHM6, age=33, key=bS5oR, age=88, key=Rav2A, age=24, key=aLQO7, age=74, key=QCTUi, age=81, key=0HZlb, age=39, key=zshkO, age=5, key=q5EUd, age=75, key=WwgjN, age=20, key=LzTMa, age=3, key=uumoL, age=32, key=m3LJI, age=80, key=rU10P, age=39, key=gVTQz, age=79, key=wZjna, age=47, key=3d1E0, age=77, key=Ra74M, age=89, key=FJXHG, age=11, key=MckmR, age=37, key=tSqfN, age=2, key=HHkpI, age=40, key=S7rIA, age=34, key=vnpjJ, age=2, key=t8WSa, age=84, key=38fyp, age=11, key=Znot2, age=72, key=OGqoG, age=65, key=7VKiL, age=58, key=UdlEG, age=79, key=BXxIS, age=47, key=eW6F8, age=10, key=GASTN, age=86, key=SP0yy, age=53, key=ysN9w, age=17, key=KVGGz, age=76, key=yhEVk, age=47, key=vvlgV, age=67, key=aIMuS, age=21, key=KcHZk, age=41, key=6n8pa, age=35, key=ADTut, age=3, key=WNJXO, age=37, key=qta1A, age=67, key=cJOTp, age=67, key=1Bgd3, age=71, key=sHepZ, age=67, key=JoMvH, age=65, key=h1gF0, age=53, key=we7hP, age=41, key=Ztl8x, age=8, key=7pkQj, age=43, key=fkBah, age=21, key=FWETS, age=55, key=Gb4IY, age=26, key=U88H6, age=57, key=iExWE, age=8, key=7sl6v, age=8, key=iwI1x, age=9, key=cdKUG, age=60, key=xb127, age=57, key=dqYi8, age=15, key=opO2h, age=80, key=RNux0, age=37, key=cooLT, age=7, key=qhzQn, age=18, key=uowal, age=10, key=YR8Oy, age=17, key=GwEwr, age=15, key=WIXKE, age=53, key=aeem8, age=88, key=UPYoP, age=85, key=IF1pO, age=11, key=R6pUy, age=37, key=vYADh, age=0, key=TIq4k, age=35, key=dCekr, age=56, key=HBbXO, age=84, key=Lo9h5, age=36, key=fqBW3, age=87, key=OQWCL, age=52, key=nlYrf, age=6, key=cUS5f, age=32, key=A5gR0, age=32, key=HpUXl, age=84, key=nOuUT, age=18, key=mfvjr, age=12, key=24FH4, age=13, key=2rQei, age=51, key=EGAAV, age=8, key=Q5ifr, age=50, key=AVpil, age=87, key=vRcjt, age=51, key=G53C3, age=53, key=bsZAz, age=66, key=a8rVi, age=28, key=qPs5m, age=48, key=hF1kt, age=78, key=GIDFA, age=32, key=d2Mg4, age=12, key=EoYwt, age=30, key=DL7zx, age=14, key=lsA6c, age=17, key=ExutD, age=82, key=YOSNP, age=53, key=PEfma, age=49, key=EA8Go, age=18, key=fGTSM, age=60, key=lRf1j, age=13, key=0iJGV, age=50, key=cFCfU, age=5, key=J8an1, age=48, key=dkSlj, age=5", expected: 128, name: "Full realistic dataset (300 entries)"),
+    TestCase(raw: "key=A, age=50", expected: 1, name: "Single Entry Exactly 50 (Boundary Inclusive)"),
+    TestCase(raw: "key=A, age=49", expected: 0, name: "Single Entry Just Below 50"),
+    TestCase(raw: "key=A, age=0", expected: 0, name: "Single Entry Age Zero"),
+    TestCase(raw: "key=A, age=100", expected: 1, name: "Single Entry Very Old"),
+    TestCase(raw: "key=k0, age=45, key=k1, age=94, key=k2, age=30, key=k3, age=2, key=k4, age=40, key=k5, age=80, key=k6, age=70, key=k7, age=83, key=k8, age=79, key=k9, age=43, key=k10, age=72", expected: 6, name: "Random Case 1"),
+    TestCase(raw: "key=k0, age=74, key=k1, age=86, key=k2, age=82, key=k3, age=16, key=k4, age=53, key=k5, age=90, key=k6, age=54, key=k7, age=76, key=k8, age=84, key=k9, age=77, key=k10, age=80, key=k11, age=22, key=k12, age=47, key=k13, age=21", expected: 10, name: "Random Case 2"),
+    TestCase(raw: "key=k0, age=83, key=k1, age=65, key=k2, age=86, key=k3, age=27, key=k4, age=98, key=k5, age=91, key=k6, age=45, key=k7, age=69, key=k8, age=31, key=k9, age=57, key=k10, age=16, key=k11, age=77, key=k12, age=30", expected: 8, name: "Random Case 3"),
+    TestCase(raw: "key=k0, age=91, key=k1, age=60, key=k2, age=81, key=k3, age=66", expected: 4, name: "Random Case 4"),
+    TestCase(raw: "key=k0, age=8, key=k1, age=84, key=k2, age=49, key=k3, age=42, key=k4, age=27, key=k5, age=8, key=k6, age=31, key=k7, age=48, key=k8, age=60, key=k9, age=52, key=k10, age=13", expected: 3, name: "Random Case 5"),
+    TestCase(raw: "key=X, age=50, key=Y, age=50, key=Z, age=50", expected: 3, name: "All Exactly At Boundary"),
+    TestCase(raw: "key=X, age=0, key=Y, age=1, key=Z, age=2", expected: 0, name: "All Well Below Boundary"),
+    TestCase(raw: "key=X, age=99, key=Y, age=98, key=Z, age=97", expected: 3, name: "All Well Above Boundary")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.countAgesAtLeast50(tc.raw)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "snake_case_converter",
+                title: "Snake Case Converter",
+                category: "machineRound",
+                difficulty: "Easy",
+                topics: ["String", "Parsing"],
+                description: """
+Write a function that takes a string and returns it in snake_case, where each word is lowercased and separated from adjacent words by a single underscore. The input may contain letters and any combination of delimiter punctuation between words.
+
+EXAMPLES
+Input:  "cats AND*Dogs-are Awesome"
+Output: cats_and_dogs_are_awesome
+
+Input:  "a b c d-e-f%g"
+Output: a_b_c_d_e_f_g
+""",
+                templateCode: """
+import Foundation
+
+class Solution {
+    func toSnakeCase(_ str: String) -> String {
+        // TODO: Write your solution here
+        return str
+    }
+}
+
+print(Solution().toSnakeCase("cats AND*Dogs-are Awesome"))
+print(Solution().toSnakeCase("a b c d-e-f%g"))
+""",
+                solutionCode: """
+import Foundation
+
+class Solution {
+    func toSnakeCase(_ str: String) -> String {
+        var words: [String] = []
+        var current = ""
+        for char in str {
+            if char.isLetter {
+                current.append(char)
+            } else if !current.isEmpty {
+                words.append(current.lowercased())
+                current = ""
+            }
+        }
+        if !current.isEmpty {
+            words.append(current.lowercased())
+        }
+        return words.joined(separator: "_")
+    }
+}
+
+print(Solution().toSnakeCase("cats AND*Dogs-are Awesome"))
+print(Solution().toSnakeCase("a b c d-e-f%g"))
+print(Solution().toSnakeCase("BOB loves-coding"))
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let input: String
+    let expected: String
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(input: "cats AND*Dogs-are Awesome", expected: "cats_and_dogs_are_awesome", name: "Example 1 (Mixed Delimiters)"),
+    TestCase(input: "a b c d-e-f%g", expected: "a_b_c_d_e_f_g", name: "Example 2 (Single Char Words)"),
+    TestCase(input: "BOB loves-coding", expected: "bob_loves_coding", name: "Description Example (BOB loves-coding)"),
+    TestCase(input: "hello", expected: "hello", name: "Single Word No Delimiters"),
+    TestCase(input: "", expected: "", name: "Empty String"),
+    TestCase(input: "---", expected: "", name: "Only Delimiters No Letters"),
+    TestCase(input: "-hello-", expected: "hello", name: "Leading And Trailing Delimiter"),
+    TestCase(input: "cats--dogs", expected: "cats_dogs", name: "Consecutive Delimiters Collapse"),
+    TestCase(input: "A", expected: "a", name: "Single Letter"),
+    TestCase(input: "ALLCAPS", expected: "allcaps", name: "All Uppercase Single Word"),
+    TestCase(input: "alllower", expected: "alllower", name: "All Lowercase Single Word"),
+    TestCase(input: "MiXeD CaSe WoRds", expected: "mixed_case_words", name: "Mixed Case Multiple Words"),
+    TestCase(input: "a.b.c.d.e", expected: "a_b_c_d_e", name: "Dot Delimiters"),
+    TestCase(input: "a!!!b???c", expected: "a_b_c", name: "Multiple Different Punctuation Delimiters"),
+    TestCase(input: "   spaced   out   ", expected: "spaced_out", name: "Multiple Spaces And Leading/Trailing Whitespace"),
+    TestCase(input: "WSs EBrbR!OnLw;n**WCVtyT", expected: "wss_ebrbr_onlw_n_wcvtyt", name: "Random Case 1"),
+    TestCase(input: "ekuCw  c", expected: "ekucw_c", name: "Random Case 2"),
+    TestCase(input: "YqWj", expected: "yqwj", name: "Random Case 3"),
+    TestCase(input: "nRVa__iY--Z!Fs--MYV", expected: "nrva_iy_z_fs_myv", name: "Random Case 4"),
+    TestCase(input: "LJmJhM", expected: "ljmjhm", name: "Random Case 5"),
+    TestCase(input: "kpM", expected: "kpm", name: "Random Case 6"),
+    TestCase(input: "o..giq VkwfeA", expected: "o_giq_vkwfea", name: "Random Case 7"),
+    TestCase(input: "NkVttL..Dmj__doon-zPVVOs*jiw", expected: "nkvttl_dmj_doon_zpvvos_jiw", name: "Random Case 8"),
+    TestCase(input: "tCL!!wQoFt:HQeum:srUDI", expected: "tcl_wqoft_hqeum_srudi", name: "Random Case 9"),
+    TestCase(input: "rKor%%ame_TEnQE", expected: "rkor_ame_tenqe", name: "Random Case 10")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.toSnakeCase(tc.input)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "todo_command_processor",
+                title: "Task Command Processor",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["Simulation", "Array", "String Parsing"],
+                description: "Design a task management system that processes a series of commands: ADD Title, REMOVE TaskNumber, MARK TaskNumber, and LIST (all 1-based indices). Return the output lines produced. Invalid or out-of-range REMOVE/MARK commands must produce a descriptive error line instead of crashing.",
+                templateCode: """
+class Solution {
+    func manageToDoList(_ commands: [String]) -> [String] {
+        // TODO: Write your solution here
+        return []
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func manageToDoList(_ commands: [String]) -> [String] {
+        var titles: [String] = []
+        var completed: [Bool] = []
+        var output: [String] = []
+
+        for command in commands {
+            let parts = command.components(separatedBy: " ")
+            guard let action = parts.first else {
+                output.append("Error: Invalid command.")
+                continue
+            }
+
+            switch action {
+            case "ADD":
+                let title = parts.dropFirst().joined(separator: " ")
+                titles.append(title)
+                completed.append(false)
+            case "REMOVE":
+                guard parts.count == 2, let idx = Int(parts[1]) else {
+                    output.append("Error: Invalid REMOVE command.")
+                    continue
+                }
+                if idx < 1 || idx > titles.count {
+                    output.append("Error: Task number \\(idx) does not exist.")
+                } else {
+                    titles.remove(at: idx - 1)
+                    completed.remove(at: idx - 1)
+                }
+            case "MARK":
+                guard parts.count == 2, let idx = Int(parts[1]) else {
+                    output.append("Error: Invalid MARK command.")
+                    continue
+                }
+                if idx < 1 || idx > titles.count {
+                    output.append("Error: Task number \\(idx) does not exist.")
+                } else {
+                    completed[idx - 1] = true
+                }
+            case "LIST":
+                for i in 0..<titles.count {
+                    let mark = completed[i] ? "✓" : " "
+                    output.append("\\(i + 1). [\\(mark)] \\(titles[i])")
+                }
+            default:
+                output.append("Error: Invalid command.")
+            }
+        }
+
+        return output
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let commands: [String]
+    let expected: [String]
+    let name: String
+}
+func formatLines(_ lines: [String]) -> String {
+    return lines.joined(separator: " || ")
+}
+let testCases = [
+    TestCase(commands: ["ADD Buy groceries", "ADD Walk the dog", "MARK 1", "LIST"], expected: ["1. [✓] Buy groceries", "2. [ ] Walk the dog"], name: "Example 1 (Add, Mark, List)"),
+    TestCase(commands: ["ADD Finish homework", "REMOVE 2"], expected: ["Error: Task number 2 does not exist."], name: "Example 2 (Remove Out of Range)"),
+    TestCase(commands: ["REMOVE 1"], expected: ["Error: Task number 1 does not exist."], name: "Remove Before Any Add"),
+    TestCase(commands: ["MARK abc"], expected: ["Error: Invalid MARK command."], name: "Mark Non-Numeric"),
+    TestCase(commands: ["REMOVE"], expected: ["Error: Invalid REMOVE command."], name: "Remove Missing Argument"),
+    TestCase(commands: ["FOO 1"], expected: ["Error: Invalid command."], name: "Unrecognized Command"),
+    TestCase(commands: ["ADD Task A", "ADD Task B", "ADD Task C", "REMOVE 2", "LIST"], expected: ["1. [ ] Task A", "2. [ ] Task C"], name: "Remove Middle Then List"),
+    TestCase(commands: ["ADD X", "MARK 1", "MARK 1", "LIST"], expected: ["1. [✓] X"], name: "Mark Same Task Twice"),
+    TestCase(commands: ["MARK 5"], expected: ["Error: Task number 5 does not exist."], name: "Random Case 1 (n=1)"),
+    TestCase(commands: ["ADD Walk dog", "ADD Do laundry", "REMOVE 3", "ADD Clean room", "MARK 1"], expected: ["Error: Task number 3 does not exist."], name: "Random Case 2 (n=5)"),
+    TestCase(commands: ["LIST", "MARK 2", "LIST", "MARK 3", "REMOVE 3"], expected: ["Error: Task number 2 does not exist.", "Error: Task number 3 does not exist.", "Error: Task number 3 does not exist."], name: "Random Case 3 (n=5)"),
+    TestCase(commands: ["MARK 5", "ADD Cook dinner", "MARK 1", "ADD Write code", "ADD Call mom", "MARK 3", "MARK 3"], expected: ["Error: Task number 5 does not exist."], name: "Random Case 4 (n=7)"),
+    TestCase(commands: ["MARK 3", "MARK 2", "MARK 1"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 2 does not exist.", "Error: Task number 1 does not exist."], name: "Random Case 5 (n=3)"),
+    TestCase(commands: ["MARK 0", "ADD Walk dog", "REMOVE 0", "MARK 4"], expected: ["Error: Task number 0 does not exist.", "Error: Task number 0 does not exist.", "Error: Task number 4 does not exist."], name: "Random Case 6 (n=4)"),
+    TestCase(commands: ["ADD Water plants", "REMOVE 1", "ADD Read book", "LIST", "ADD Cook dinner"], expected: ["1. [ ] Read book"], name: "Random Case 7 (n=5)"),
+    TestCase(commands: ["ADD Water plants", "ADD Write code"], expected: [], name: "Random Case 8 (n=2)"),
+    TestCase(commands: ["ADD Water plants", "ADD Call mom", "REMOVE 0", "MARK 3", "ADD Water plants", "MARK 1"], expected: ["Error: Task number 0 does not exist.", "Error: Task number 3 does not exist."], name: "Random Case 9 (n=6)"),
+    TestCase(commands: ["LIST", "REMOVE 0", "MARK 1", "MARK 4"], expected: ["Error: Task number 0 does not exist.", "Error: Task number 1 does not exist.", "Error: Task number 4 does not exist."], name: "Random Case 10 (n=4)"),
+    TestCase(commands: ["MARK 1", "ADD Read book", "REMOVE 1", "LIST", "REMOVE 5"], expected: ["Error: Task number 1 does not exist.", "Error: Task number 5 does not exist."], name: "Random Case 11 (n=5)"),
+    TestCase(commands: ["MARK 2", "MARK 1", "MARK 0", "ADD Pay bills"], expected: ["Error: Task number 2 does not exist.", "Error: Task number 1 does not exist.", "Error: Task number 0 does not exist."], name: "Random Case 12 (n=4)"),
+    TestCase(commands: ["ADD Pay bills", "LIST", "ADD Read book", "MARK 1"], expected: ["1. [ ] Pay bills"], name: "Random Case 13 (n=4)"),
+    TestCase(commands: ["ADD Pay bills", "LIST", "LIST", "ADD Do laundry", "ADD Cook dinner", "LIST"], expected: ["1. [ ] Pay bills", "1. [ ] Pay bills", "1. [ ] Pay bills", "2. [ ] Do laundry", "3. [ ] Cook dinner"], name: "Random Case 14 (n=6)"),
+    TestCase(commands: ["MARK 3", "REMOVE 1", "ADD Write code"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 1 does not exist."], name: "Random Case 15 (n=3)"),
+    TestCase(commands: ["LIST", "REMOVE 3", "REMOVE 2", "LIST"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 2 does not exist."], name: "Random Case 16 (n=4)"),
+    TestCase(commands: ["ADD Water plants", "MARK 2", "MARK 3", "LIST", "ADD Do laundry", "ADD Water plants", "ADD Water plants", "LIST"], expected: ["Error: Task number 2 does not exist.", "Error: Task number 3 does not exist.", "1. [ ] Water plants", "1. [ ] Water plants", "2. [ ] Do laundry", "3. [ ] Water plants", "4. [ ] Water plants"], name: "Random Case 17 (n=8)"),
+    TestCase(commands: ["MARK 3", "MARK 4", "ADD Walk dog", "MARK 0"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 4 does not exist.", "Error: Task number 0 does not exist."], name: "Random Case 18 (n=4)"),
+    TestCase(commands: ["ADD Read book", "MARK 1", "ADD Cook dinner", "MARK 1", "MARK 5"], expected: ["Error: Task number 5 does not exist."], name: "Random Case 19 (n=5)"),
+    TestCase(commands: ["ADD Call mom", "MARK 4", "ADD Do laundry", "ADD Do laundry", "MARK 1", "MARK 2", "ADD Do laundry", "MARK 1"], expected: ["Error: Task number 4 does not exist."], name: "Random Case 20 (n=8)"),
+    TestCase(commands: ["ADD Clean room"], expected: [], name: "Random Case 21 (n=1)"),
+    TestCase(commands: ["REMOVE 3", "LIST", "MARK 5", "ADD Do laundry"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 5 does not exist."], name: "Random Case 22 (n=4)"),
+    TestCase(commands: ["REMOVE 1", "LIST"], expected: ["Error: Task number 1 does not exist."], name: "Random Case 23 (n=2)"),
+    TestCase(commands: ["LIST", "LIST", "LIST"], expected: [], name: "Random Case 24 (n=3)"),
+    TestCase(commands: ["MARK 2", "ADD Read book", "REMOVE 0", "ADD Buy milk", "MARK 0"], expected: ["Error: Task number 2 does not exist.", "Error: Task number 0 does not exist.", "Error: Task number 0 does not exist."], name: "Random Case 25 (n=5)"),
+    TestCase(commands: ["LIST", "LIST", "MARK 1", "ADD Buy milk", "MARK 4", "LIST"], expected: ["Error: Task number 1 does not exist.", "Error: Task number 4 does not exist.", "1. [ ] Buy milk"], name: "Random Case 26 (n=6)"),
+    TestCase(commands: ["MARK 4", "REMOVE 3", "MARK 4"], expected: ["Error: Task number 4 does not exist.", "Error: Task number 3 does not exist.", "Error: Task number 4 does not exist."], name: "Random Case 27 (n=3)"),
+    TestCase(commands: ["LIST", "LIST", "ADD Do laundry", "MARK 0"], expected: ["Error: Task number 0 does not exist."], name: "Random Case 28 (n=4)"),
+    TestCase(commands: ["ADD Cook dinner", "ADD Water plants", "LIST", "ADD Read book", "MARK 1", "ADD Buy milk"], expected: ["1. [ ] Cook dinner", "2. [ ] Water plants"], name: "Random Case 29 (n=6)"),
+    TestCase(commands: ["LIST", "MARK 4", "REMOVE 5", "ADD Write code", "LIST"], expected: ["Error: Task number 4 does not exist.", "Error: Task number 5 does not exist.", "1. [ ] Write code"], name: "Random Case 30 (n=5)"),
+    TestCase(commands: ["REMOVE 4", "REMOVE 2", "ADD Clean room", "MARK 0", "LIST", "MARK 2", "LIST"], expected: ["Error: Task number 4 does not exist.", "Error: Task number 2 does not exist.", "Error: Task number 0 does not exist.", "1. [ ] Clean room", "Error: Task number 2 does not exist.", "1. [ ] Clean room"], name: "Random Case 31 (n=7)"),
+    TestCase(commands: ["ADD Pay bills", "MARK 3", "REMOVE 2", "ADD Pay bills", "MARK 2", "ADD Do laundry", "MARK 2"], expected: ["Error: Task number 3 does not exist.", "Error: Task number 2 does not exist."], name: "Random Case 32 (n=7)"),
+    TestCase(commands: ["MARK 1"], expected: ["Error: Task number 1 does not exist."], name: "Random Case 33 (n=1)"),
+    TestCase(commands: ["ADD Water plants", "MARK 4", "ADD Clean room", "LIST", "LIST", "ADD Cook dinner", "ADD Walk dog", "LIST"], expected: ["Error: Task number 4 does not exist.", "1. [ ] Water plants", "2. [ ] Clean room", "1. [ ] Water plants", "2. [ ] Clean room", "1. [ ] Water plants", "2. [ ] Clean room", "3. [ ] Cook dinner", "4. [ ] Walk dog"], name: "Random Case 34 (n=8)"),
+    TestCase(commands: ["ADD Do laundry", "ADD Buy milk", "ADD Read book"], expected: [], name: "Random Case 35 (n=3)"),
+    TestCase(commands: ["ADD Write code", "ADD Do laundry", "ADD Write code", "REMOVE 5", "MARK 2", "ADD Cook dinner", "MARK 2"], expected: ["Error: Task number 5 does not exist."], name: "Random Case 36 (n=7)"),
+    TestCase(commands: ["ADD A", "ADD B", "ADD C", "MARK 1", "MARK 2", "MARK 3", "LIST"], expected: ["1. [✓] A", "2. [✓] B", "3. [✓] C"], name: "Mark All Then List"),
+    TestCase(commands: ["ADD A", "REMOVE 1", "ADD B", "LIST"], expected: ["1. [ ] B"], name: "Add Remove Add List"),
+    TestCase(commands: ["LIST"], expected: [], name: "List On Empty"),
+    TestCase(commands: ["ADD A", "ADD B", "REMOVE 1", "REMOVE 1", "LIST"], expected: [], name: "Double Remove Same Index"),
+    TestCase(commands: ["ADD A", "MARK 0"], expected: ["Error: Task number 0 does not exist."], name: "Mark Zero Index"),
+    TestCase(commands: ["ADD A", "REMOVE -1"], expected: ["Error: Task number -1 does not exist."], name: "Remove Negative Index")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.manageToDoList(tc.commands)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    let resultStr = formatLines(result)
+    let expectedStr = formatLines(tc.expected)
+    if resultStr == expectedStr {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(resultStr) | Expected: \\(expectedStr) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "online_store_class_machine_coding",
+                title: "Machine Coding: OnlineStore Class (Inventory & Purchases)",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["OOP", "Dictionaries", "String Formatting", "Simulation"],
+                description: """
+Design and implement an OnlineStore class that manages a product inventory and processes customer purchases.
+
+THE CLASS
+
+class OnlineStore {
+    var inventory: [String: Double]   // product name -> price
+    var purchases: [String: Int]      // product name -> total quantity purchased
+}
+
+METHODS
+
+- addProduct(name: String, price: Double) — adds a product with its price to the inventory (or updates the price if it already exists).
+- buyProduct(name: String, quantity: Int) — records a purchase of `quantity` units of `name`. If the product does not exist in the inventory, the purchase is silently ignored.
+- getTotalPrice() -> Double — returns the total cost of every recorded purchase (price * quantity, summed across all purchased products), rounded to two decimal places.
+- execute() -> String — returns the total price formatted as a string with exactly two decimal places (e.g. "14.50", "1095.00" — never "14.5" or "1095").
+
+CONSTRAINTS
+
+- Number of products n < 500.
+- Number of purchase transactions m < 10^3.
+- Product names are case-sensitive and unique.
+- Quantities are non-negative integers.
+
+SAMPLE CASE 1
+Products: Apple = 2.5, Banana = 1.0, Cherry = 3.0
+Purchases: Apple x3, Cherry x2, Banana x1
+execute() -> "14.50"   (2.5*3 + 3.0*2 + 1.0*1 = 7.5 + 6 + 1 = 14.5)
+
+SAMPLE CASE 2
+Products: Laptop = 1000.0, Mouse = 25.0, Keyboard = 45.0
+Purchases: Laptop x1, Mouse x2, Keyboard x1
+execute() -> "1095.00"   (1000 + 50 + 45 = 1095)
+
+This is an OOP-shaped variant of the "total purchase price" idea — unlike a plain function that takes parallel arrays, here the store is a stateful class you build up incrementally via addProduct/buyProduct calls, then read out via execute(). That statefulness (and the requirement to silently ignore purchases of unknown products) is the actual thing being assessed.
+""",
+                templateCode: """
+class OnlineStore {
+    var inventory: [String: Double] = [:]
+    var purchases: [String: Int] = [:]
+
+    func addProduct(name: String, price: Double) {
+        // TODO: add the product to inventory
+    }
+
+    func buyProduct(name: String, quantity: Int) {
+        // TODO: record the purchase; ignore if the product is not in inventory
+    }
+
+    func getTotalPrice() -> Double {
+        // TODO: return the total cost of every recorded purchase, rounded to 2 decimal places
+        return 0.0
+    }
+
+    func execute() -> String {
+        // TODO: return getTotalPrice() formatted with exactly two decimal places
+        return ""
+    }
+}
+""",
+                solutionCode: """
+class OnlineStore {
+    var inventory: [String: Double] = [:]
+    var purchases: [String: Int] = [:]
+    private var totalCost: Double = 0
+
+    func addProduct(name: String, price: Double) {
+        inventory[name] = price
+    }
+
+    func buyProduct(name: String, quantity: Int) {
+        guard let price = inventory[name] else { return }
+        if let existing = purchases[name] {
+            purchases[name] = existing + quantity
+        } else {
+            purchases[name] = quantity
+        }
+        totalCost += price * Double(quantity)
+    }
+
+    func getTotalPrice() -> Double {
+        return (totalCost * 100).rounded() / 100
+    }
+
+    func execute() -> String {
+        let total = getTotalPrice()
+        return String(format: "%.2f", total)
+    }
+}
+""",
+                testHarness: """
+struct TestCase {
+    let productNames: [String]
+    let productPrices: [Double]
+    let purchaseNames: [String]
+    let purchaseQuantities: [Int]
+    let expected: String
+    let name: String
+}
+let testCases = [
+    TestCase(productNames: ["Apple", "Banana", "Cherry"], productPrices: [2.5, 1.0, 3.0], purchaseNames: ["Apple", "Cherry", "Banana"], purchaseQuantities: [3, 2, 1], expected: "14.50", name: "Example 1 (Fruit Basket)"),
+    TestCase(productNames: ["Laptop", "Mouse", "Keyboard"], productPrices: [1000.0, 25.0, 45.0], purchaseNames: ["Laptop", "Mouse", "Keyboard"], purchaseQuantities: [1, 2, 1], expected: "1095.00", name: "Example 2 (Electronics)"),
+    TestCase(productNames: ["Pen"], productPrices: [0.99], purchaseNames: ["Pen"], purchaseQuantities: [10], expected: "9.90", name: "Fractional Unit Price"),
+    TestCase(productNames: ["Widget"], productPrices: [5.0], purchaseNames: ["Gadget"], purchaseQuantities: [3], expected: "0.00", name: "Purchase Not In Inventory"),
+    TestCase(productNames: ["A", "B"], productPrices: [1.11, 2.22], purchaseNames: ["A", "B", "A"], purchaseQuantities: [1, 1, 1], expected: "4.44", name: "Repeated Purchase Of Same Product"),
+    TestCase(productNames: [], productPrices: [], purchaseNames: ["X"], purchaseQuantities: [5], expected: "0.00", name: "Empty Inventory"),
+    TestCase(productNames: ["Item"], productPrices: [3.333], purchaseNames: ["Item"], purchaseQuantities: [3], expected: "10.00", name: "Rounding To Nearest Cent"),
+    TestCase(productNames: ["X", "Y", "Z"], productPrices: [10.0, 20.0, 30.0], purchaseNames: [], purchaseQuantities: [], expected: "0.00", name: "No Purchases Made"),
+    TestCase(productNames: ["Banana"], productPrices: [1.67], purchaseNames: ["Mango", "Pear"], purchaseQuantities: [4, 5], expected: "0.00", name: "Random Case 1 (products=1, purchases=2)"),
+    TestCase(productNames: ["Grape", "Mango", "Apple", "Cherry", "Plum", "Pear"], productPrices: [35.45, 6.65, 46.16, 5.82, 4.95, 29.81], purchaseNames: ["Apple", "Plum"], purchaseQuantities: [3, 10], expected: "187.98", name: "Random Case 2 (products=6, purchases=2)"),
+    TestCase(productNames: ["Kiwi", "Pear", "Mango", "Cherry", "Apple", "Grape"], productPrices: [6.53, 31.08, 12.94, 26.45, 13.41, 36.43], purchaseNames: ["Grape", "Pear", "Mango"], purchaseQuantities: [1, 5, 3], expected: "230.65", name: "Random Case 3 (products=6, purchases=3)"),
+    TestCase(productNames: ["Mango", "Banana", "Plum", "Pear", "Kiwi"], productPrices: [47.59, 48.69, 37.44, 7.8, 4.51], purchaseNames: ["Mango", "Banana", "Grape", "Mango", "Pear", "Pear"], purchaseQuantities: [2, 10, 9, 10, 7, 1], expected: "1120.38", name: "Random Case 4 (products=5, purchases=6)"),
+    TestCase(productNames: ["Banana", "Kiwi", "Plum", "Apple"], productPrices: [27.83, 14.51, 10.14, 43.59], purchaseNames: ["Cherry"], purchaseQuantities: [5], expected: "0.00", name: "Random Case 5 (products=4, purchases=1)"),
+    TestCase(productNames: ["Grape", "Cherry", "Pear", "Kiwi"], productPrices: [19.69, 45.04, 0.88, 48.52], purchaseNames: ["Mango", "Mango", "Mango", "Apple"], purchaseQuantities: [1, 3, 6, 6], expected: "0.00", name: "Random Case 6 (products=4, purchases=4)"),
+    TestCase(productNames: ["Apple", "Kiwi"], productPrices: [40.46, 12.98], purchaseNames: ["Grape", "Apple", "Apple", "Mango", "Apple"], purchaseQuantities: [2, 10, 7, 5, 1], expected: "728.28", name: "Random Case 7 (products=2, purchases=5)"),
+    TestCase(productNames: ["Kiwi", "Mango", "Pear", "Banana"], productPrices: [12.93, 47.24, 25.95, 46.27], purchaseNames: ["Mango"], purchaseQuantities: [5], expected: "236.20", name: "Random Case 8 (products=4, purchases=1)"),
+    TestCase(productNames: ["Apple", "Pear"], productPrices: [42.52, 22.16], purchaseNames: ["Kiwi", "Mango", "Grape", "Pear", "Grape"], purchaseQuantities: [4, 6, 4, 7, 3], expected: "155.12", name: "Random Case 9 (products=2, purchases=5)"),
+    TestCase(productNames: ["Pear", "Plum", "Banana", "Apple"], productPrices: [30.54, 35.62, 37.59, 47.4], purchaseNames: ["Cherry", "Pear", "Apple", "Banana"], purchaseQuantities: [5, 4, 4, 6], expected: "537.30", name: "Random Case 10 (products=4, purchases=4)"),
+    TestCase(productNames: ["Banana", "Apple", "Grape"], productPrices: [9.44, 24.42, 31.56], purchaseNames: ["Grape", "Apple", "Kiwi", "Grape", "Pear", "Grape"], purchaseQuantities: [2, 5, 8, 9, 4, 6], expected: "658.62", name: "Random Case 11 (products=3, purchases=6)"),
+    TestCase(productNames: ["Banana", "Cherry"], productPrices: [0.71, 22.83], purchaseNames: ["Banana", "Plum", "Plum", "Plum"], purchaseQuantities: [8, 6, 3, 3], expected: "5.68", name: "Random Case 12 (products=2, purchases=4)"),
+    TestCase(productNames: ["Cherry"], productPrices: [3.54], purchaseNames: ["Pear", "Mango", "Cherry", "Plum"], purchaseQuantities: [4, 6, 5, 8], expected: "17.70", name: "Random Case 13 (products=1, purchases=4)"),
+    TestCase(productNames: ["Apple", "Plum", "Grape", "Pear", "Mango", "Banana"], productPrices: [24.95, 9.66, 43.36, 25.87, 5.52, 20.92], purchaseNames: ["Grape", "Plum"], purchaseQuantities: [5, 1], expected: "226.46", name: "Random Case 14 (products=6, purchases=2)"),
+    TestCase(productNames: ["Banana", "Apple"], productPrices: [31.16, 13.59], purchaseNames: ["Banana", "Kiwi", "Banana", "Kiwi", "Kiwi", "Apple"], purchaseQuantities: [10, 1, 6, 5, 3, 3], expected: "539.33", name: "Random Case 15 (products=2, purchases=6)"),
+    TestCase(productNames: ["Kiwi", "Plum", "Apple"], productPrices: [30.75, 37.54, 42.1], purchaseNames: ["Grape", "Pear", "Plum", "Mango", "Mango"], purchaseQuantities: [4, 2, 6, 4, 7], expected: "225.24", name: "Random Case 16 (products=3, purchases=5)"),
+    TestCase(productNames: ["Banana", "Cherry", "Pear", "Mango", "Kiwi", "Apple"], productPrices: [12.31, 30.66, 17.55, 32.65, 37.23, 28.76], purchaseNames: ["Pear"], purchaseQuantities: [10], expected: "175.50", name: "Random Case 17 (products=6, purchases=1)"),
+    TestCase(productNames: ["Mango", "Apple", "Kiwi", "Pear"], productPrices: [34.2, 42.34, 13.09, 44.46], purchaseNames: ["Pear", "Banana", "Pear", "Apple", "Kiwi", "Banana"], purchaseQuantities: [3, 3, 7, 7, 2, 7], expected: "767.16", name: "Random Case 18 (products=4, purchases=6)"),
+    TestCase(productNames: ["Mango", "Banana", "Cherry"], productPrices: [24.82, 43.36, 42.76], purchaseNames: [], purchaseQuantities: [], expected: "0.00", name: "Random Case 19 (products=3, purchases=0)"),
+    TestCase(productNames: ["Apple", "Mango", "Plum", "Banana", "Kiwi"], productPrices: [16.99, 31.05, 48.18, 47.41, 48.96], purchaseNames: ["Plum"], purchaseQuantities: [9], expected: "433.62", name: "Random Case 20 (products=5, purchases=1)"),
+    TestCase(productNames: ["Apple", "Pear"], productPrices: [5.83, 37.38], purchaseNames: ["Cherry"], purchaseQuantities: [10], expected: "0.00", name: "Random Case 21 (products=2, purchases=1)"),
+    TestCase(productNames: ["Cherry", "Banana", "Plum"], productPrices: [5.1, 17.49, 4.2], purchaseNames: ["Plum", "Kiwi", "Pear", "Banana", "Banana", "Apple"], purchaseQuantities: [7, 1, 7, 9, 1, 1], expected: "204.30", name: "Random Case 22 (products=3, purchases=6)"),
+    TestCase(productNames: ["Banana", "Mango", "Plum"], productPrices: [39.88, 47.89, 35.64], purchaseNames: [], purchaseQuantities: [], expected: "0.00", name: "Random Case 23 (products=3, purchases=0)"),
+    TestCase(productNames: ["Banana"], productPrices: [23.7], purchaseNames: ["Plum", "Banana", "Grape"], purchaseQuantities: [3, 1, 3], expected: "23.70", name: "Random Case 24 (products=1, purchases=3)"),
+    TestCase(productNames: ["Kiwi", "Apple", "Plum", "Banana"], productPrices: [26.03, 9.12, 45.05, 33.13], purchaseNames: ["Pear", "Grape", "Kiwi", "Cherry", "Apple", "Pear"], purchaseQuantities: [5, 4, 9, 10, 4, 9], expected: "270.75", name: "Random Case 25 (products=4, purchases=6)"),
+    TestCase(productNames: ["Grape", "Plum", "Mango", "Banana", "Cherry", "Apple"], productPrices: [11.16, 13.9, 48.55, 44.62, 41.86, 17.92], purchaseNames: ["Pear", "Banana", "Banana", "Cherry", "Grape"], purchaseQuantities: [9, 1, 9, 8, 4], expected: "825.72", name: "Random Case 26 (products=6, purchases=5)"),
+    TestCase(productNames: ["Banana", "Cherry", "Plum", "Pear"], productPrices: [19.69, 5.84, 43.24, 28.61], purchaseNames: ["Kiwi", "Mango"], purchaseQuantities: [2, 10], expected: "0.00", name: "Random Case 27 (products=4, purchases=2)"),
+    TestCase(productNames: ["Plum"], productPrices: [26.38], purchaseNames: ["Plum", "Apple", "Pear", "Mango"], purchaseQuantities: [1, 1, 6, 9], expected: "26.38", name: "Random Case 28 (products=1, purchases=4)"),
+    TestCase(productNames: ["Cherry", "Grape", "Pear"], productPrices: [29.64, 44.16, 13.03], purchaseNames: [], purchaseQuantities: [], expected: "0.00", name: "Random Case 29 (products=3, purchases=0)"),
+    TestCase(productNames: ["Cherry", "Banana", "Mango", "Apple", "Kiwi"], productPrices: [12.76, 12.35, 40.8, 33.2, 19.73], purchaseNames: ["Grape", "Banana", "Grape"], purchaseQuantities: [9, 5, 7], expected: "61.75", name: "Random Case 30 (products=5, purchases=3)"),
+    TestCase(productNames: ["Banana", "Cherry", "Grape", "Pear"], productPrices: [30.12, 46.37, 45.71, 6.67], purchaseNames: ["Pear", "Grape", "Mango", "Banana", "Cherry", "Kiwi"], purchaseQuantities: [6, 1, 5, 5, 9, 8], expected: "653.66", name: "Random Case 31 (products=4, purchases=6)"),
+    TestCase(productNames: ["Plum", "Mango", "Pear"], productPrices: [41.31, 8.75, 37.86], purchaseNames: ["Plum", "Mango", "Mango", "Grape", "Grape"], purchaseQuantities: [7, 7, 10, 9, 10], expected: "437.92", name: "Random Case 32 (products=3, purchases=5)"),
+    TestCase(productNames: ["Mango", "Plum", "Cherry", "Kiwi", "Banana"], productPrices: [21.95, 5.43, 20.2, 35.55, 2.91], purchaseNames: ["Grape"], purchaseQuantities: [1], expected: "0.00", name: "Random Case 33 (products=5, purchases=1)"),
+    TestCase(productNames: ["Plum", "Grape", "Mango", "Pear", "Apple"], productPrices: [33.76, 4.18, 41.18, 37.42, 19.1], purchaseNames: ["Cherry"], purchaseQuantities: [2], expected: "0.00", name: "Random Case 34 (products=5, purchases=1)"),
+    TestCase(productNames: ["Plum", "Apple", "Banana"], productPrices: [13.83, 34.99, 8.38], purchaseNames: ["Pear", "Mango", "Banana", "Mango"], purchaseQuantities: [1, 7, 9, 9], expected: "75.42", name: "Random Case 35 (products=3, purchases=4)"),
+    TestCase(productNames: ["Apple", "Kiwi", "Pear", "Mango", "Plum", "Banana"], productPrices: [30.83, 3.95, 10.43, 39.58, 20.19, 21.44], purchaseNames: [], purchaseQuantities: [], expected: "0.00", name: "Random Case 36 (products=6, purchases=0)"),
+    TestCase(productNames: ["A"], productPrices: [1.005], purchaseNames: ["A"], purchaseQuantities: [1], expected: "1.00", name: "Half Cent Rounding Up"),
+    TestCase(productNames: ["A"], productPrices: [0.0], purchaseNames: ["A"], purchaseQuantities: [100], expected: "0.00", name: "Zero Price Product"),
+    TestCase(productNames: ["A"], productPrices: [10.0], purchaseNames: ["A"], purchaseQuantities: [0], expected: "0.00", name: "Zero Quantity Purchase"),
+    TestCase(productNames: ["A", "B", "C", "D", "E"], productPrices: [1.0, 2.0, 3.0, 4.0, 5.0], purchaseNames: ["A", "B", "C", "D", "E"], purchaseQuantities: [1, 1, 1, 1, 1], expected: "15.00", name: "One Each Of Five Products"),
+    TestCase(productNames: ["A"], productPrices: [99.99], purchaseNames: ["A", "A", "A"], purchaseQuantities: [1, 1, 1], expected: "299.97", name: "Same Product Purchased Three Times"),
+    TestCase(productNames: ["Book"], productPrices: [12.5], purchaseNames: ["Book"], purchaseQuantities: [7], expected: "87.50", name: "Simple Multiplication No Rounding Needed")
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let store = OnlineStore()
+    for i in 0..<tc.productNames.count {
+        store.addProduct(name: tc.productNames[i], price: tc.productPrices[i])
+    }
+    for i in 0..<tc.purchaseNames.count {
+        store.buyProduct(name: tc.purchaseNames[i], quantity: tc.purchaseQuantities[i])
+    }
+    let result = store.execute()
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "profile_management_app_swiftui",
+                title: "Machine Coding: Profile Management App (SwiftUI)",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["SwiftUI", "Codable", "Navigation", "Accessibility", "MVVM"],
+                description: """
+Implement a profile management application using SwiftUI for viewing personal information, skills, and work experience. The application requirements are listed below, and the final application must pass the unit tests.
+
+FUNCTIONALITY REQUIREMENTS
+
+Build a profile management app that loads user data from user_profile_json.json and displays it across three main sections:
+
+- Personal Information
+  - Full name and job title in header
+  - Contact details (first name, last name, email, phone) in labeled fields
+- Skills
+  - Grid layout showing skill name, category, proficiency level (1-5), and years of experience
+- Work Experience
+  - Timeline of positions with the company, role, dates, and descriptions
+
+USER EXPERIENCE
+
+- Login screen -> Profile screen navigation
+- Scrollable profile content with clean iOS design
+- Proper data loading and error handling
+
+TESTING REQUIREMENTS
+
+Initially, the file is filled with boilerplate code. Note the following:
+
+- The Login button must be rendered as a <Button> element with accessibilityIdentifier="Login".
+- The Profile navigation bar must be rendered as a <NavigationBar> element with title "Profile".
+- The user's full name must be rendered as a <Text> element with accessibilityIdentifier="Alex Doe".
+- The user's job title must be rendered as a <Text> element with accessibilityIdentifier="iOS Developer".
+- The profile scroll view must be rendered as a <ScrollView> element with accessibilityIdentifier="profileScrollView".
+- The Skills section header must be rendered as a <Text> element with accessibilityIdentifier="Skills".
+- The Experience section header must be rendered as a <Text> element with accessibilityIdentifier="Experience".
+
+The component includes testID attributes and specific class/ID names required for rendering and testing. These should not be changed.
+
+NOTE ON THIS APP'S CONSOLE RUNNER
+
+This question is fundamentally different from every other question in this app: it's graded by rendering the SwiftUI view hierarchy and inspecting it for specific accessibilityIdentifiers (an XCUITest-style check), not by running a function and comparing printed output. This app's runner (a native `swift` subprocess, or a JavaScriptCore transpiler on sandboxed builds) only executes plain Swift/JS logic — it has no SwiftUI rendering engine and no accessibility tree to inspect, on either execution path. So, matching this app's other reference-graded Machine Round questions (the eBay GitHub Repository Viewer and the Honeywell AtomicStore), this one is graded by reading the reference solution against the requirements above, not by running it. The reference solution below is a complete, correct SwiftUI implementation satisfying every bullet above, including every exact accessibilityIdentifier — read it, then re-implement it yourself as practice. The runnable section at the bottom only exercises the Codable data-loading logic directly, which this console CAN execute safely.
+""",
+                templateCode: """
+import SwiftUI
+
+// TODO: Implement the Profile Management App per the requirements below.
+//
+// 1. Data Model - a Codable UserProfile with personalInfo (first/last name,
+//    job title, email, phone), skills (name, category, proficiencyLevel 1-5,
+//    yearsOfExperience), and workExperience (company, role, dates, description).
+// 2. Data Loading - load from the bundled `user_profile_json.json`, with
+//    proper error handling if it's missing or fails to decode.
+// 3. LoginView -> ProfileView navigation, triggered by a Login button.
+// 4. ProfileView - a scrollable, clean-iOS-design layout with:
+//    - Header: full name + job title
+//    - Contact details: first name, last name, email, phone (labeled fields)
+//    - Skills: grid of name / category / proficiency level / years of experience
+//    - Work Experience: timeline of company / role / dates / description
+//
+// TESTING REQUIREMENTS - these accessibilityIdentifiers must be present
+// exactly as specified (do not rename them):
+//   - Login button              -> accessibilityIdentifier("Login")
+//   - Profile navigation bar    -> navigationTitle("Profile")
+//   - User's full name Text     -> accessibilityIdentifier(fullName), e.g. "Alex Doe"
+//   - User's job title Text     -> accessibilityIdentifier(jobTitle), e.g. "iOS Developer"
+//   - Profile ScrollView        -> accessibilityIdentifier("profileScrollView")
+//   - Skills section header     -> accessibilityIdentifier("Skills")
+//   - Experience section header -> accessibilityIdentifier("Experience")
+
+struct UserProfile: Codable {
+    // TODO: define personalInfo / skills / workExperience
+}
+
+struct ContentView: View {
+    var body: some View {
+        // TODO: Login -> Profile navigation
+        Text("TODO")
+    }
+}
+""",
+                solutionCode: """
+import SwiftUI
+
+// MARK: - Data Model
+
+struct UserProfile: Codable {
+    struct PersonalInfo: Codable {
+        let firstName: String
+        let lastName: String
+        let jobTitle: String
+        let email: String
+        let phone: String
+        var fullName: String { "\\(firstName) \\(lastName)" }
+    }
+    struct Skill: Codable, Identifiable {
+        var id: String { name }
+        let name: String
+        let category: String
+        let proficiencyLevel: Int   // 1...5
+        let yearsOfExperience: Double
+    }
+    struct WorkExperience: Codable, Identifiable {
+        var id: String { company + role }
+        let company: String
+        let role: String
+        let startDate: String
+        let endDate: String
+        let description: String
+    }
+
+    let personalInfo: PersonalInfo
+    let skills: [Skill]
+    let workExperience: [WorkExperience]
+}
+
+// MARK: - Data Loading
+
+enum ProfileLoadError: Error {
+    case resourceNotFound
+    case decodingFailed(Error)
+}
+
+enum ProfileDataLoader {
+    // In the real Xcode project this reads the bundled `user_profile_json.json`
+    // resource. This reference solution falls back to an embedded copy of that
+    // same JSON so the loader is exercised end-to-end (bundle lookup -> decode)
+    // even outside a full app target.
+    static let embeddedJSON = "{\"personalInfo\":{\"firstName\":\"Alex\",\"lastName\":\"Doe\",\"jobTitle\":\"iOS Developer\",\"email\":\"alex.doe@example.com\",\"phone\":\"+1 (555) 123-4567\"},\"skills\":[{\"name\":\"Swift\",\"category\":\"Language\",\"proficiencyLevel\":5,\"yearsOfExperience\":6},{\"name\":\"SwiftUI\",\"category\":\"Framework\",\"proficiencyLevel\":4,\"yearsOfExperience\":3},{\"name\":\"Combine\",\"category\":\"Framework\",\"proficiencyLevel\":3,\"yearsOfExperience\":2},{\"name\":\"Git\",\"category\":\"Tool\",\"proficiencyLevel\":4,\"yearsOfExperience\":6}],\"workExperience\":[{\"company\":\"Apple Inc.\",\"role\":\"Senior iOS Developer\",\"startDate\":\"Jan 2022\",\"endDate\":\"Present\",\"description\":\"Leading development of core iOS frameworks used across multiple first-party apps.\"},{\"company\":\"Tech Innovators LLC\",\"role\":\"iOS Developer\",\"startDate\":\"Jun 2019\",\"endDate\":\"Dec 2021\",\"description\":\"Built and shipped consumer-facing SwiftUI apps with millions of downloads.\"},{\"company\":\"StartUp Studio\",\"role\":\"Junior iOS Developer\",\"startDate\":\"Aug 2017\",\"endDate\":\"May 2019\",\"description\":\"Developed and maintained UIKit-based features for an early-stage fintech app.\"}]}"
+
+    static func load() -> Result<UserProfile, ProfileLoadError> {
+        let data: Data
+        if let url = Bundle.main.url(forResource: "user_profile_json", withExtension: "json"),
+           let bundled = try? Data(contentsOf: url) {
+            data = bundled
+        } else if let embedded = embeddedJSON.data(using: .utf8) {
+            data = embedded
+        } else {
+            return .failure(.resourceNotFound)
+        }
+
+        do {
+            let profile = try JSONDecoder().decode(UserProfile.self, from: data)
+            return .success(profile)
+        } catch {
+            return .failure(.decodingFailed(error))
+        }
+    }
+}
+
+// MARK: - Root
+
+struct ContentView: View {
+    @State private var isLoggedIn = false
+
+    var body: some View {
+        if isLoggedIn {
+            ProfileView()
+        } else {
+            LoginView(onLogin: { isLoggedIn = true })
+        }
+    }
+}
+
+// MARK: - Login
+
+struct LoginView: View {
+    let onLogin: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "person.circle.fill")
+                .resizable()
+                .frame(width: 88, height: 88)
+                .foregroundColor(.blue)
+
+            Text("Profile App")
+                .font(.largeTitle)
+                .bold()
+            Text("Manage your professional profile")
+                .foregroundColor(.secondary)
+
+            Button(action: onLogin) {
+                Label("Login", systemImage: "person.fill")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+            }
+            .accessibilityIdentifier("Login")
+            .padding(.horizontal, 40)
+        }
+        .padding()
+    }
+}
+
+// MARK: - Profile
+
+struct ProfileView: View {
+    @State private var profile: UserProfile?
+    @State private var loadError: String?
+
+    var body: some View {
+        NavigationView {
+            Group {
+                if let profile {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 24) {
+                            header(for: profile.personalInfo)
+                            contactDetails(for: profile.personalInfo)
+                            skillsSection(profile.skills)
+                            experienceSection(profile.workExperience)
+                        }
+                        .padding()
+                    }
+                    .accessibilityIdentifier("profileScrollView")
+                } else if let loadError {
+                    VStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                        Text("Couldn't load profile")
+                            .font(.headline)
+                        Text(loadError)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                } else {
+                    ProgressView("Loading profile...")
+                }
+            }
+            .navigationTitle("Profile")
+        }
+        .onAppear(perform: loadProfile)
+    }
+
+    private func loadProfile() {
+        switch ProfileDataLoader.load() {
+        case .success(let profile):
+            self.profile = profile
+        case .failure(let error):
+            switch error {
+            case .resourceNotFound:
+                loadError = "user_profile_json.json was not found in the app bundle."
+            case .decodingFailed(let underlying):
+                loadError = "Failed to decode profile data: \\(underlying.localizedDescription)"
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func header(for info: UserProfile.PersonalInfo) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(info.fullName)
+                .font(.title)
+                .bold()
+                .accessibilityIdentifier(info.fullName)
+            Text(info.jobTitle)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .accessibilityIdentifier(info.jobTitle)
+        }
+    }
+
+    @ViewBuilder
+    private func contactDetails(for info: UserProfile.PersonalInfo) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            labeledField(label: "First Name", value: info.firstName)
+            labeledField(label: "Last Name", value: info.lastName)
+            labeledField(label: "Email", value: info.email)
+            labeledField(label: "Phone", value: info.phone)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.12))
+        .cornerRadius(12)
+    }
+
+    @ViewBuilder
+    private func labeledField(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 90, alignment: .leading)
+            Text(value)
+                .font(.body)
+            Spacer()
+        }
+    }
+
+    @ViewBuilder
+    private func skillsSection(_ skills: [UserProfile.Skill]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Skills")
+                .font(.title2)
+                .bold()
+                .accessibilityIdentifier("Skills")
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                ForEach(skills) { skill in
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(skill.name).font(.headline)
+                        Text(skill.category).font(.caption).foregroundColor(.secondary)
+                        HStack(spacing: 2) {
+                            ForEach(0..<5) { i in
+                                Image(systemName: i < skill.proficiencyLevel ? "star.fill" : "star")
+                                    .font(.caption2)
+                                    .foregroundColor(.yellow)
+                            }
+                        }
+                        Text("\\(skill.yearsOfExperience, specifier: "%.1f") yrs")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.gray.opacity(0.12))
+                    .cornerRadius(10)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func experienceSection(_ experience: [UserProfile.WorkExperience]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Experience")
+                .font(.title2)
+                .bold()
+                .accessibilityIdentifier("Experience")
+
+            ForEach(experience) { job in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(job.role).font(.headline)
+                    Text(job.company).font(.subheadline).foregroundColor(.secondary)
+                    Text("\\(job.startDate) - \\(job.endDate)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(job.description)
+                        .font(.body)
+                        .padding(.top, 2)
+                }
+                .padding(.vertical, 6)
+                .overlay(
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(height: 0.5),
+                    alignment: .bottom
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Runnable demo (data loading + Codable, console-verifiable)
+//
+// ContentView/LoginView/ProfileView above are real, correct reference code
+// for every requirement in the problem description - including every
+// accessibilityIdentifier the grader checks for - but this console has no
+// SwiftUI rendering engine or accessibility tree to inspect (it only runs
+// plain Swift/JS and diffs printed text), so instantiating those Views here
+// would not exercise anything meaningful. This demo instead runs the one
+// part that IS plain, safely-runnable logic: decoding user_profile_json's
+// data through the same Codable model the views consume.
+
+switch ProfileDataLoader.load() {
+case .success(let profile):
+    print("Loaded profile: \\(profile.personalInfo.fullName), \\(profile.personalInfo.jobTitle)")
+    print("Skills: \\(profile.skills.map { $0.name }.joined(separator: ", "))")
+    print("Most recent role: \\(profile.workExperience.first?.role ?? "n/a") at \\(profile.workExperience.first?.company ?? "n/a")")
+case .failure(let error):
+    print("Profile load failed: \\(error)")
+}
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "walmart_paginated_image_grid_machine_coding",
+                title: "Machine Coding Round: Paginated Product Image Grid (Protocol-Oriented Networking + Bounded GCD Worker Pool)",
+                category: "machineRound",
+                difficulty: "Hard",
+                topics: ["Machine Coding", "Networking", "Protocol-Oriented Programming", "UIKit", "GCD", "Concurrency", "Pagination"],
+                description: """
+This is a real Walmart-style iOS live/take-home "Machine Coding Round" reconstructed from two parts of the same session: designing a protocol-oriented networking layer shared by every endpoint in the app, then building a paginated product-image grid screen on top of it — complete with a shimmer loading state, infinite-scroll pagination, and a bounded-concurrency worker pool for image downloads. Like this app's other multi-tier machine coding questions, each tier is gradeable independently — a solid Tier 1/2 with an incomplete Tier 3/4 still earns real credit. Tier 2 is the one piece that's genuinely executable in the console below (protocol-oriented endpoint modeling + paginated JSON decoding); Tiers 3 and 4 involve UIKit view controllers, storyboards, and GCD worker-pool timing that this app's console runner has no way to execute either way (the same reason SwiftUI code isn't executed in this app's other UI-based machine coding questions) — they're graded by reading correct, idiomatic code against the reference implementation given in full below, not by running it.
+
+TIER 1 — Protocol-Oriented Networking Layer
+Design a single `Endpoint` protocol that every API resource in the app conforms to, so the URLSession boilerplate is written exactly once — not duplicated per endpoint:
+  • `var path: String { get }` — each endpoint's own URL path, e.g. "/product", "/payment", "/user".
+  • `func getData(completion: @escaping (Data?, Error?) -> Void)` — a default implementation in a protocol EXTENSION that builds the request from `path`, runs it through `URLSession.shared.dataTask`, and calls `completion` with the raw response.
+Then declare three lightweight conforming types — `Product`, `PaymentInfo`, `UserInfo` — each supplying only its own `path`; none of them should need to re-implement `getData` themselves. This is the specific thing being tested: does the networking boilerplate live in ONE place (the protocol extension), or does each endpoint type duplicate its own copy of the URLSession call — the second shape is the wrong answer here, and is exactly what a rushed first draft (writing the URLSession call directly inside `Product.getData` itself) tends to produce.
+
+Two small supporting pieces belong in this same networking layer, shared across every endpoint: an `HTTPService` responsible for the actual request execution (so `Endpoint`'s default `getData` delegates to it rather than calling `URLSession` directly), and a `Validator` that checks the HTTP status code / response shape before data is ever handed back through a completion handler — centralizing that check once instead of re-verifying `response is HTTPURLResponse` and the status code range inside every single endpoint's own parsing code.
+
+TIER 2 — Product Image Model & Pagination (RUNNABLE — this is the tier the console below actually executes)
+The `Product` endpoint's `getData` returns a PAGINATED list of product images for the grid screen — model each one as:
+  struct Image: Codable, Identifiable {
+      let id: Int
+      let url: String       // full-resolution image, used by the detail screen
+      let urlLow: String     // low-resolution thumbnail, used by the grid ("url_low" in the JSON)
+      let title: String      // caption/title shown under the thumbnail ("t" in the JSON)
+  }
+Pagination fetches exactly 50 images per page (`GET /product?page=N&limit=50`). Implement:
+  • Decoding a page of Image JSON into `[Image]`, mapping the snake_case JSON keys (`url_low`) onto the camelCase Swift properties via `CodingKeys`.
+  • A pure, testable pagination-boundary helper: given a page's returned item count and the page size (50), determine whether there is possibly a NEXT page (`count == pageSize`) or this was the LAST page (`count < pageSize`) — this is the exact check that drives whether the grid screen's infinite scroll (Tier 3) fires another fetch or stops.
+
+TIER 3 — Grid Screen With Shimmer Placeholder & Infinite Scroll (UIKit, Storyboard-based — reference only, not executable here)
+`Main.storyboard` wires a `UICollectionView`-based grid to `HomeScreenController.swift` (this is a UIKit, storyboard-driven screen — not SwiftUI):
+  • The instant the screen appears, show a full grid of SHIMMER/skeleton placeholder cells immediately — a "demo grid" the user sees with zero delay — rather than a blank screen + spinner. This is optimistic/skeleton UI: the grid's STRUCTURE is visibly correct before any real data has arrived.
+  • Kick off the Tier 1/2 paginated fetch (page 1) in the background. As each page of up to 50 `Image`s arrives, replace the shimmer cells with real thumbnails (loaded from each `Image.urlLow`) by reloading only the affected index paths — not the whole collection view — to avoid a visible full-grid flash.
+  • Infinite scroll: when the user scrolls within a few rows of the currently-loaded end (`collectionView(_:willDisplay:forItemAt:)`), and Tier 2's pagination helper says there's possibly a next page, fetch the next page of 50 and APPEND to the existing data source.
+  • Tapping any cell pushes `SingleImageViewController`, passing that `Image`'s FULL-resolution `url` (not `urlLow`) for the detail view.
+`HomeScreenController` holds the base `url: String` it fetches from, and an `init` that wires up its data source before the view loads.
+
+TIER 4 — Bounded-Concurrency Image Download Worker Pool (GCD, Singleton — reference only, not executable here)
+A single page can contain up to 50 image URLs to download for the grid's thumbnails. Downloading all 50 fully in parallel opens 50 simultaneous connections (wasteful, and many backends rate-limit that many concurrent requests from one client); downloading them one at a time is needlessly slow for a screen the user is actively scrolling. Build an `ImageDownloadWorkerPool`:
+  • A SINGLETON (`static let shared`, `private init()`) — exactly one pool for the app's entire lifetime, enforced at compile time, not just by convention (see this app's own Q&A section for why the init specifically needs to be private for that guarantee to actually hold).
+  • Bounded to exactly 5 concurrent downloads in flight at once ("worker thread [5]" in the original notes), built from a CONCURRENT `DispatchQueue` paired with a counting `DispatchSemaphore(value: 5)` — each download calls `semaphore.wait()` before starting and `semaphore.signal()` in a `defer` block when it finishes, which is the standard GCD technique for capping a concurrent queue's simultaneous throughput to a fixed number regardless of how many downloads are actually queued.
+  • A separate SERIAL queue protects the pool's own internal bookkeeping (e.g. an in-flight-download-count or a small "already downloading this URL" de-duplication set) from concurrent read/write races — the serial queue serializes access to that shared mutable state, while the bounded concurrent queue + semaphore is what actually runs the parallel downloads. This is exactly why the original notes list "gcd [serial, concurrent]" side by side: they solve two different problems (safe shared-state access vs. bounded parallelism), not one.
+This pool (along with the shared `HTTPService`/`Validator` from Tier 1) is set up once in `AppDelegate.application(_:didFinishLaunchingWithOptions:)`, so it's ready before `HomeScreenController` ever needs it.
+
+TIER 3 & 4 REFERENCE IMPLEMENTATION (UIKit — not part of the editable/runnable file; see above for why)
+
+    // MARK: - Tier 1 networking layer (shown here for context; Tier 1's
+    // Endpoint/Product/PaymentInfo/UserInfo declarations are what you
+    // actually write in the editable file below)
+
+    final class HTTPService {
+        static let shared = HTTPService()
+        private init() {}
+
+        func execute(path: String, completion: @escaping (Data?, Error?) -> Void) {
+            guard let url = URL(string: "https://api.walmart.example.com\\(path)") else {
+                completion(nil, NetworkingError.invalidURL)
+                return
+            }
+            let handleResponse: (Data?, URLResponse?, Error?) -> Void = { data, response, maybeError in
+                if let unwrappedError = maybeError {
+                    completion(nil, unwrappedError)
+                    return
+                }
+                guard Validator.isSuccessful(response) else {
+                    completion(nil, NetworkingError.badServerResponse)
+                    return
+                }
+                completion(data, nil)
+            }
+            URLSession.shared.dataTask(with: url, completionHandler: handleResponse).resume()
+        }
+    }
+
+    enum Validator {
+        static func isSuccessful(_ response: URLResponse?) -> Bool {
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200..<300).contains(http.statusCode)
+        }
+    }
+
+    // MARK: - Tier 4: bounded-concurrency worker pool
+
+    final class ImageDownloadWorkerPool {
+        static let shared = ImageDownloadWorkerPool()
+        private init() {}
+
+        private let concurrentQueue = DispatchQueue(label: "com.walmart.imagepool.work", attributes: .concurrent)
+        private let bookkeepingQueue = DispatchQueue(label: "com.walmart.imagepool.bookkeeping")
+        private let semaphore = DispatchSemaphore(value: 5)   // exactly 5 workers
+        private var inFlightURLs: Set<String> = []
+
+        func downloadThumbnail(for image: Image, completion: @escaping (Data?) -> Void) {
+            bookkeepingQueue.async { [weak self] in
+                guard let self, !self.inFlightURLs.contains(image.urlLow) else { return }
+                self.inFlightURLs.insert(image.urlLow)
+
+                self.concurrentQueue.async {
+                    self.semaphore.wait()
+                    defer { self.semaphore.signal() }
+
+                    guard let url = URL(string: image.urlLow),
+                          let data = try? Data(contentsOf: url) else {
+                        completion(nil)
+                        self.bookkeepingQueue.async { self.inFlightURLs.remove(image.urlLow) }
+                        return
+                    }
+
+                    completion(data)
+                    self.bookkeepingQueue.async { self.inFlightURLs.remove(image.urlLow) }
+                }
+            }
+        }
+    }
+
+    // MARK: - Tier 3: grid screen (Main.storyboard -> HomeScreenController)
+
+    final class HomeScreenController: UIViewController {
+        var url: String
+        private var images: [Image] = []
+        private var currentPage = 1
+        private let pageSize = 50
+        private var isLastPage = false
+        private var isLoadingPage = false
+
+        @IBOutlet private var collectionView: UICollectionView!
+
+        init(url: String) {
+            self.url = url
+            super.init(nibName: nil, bundle: nil)
+        }
+        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            // Shimmer cells are visible immediately from cellForItemAt's
+            // own logic (images.isEmpty -> shimmer cell), NOT gated behind
+            // a loading flag - the "demo grid" the user sees with zero delay.
+            collectionView.reloadData()
+            loadNextPageIfNeeded()
+        }
+
+        private func loadNextPageIfNeeded() {
+            guard !isLoadingPage, !isLastPage else { return }
+            isLoadingPage = true
+
+            Product().getData { [weak self] data, error in
+                guard let self else { return }
+                defer { self.isLoadingPage = false }
+                guard let data, error == nil,
+                      let page = try? JSONDecoder().decode([Image].self, from: data) else { return }
+
+                self.isLastPage = page.count < self.pageSize
+                let startIndex = self.images.count
+                self.images.append(contentsOf: page)
+
+                DispatchQueue.main.async {
+                    let indexPaths = (startIndex..<self.images.count).map { IndexPath(item: $0, section: 0) }
+                    self.collectionView.insertItems(at: indexPaths)   // targeted reload, not reloadData()
+                }
+            }
+        }
+
+        func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+            if indexPath.item >= images.count - 5 {
+                loadNextPageIfNeeded()
+            }
+        }
+
+        func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+            let tapped = images[indexPath.item]
+            let detail = SingleImageViewController(imageURL: tapped.url)   // FULL-res url, not urlLow
+            navigationController?.pushViewController(detail, animated: true)
+        }
+    }
+
+    final class SingleImageViewController: UIViewController {
+        let imageURL: String
+        init(imageURL: String) {
+            self.imageURL = imageURL
+            super.init(nibName: nil, bundle: nil)
+        }
+        required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+    }
+""",
+                templateCode: """
+import Foundation
+
+// MARK: - Tier 1: Protocol-Oriented Networking Layer
+// TODO: Define an `Endpoint` protocol with `var path: String { get }` and a
+// default `getData(completion:)` implementation in a protocol EXTENSION
+// (not repeated per conforming type). Then declare `Product`, `PaymentInfo`,
+// and `UserInfo` as lightweight conforming types, each supplying only its
+// own `path` ("/product", "/payment", "/user").
+protocol Endpoint {
+    var path: String { get }
+    func getData(completion: @escaping (Data?, Error?) -> Void)
+}
+
+// TODO: implement the shared default in an extension here.
+
+// TODO: struct/class Product, PaymentInfo, UserInfo conforming to Endpoint.
+
+// MARK: - Tier 2: Image Model & Pagination (this is the RUNNABLE tier)
+// TODO: Create a Codable, Identifiable `Image` struct with:
+//   id (Int), url (String), urlLow (String, JSON key "url_low"),
+//   title (String, JSON key "t")
+struct Image {
+    // TODO: implement your solution here
+}
+
+// TODO: implement a pure pagination-boundary helper:
+// hasNextPage(returnedCount: Int, pageSize: Int) -> Bool
+// (true when returnedCount == pageSize, false when returnedCount < pageSize)
+
+// MARK: - Tiers 3 & 4 (UIKit grid screen + GCD worker pool) are described in
+// the PROBLEM DESCRIPTION above, with a complete reference implementation to
+// compare against — they're not part of this file, since this app's console
+// runner has no way to execute UIKit view controllers or GCD worker-pool
+// timing either way.
+
+// MARK: - Runnable demo — decode one paginated page of sample JSON and
+// print each Image, then report whether the grid should fetch another page.
+let samplePageJSON = "[{\\"id\\": 1, \\"url\\": \\"https://img.example.com/1.jpg\\", \\"url_low\\": \\"https://img.example.com/1_low.jpg\\", \\"t\\": \\"Rollback Deal\\"}, {\\"id\\": 2, \\"url\\": \\"https://img.example.com/2.jpg\\", \\"url_low\\": \\"https://img.example.com/2_low.jpg\\", \\"t\\": \\"Grocery Pickup\\"}, {\\"id\\": 3, \\"url\\": \\"https://img.example.com/3.jpg\\", \\"url_low\\": \\"https://img.example.com/3_low.jpg\\", \\"t\\": \\"Electronics Sale\\"}]"
+// TODO: decode samplePageJSON into [Image], print each one, and print
+// whether hasNextPage(...) says there's possibly a next page for this page's item count.
+""",
+                solutionCode: """
+import Foundation
+
+// MARK: - Tier 1: Protocol-Oriented Networking Layer
+
+protocol Endpoint {
+    var path: String { get }
+    func getData(completion: @escaping (Data?, Error?) -> Void)
+}
+
+// The shared boilerplate lives HERE, exactly once - every conforming type
+// below gets `getData` for free and never re-implements the URLSession call.
+enum NetworkingError: Error {
+    case invalidURL
+    case badServerResponse
+}
+
+extension Endpoint {
+    func getData(completion: @escaping (Data?, Error?) -> Void) {
+        guard let url = URL(string: "https://api.walmart.example.com" + path) else {
+            completion(nil, NetworkingError.invalidURL)
+            return
+        }
+        let handleResponse: (Data?, URLResponse?, Error?) -> Void = { data, response, maybeError in
+            if let unwrappedError = maybeError {
+                completion(nil, unwrappedError)
+                return
+            }
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                completion(nil, NetworkingError.badServerResponse)
+                return
+            }
+            completion(data, nil)
+        }
+        URLSession.shared.dataTask(with: url, completionHandler: handleResponse).resume()
+    }
+}
+
+struct Product: Endpoint {
+    let path = "/product"
+}
+
+struct PaymentInfo: Endpoint {
+    let path = "/payment"
+}
+
+struct UserInfo: Endpoint {
+    let path = "/user"
+}
+
+// MARK: - Tier 2: Image Model & Pagination
+
+struct Image: Codable, Identifiable {
+    let id: Int
+    let url: String
+    let urlLow: String
+    let title: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, url
+        case urlLow = "url_low"
+        case title = "t"
+    }
+}
+
+func hasNextPage(returnedCount: Int, pageSize: Int) -> Bool {
+    return returnedCount == pageSize
+}
+
+// MARK: - Tiers 3 & 4 (UIKit grid screen + GCD worker pool) are real,
+// correct reference code shown in full in the PROBLEM DESCRIPTION above -
+// read them there to see the shimmer/pagination/worker-pool implementation
+// - but they deliberately aren't part of this executable file. This app's
+// runner transpiles console-style Swift to JS to execute it, and that JS
+// engine has no UIKit, no UICollectionView, and no real GCD thread-pool
+// timing at all (every "concurrent" queue in the JS fallback layer is
+// mocked as synchronous), so "running" a UIViewController or a
+// DispatchSemaphore-bounded worker pool here could only ever be a
+// meaningless simulation - not a real demonstration either way. Matching
+// this app's other UI/concurrency-heavy machine coding questions, only the
+// data-modeling tier below actually executes.
+
+print("=== Tier 2: Decoding one paginated page of sample JSON ===")
+let samplePageJSON = "[{\\"id\\": 1, \\"url\\": \\"https://img.example.com/1.jpg\\", \\"url_low\\": \\"https://img.example.com/1_low.jpg\\", \\"t\\": \\"Rollback Deal\\"}, {\\"id\\": 2, \\"url\\": \\"https://img.example.com/2.jpg\\", \\"url_low\\": \\"https://img.example.com/2_low.jpg\\", \\"t\\": \\"Grocery Pickup\\"}, {\\"id\\": 3, \\"url\\": \\"https://img.example.com/3.jpg\\", \\"url_low\\": \\"https://img.example.com/3_low.jpg\\", \\"t\\": \\"Electronics Sale\\"}]"
+let decodedImages = try! JSONDecoder().decode([Image].self, from: samplePageJSON.data(using: .utf8)!)
+for image in decodedImages {
+    print("#\\(image.id) \\(image.title) | full: \\(image.url) | thumb: \\(image.urlLow)")
+}
+print("With \\(decodedImages.count) images returned out of a page size of 50, hasNextPage = \\(hasNextPage(returnedCount: decodedImages.count, pageSize: 50))")
+""",
+                testHarness: ""
+            ),
+            Question(
+                id: "delivery_truck_min_distance",
+                title: "Machine Coding: Delivery Truck Minimum Trip Distance",
+                category: "machineRound",
+                difficulty: "Easy",
+                topics: ["Array", "Math", "Greedy"],
+                description: """
+This is a real AI-screened "Coding Exercise" round (Micro1-style) that looks harder than it actually is - it's worth understanding WHY, since that's the actual thing being tested.
+
+A logistics company delivers packages to several destinations along a SINGLE highway. Each destination has a km marker (a positive integer). The truck starts at the warehouse (km 0), must visit every given km marker (in any order), and return to the warehouse. Given the array of destination markers, compute the minimum total distance driven.
+
+Input: an array `destinations` of 1 to 10^5 positive integers, each between 1 and 10^9 (duplicates allowed - visiting a marker once covers every package assigned to it).
+Output: a single integer - the minimum total driving distance.
+Constraints: destinations can be visited in any order; the solution must run in O(n).
+
+EXAMPLE 1
+Input:  [2, 7, 4, 9]
+Output: 18
+Explanation: Drive to the farthest point (9 km) and back; every other marker (2, 7, 4) sits on that same stretch of road and gets passed through on the way, so the minimum distance is 2 x 9 = 18.
+
+EXAMPLE 2
+Input:  [5, 5, 5]
+Output: 10
+Explanation: All destinations are at 5 km - the minimum trip is to 5 km and back, totaling 10 km.
+
+THE ACTUAL TRAP: this reads like it wants a Traveling-Salesman-style search over visit orderings - sort the stops, plan a route, compute pairwise distances, etc. - and a candidate who starts down that path will burn most of the time budget before realizing it was never necessary. The problem quietly encodes two constraints that collapse it entirely: everything happens on a SINGLE highway (one dimension, not a 2D map), and the warehouse sits at km 0 while every destination marker is POSITIVE - meaning every destination lies on the exact same side of the warehouse, along the exact same straight line. On a single line, driving out to the single FARTHEST marker and back necessarily drives past every closer marker on the way out AND the way back - there is no ordering of stops that could ever produce a shorter round trip than "go to the far end, come back." The entire problem reduces to: minimum distance = 2 x max(destinations). No sorting, no route planning, no pairwise-distance computation needed at all - just one linear scan for the maximum, which is exactly the required O(n) runtime.
+
+NOTABLE EDGE CASES: all destinations at the same marker (Example 2); a single-destination trip; very large marker values (up to 10^9 - safe in a 64-bit Int, no overflow risk even doubled); duplicate markers (irrelevant to the answer, since only the maximum matters).
+""",
+                templateCode: """
+class Solution {
+    func minTotalDistance(_ destinations: [Int]) -> Int {
+        // TODO: Write your solution here
+        return 0
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func minTotalDistance(_ destinations: [Int]) -> Int {
+        // The whole problem is confined to a single highway, and every
+        // destination marker is positive (same side of the warehouse at
+        // km 0) - so driving to the single FARTHEST marker and back
+        // necessarily passes every closer marker along the way, both
+        // directions. No ordering of stops can beat that round trip.
+        guard let farthest = destinations.max() else { return 0 }
+        return 2 * farthest
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let destinations: [Int]
+    let expected: Int
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(destinations: [2, 7, 4, 9], expected: 18, name: "Example 1 (2,7,4,9)"),
+    TestCase(destinations: [5, 5, 5], expected: 10, name: "Example 2 (All Same Marker)"),
+    TestCase(destinations: [7], expected: 14, name: "Single Destination"),
+    TestCase(destinations: [1], expected: 2, name: "Minimum Marker Value"),
+    TestCase(destinations: [10, 3], expected: 20, name: "Two Elements"),
+    TestCase(destinations: [1, 2, 3, 4, 5], expected: 10, name: "Ascending Order"),
+    TestCase(destinations: [9, 8, 7, 6, 5, 4, 3, 2, 1], expected: 18, name: "Descending Order"),
+    TestCase(destinations: [3, 8, 3, 8, 1], expected: 16, name: "Duplicates Mixed With Distinct"),
+    TestCase(destinations: [9, 1, 2, 3], expected: 18, name: "Farthest Point First"),
+    TestCase(destinations: [1, 2, 3, 9], expected: 18, name: "Farthest Point Last"),
+    TestCase(destinations: [3, 1, 9, 2], expected: 18, name: "Farthest Point In Middle"),
+    TestCase(destinations: [1000000000], expected: 2000000000, name: "Max Marker Value (10^9)"),
+    TestCase(destinations: [1000000000, 1000000000], expected: 2000000000, name: "Two Max Marker Values"),
+    TestCase(destinations: [1, 1000000000, 500000], expected: 2000000000, name: "Max Marker Mixed With Small"),
+    TestCase(destinations: [1, 1000000000], expected: 2000000000, name: "Min And Max Together"),
+    TestCase(destinations: [971, 155, 405, 667, 50, 75], expected: 1942, name: "Random Case 1 (n=6)"),
+    TestCase(destinations: [97, 375, 597, 60, 932, 520, 220, 39, 89], expected: 1864, name: "Random Case 2 (n=9)"),
+    TestCase(destinations: [429, 72, 247, 93, 565, 435, 61], expected: 1130, name: "Random Case 3 (n=7)"),
+    TestCase(destinations: [127, 971, 229, 646, 643, 597, 971, 64, 591, 600], expected: 1942, name: "Random Case 4 (n=10)"),
+    TestCase(destinations: [51, 1000, 227, 48, 571, 880, 137], expected: 2000, name: "Random Case 5 (n=7)"),
+    TestCase(destinations: [430, 148, 554, 121, 585], expected: 1170, name: "Random Case 6 (n=5)"),
+    TestCase(destinations: [574, 836, 699, 186, 106], expected: 1672, name: "Random Case 7 (n=5)"),
+    TestCase(destinations: [585, 655, 193, 382, 100, 561, 730, 65, 578, 62], expected: 1460, name: "Random Case 8 (n=10)"),
+    TestCase(destinations: [211, 509, 697, 545, 438, 796, 322, 477, 600, 946], expected: 1892, name: "Random Case 9 (n=10)"),
+    TestCase(destinations: [371, 307, 255, 814, 185, 716, 799, 250], expected: 1628, name: "Random Case 10 (n=8)"),
+    TestCase(destinations: [433768155, 408830030, 214829376, 643642839, 191987536, 247242721, 266751100, 143070081, 815912191, 92962936, 269671340, 782791101, 411315682, 569955693, 734770808, 752143476, 578348631, 96460985, 669928630, 525354987, 214177267, 452731737, 775483848, 658435729, 631797388, 232671597, 851062814, 968514386, 846447972, 401557732, 882965199, 416731921, 925020207, 732687938, 228267700, 163505684, 495513912, 709279384, 192200819, 912645327, 608720354, 363790963, 89083536, 769529291, 567704661, 727328575, 831584661, 94276917, 503626845, 339709089, 432312869, 45796671, 289265204, 599096334, 8181696, 456561459, 218790376, 389265182, 573711029, 86775980, 496161799, 556901541, 966627773, 212686670, 650160476, 496820826, 55102071, 383889468, 138662724, 231738506, 988663060, 767880498, 172670525, 802630929, 850230770, 474287461, 639324689, 993046872, 190723859, 540301996, 708991358, 189003191, 39795204, 117888717, 25022319, 183810888, 508660366, 734294138, 880111884, 449922638, 87145048, 456791495, 678620617, 92362081, 153450118, 332652653, 662918410, 6085912, 409161681, 354010199, 145831444, 561998706, 435220096, 215601358, 966335585, 845266600, 59485195, 687660420, 227026800, 475638398, 276570744, 585694945, 433864351, 885980681, 820118561, 135668246, 379899006, 746249395, 511255050, 990204059, 59933790, 140581736, 793016404, 927637184, 771337018, 643888647, 836382636, 802322774, 161533747, 652872140, 438408209, 133537998, 103598104, 127469018, 154256339, 317799465, 186976106, 190745413, 440099465, 156241728, 992281216, 222886596, 945355252, 602332369, 342637959, 827390182, 535940551, 856809042, 251154713, 908520255, 276594445, 125856788, 921126707, 882989939, 388375205, 199664371, 728345557, 77727572, 538194671, 308930864, 11970605, 628882570, 893947575, 51193483, 362318018, 232274151, 404773041, 428531262, 361586831, 883009962, 872277777, 428863359, 414399901, 444599130, 873691499, 398333114, 573773157, 99497547, 194589340, 944429343, 40364642, 991102531, 400500979, 774876537, 920348624, 427971904, 827663416, 476713224, 247185890, 334383348, 916526733, 702585863, 242714867, 701543877, 773058423, 333564786, 113546819, 938697479, 738607355, 773872839], expected: 1986093744, name: "Larger Random Case (n=200)"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.minTotalDistance(tc.destinations)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "film_festival_max_non_overlapping",
+                title: "Machine Coding: Film Festival Maximum Non-Overlapping Screenings",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["Greedy", "Intervals", "Sorting"],
+                description: """
+This is a real AI-screened "Coding Exercise" round (Micro1-style) - the classic Activity Selection / Interval Scheduling Maximization problem, one of the most-repeated greedy-algorithm interview questions there is.
+
+You are organizing a film festival with a single screen, so no two selected films can overlap in time. Given a list of films, each represented as [start_time, end_time], select the MAXIMUM NUMBER of films that can be shown without any two overlapping.
+
+Input: an integer n (number of films, 1 <= n <= 10^4), followed by an array of n [start_time, end_time] pairs (0 <= start_time < end_time <= 10^9).
+Output: a single integer - the maximum number of non-overlapping films that can be scheduled.
+Constraints: films that END exactly when another STARTS do not overlap and can be shown back-to-back; the solution must run in O(n log n) (no full-timeline scan - times can be up to 10^9).
+
+EXAMPLE 1
+Input: 4, [[1, 3], [2, 5], [4, 7], [6, 8]]
+Output: 2
+Explanation: [1, 3] and [4, 7] don't overlap and yield the maximum count. [2, 5] and [6, 8] is also a valid non-overlapping pair.
+
+EXAMPLE 2
+Input: 3, [[0, 5], [5, 10], [10, 15]]
+Output: 3
+Explanation: all films can be scheduled back-to-back since each ends exactly as the next starts, resulting in a total of 3 films.
+
+THE ALGORITHM: this is the textbook "Activity Selection Problem", and the key insight is WHICH key to sort by. Sorting by START time and greedily picking each film that doesn't conflict with the last one CHOSEN does not work in general - picking whichever film starts earliest can lock in a film that ends very late, blocking out several shorter films that would otherwise have fit in that same slot. Sorting by END time instead, then greedily picking every film whose start time is >= the end time of the last SELECTED film, is provably optimal: among all films that could be picked next, the one that finishes SOONEST always leaves the most remaining room for future films - it can never be a worse choice than a film that finishes later (a standard exchange-argument proof). This is exactly why greedy-by-end-time is the correct approach, while greedy-by-start-time is a common wrong-but-plausible-looking first instinct.
+
+NOTABLE EDGE CASES: films that touch exactly at their boundary (end_time == next start_time - Example 2, must count as non-overlapping); a single film; every film mutually overlapping (answer 1); all films already disjoint (answer = n); duplicate identical intervals (only one of them can ever be selected).
+""",
+                templateCode: """
+class Solution {
+    func maxNonOverlappingFilms(_ films: [[Int]]) -> Int {
+        // TODO: Write your solution here
+        return 0
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func maxNonOverlappingFilms(_ films: [[Int]]) -> Int {
+        guard !films.isEmpty else { return 0 }
+        // Sort by END time - the key greedy insight: among all films that
+        // could be picked next, the one ending soonest always leaves the
+        // most room for whatever comes after it, so it is never wrong to
+        // pick it first. Sorting by start time instead does NOT work in
+        // general (an early-starting but long-running film can block out
+        // several shorter films that would otherwise fit in that slot).
+        let sorted = films.sorted { $0[1] < $1[1] }
+
+        var count = 0
+        var lastEnd = Int.min
+        for film in sorted {
+            let start = film[0]
+            let end = film[1]
+            // A film that starts exactly when the last one ends does NOT
+            // overlap - back-to-back scheduling is allowed.
+            if start >= lastEnd {
+                count += 1
+                lastEnd = end
+            }
+        }
+        return count
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let films: [[Int]]
+    let expected: Int
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(films: [[1, 3], [2, 5], [4, 7], [6, 8]], expected: 2, name: "Example 1"),
+    TestCase(films: [[0, 5], [5, 10], [10, 15]], expected: 3, name: "Example 2 (Back-To-Back Chain)"),
+    TestCase(films: [[1, 2]], expected: 1, name: "Single Film"),
+    TestCase(films: [[1, 10], [2, 9], [3, 8], [4, 7]], expected: 1, name: "All Fully Overlapping"),
+    TestCase(films: [[1, 2], [3, 4], [5, 6], [7, 8]], expected: 4, name: "All Already Disjoint"),
+    TestCase(films: [[1, 100], [2, 3], [4, 5], [6, 7]], expected: 3, name: "Greedy-By-Start-Time Trap (long film blocks 3 short ones)"),
+    TestCase(films: [[6, 8], [4, 7], [2, 5], [1, 3]], expected: 2, name: "Reverse-Order Input (needs sorting)"),
+    TestCase(films: [[1, 10], [2, 3]], expected: 1, name: "Nested Intervals"),
+    TestCase(films: [[1, 5], [1, 5], [1, 5]], expected: 1, name: "Duplicate Identical Intervals"),
+    TestCase(films: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]], expected: 5, name: "Long Back-To-Back Chain"),
+    TestCase(films: [[1, 4], [4, 6], [3, 5], [6, 8]], expected: 3, name: "Mixed Touching And Overlapping"),
+    TestCase(films: [[0, 3], [0, 5], [3, 6]], expected: 2, name: "Zero Start Time"),
+    TestCase(films: [[1, 1000000000], [1, 2], [2, 3]], expected: 2, name: "Large Time Values (near 10^9)"),
+    TestCase(films: [[1, 5], [5, 9]], expected: 2, name: "Two Films Touching Exactly"),
+    TestCase(films: [[1, 5], [4, 9]], expected: 1, name: "Two Films Overlapping By One Unit"),
+    TestCase(films: [[10, 19], [30, 39], [20, 34]], expected: 2, name: "Random Case 1 (n=3)"),
+    TestCase(films: [[28, 32], [28, 38], [19, 28]], expected: 2, name: "Random Case 2 (n=3)"),
+    TestCase(films: [[25, 35], [17, 31], [23, 36], [24, 32], [24, 37], [18, 26], [7, 8], [19, 21]], expected: 3, name: "Random Case 3 (n=8)"),
+    TestCase(films: [[9, 23], [3, 11], [0, 14]], expected: 1, name: "Random Case 4 (n=3)"),
+    TestCase(films: [[15, 26], [10, 14], [12, 17], [11, 26], [11, 24], [12, 24], [16, 27], [2, 14], [10, 12], [17, 26], [9, 14], [14, 17]], expected: 3, name: "Random Case 5 (n=12)"),
+    TestCase(films: [[22, 34], [18, 23], [0, 14], [22, 28], [11, 19], [13, 15], [12, 27], [18, 27], [15, 29], [3, 10], [16, 29], [24, 38]], expected: 4, name: "Random Case 6 (n=12)"),
+    TestCase(films: [[28, 36], [12, 27], [16, 21], [27, 34], [18, 33], [15, 24], [16, 29], [0, 10], [7, 20], [4, 18], [1, 13]], expected: 3, name: "Random Case 7 (n=11)"),
+    TestCase(films: [[28, 39], [3, 15], [19, 26], [15, 18], [15, 30], [7, 21], [28, 30], [20, 32], [14, 25], [15, 27]], expected: 4, name: "Random Case 8 (n=10)"),
+    TestCase(films: [[8, 17], [12, 23], [9, 18], [25, 36], [16, 28], [15, 28], [28, 35], [13, 17], [9, 23], [8, 9]], expected: 3, name: "Random Case 9 (n=10)"),
+    TestCase(films: [[4, 15], [28, 38]], expected: 2, name: "Random Case 10 (n=2)"),
+    TestCase(films: [[926049509, 926050481], [446347738, 446347873], [30549404, 30550036], [419042563, 419042952], [344658915, 344659197], [198545812, 198546340], [530053344, 530053369], [873675074, 873675555], [168987475, 168987635], [616104027, 616104809], [721469639, 721470127], [128741787, 128741815], [136125677, 136126195], [152549295, 152549480], [361737998, 361738123], [184083379, 184084115], [255256737, 255257622], [739325257, 739325841], [717641425, 717642070], [250941349, 250942280], [478426358, 478426421], [979966131, 979966412], [361269722, 361269727], [342489307, 342490220], [180637813, 180638343], [361024382, 361025071], [381771867, 381772489], [423620993, 423621407], [344479916, 344480672], [329683139, 329683945], [180125711, 180126064], [645667222, 645667796], [520638212, 520638487], [473144932, 473145013], [869207041, 869207943], [776923226, 776924092], [513499132, 513499395], [179364535, 179365535], [656347686, 656347857], [977941621, 977941910], [515993350, 515993635], [987172214, 987172301], [948191937, 948192041], [780937734, 780938121], [887904334, 887904775], [715021688, 715022655], [500819111, 500819595], [245696478, 245696985], [240594174, 240594282], [666363325, 666363783], [445479133, 445479691], [930440468, 930440900], [237821369, 237822262], [266469626, 266470000], [766769677, 766769899], [567729087, 567729479], [90574906, 90575838], [332397599, 332398512], [845218221, 845218283], [573865291, 573865513], [108763671, 108764105], [9252805, 9253567], [25207503, 25208259], [596017969, 596018409], [641016216, 641016898], [619929499, 619929709], [851750323, 851751295], [271109912, 271110632], [876787042, 876787481], [522303851, 522304845], [233258263, 233259211], [453891265, 453891626], [262285964, 262286131], [861886581, 861887426], [891726029, 891726462], [862141942, 862142455], [8109591, 8110109], [406919471, 406920124], [119585086, 119585971], [520206521, 520207342], [657268724, 657268952], [500350627, 500351010], [707078418, 707078722], [117969622, 117970167], [586620797, 586621508], [162925358, 162926241], [26458973, 26459000], [970270526, 970271459], [950775456, 950776334], [195694793, 195694844], [553621436, 553621913], [138452794, 138453007], [239721358, 239721689], [397075125, 397075954], [152178539, 152178862], [109302592, 109302801], [494214700, 494215169], [958508946, 958509893], [661983354, 661983371], [969667582, 969667876], [292828360, 292828613], [745518128, 745519119], [378098723, 378098822], [902104752, 902105437], [199778777, 199779468], [736602607, 736603200], [142869314, 142869456], [734640202, 734640276], [165152409, 165152488], [616021210, 616021593], [884270868, 884270972], [27794318, 27795086], [470535459, 470536342], [199531358, 199531638], [438433145, 438433350], [746139609, 746140178], [917391804, 917391979], [205280411, 205281265], [940558385, 940558937], [610642928, 610643382], [432838256, 432838395], [918011320, 918011810], [108183502, 108184398], [119466389, 119467223], [258324151, 258325076], [945144908, 945145178], [537014364, 537014774], [755879453, 755880255], [64632210, 64633007], [329638810, 329639730], [418188530, 418189156], [946493511, 946493947], [197650922, 197651808], [808307126, 808307904], [821626750, 821627009], [816647142, 816647275], [19210876, 19211684], [979598259, 979598924], [534586109, 534586152], [356505958, 356506914], [497689231, 497689803], [430162898, 430163067], [937618631, 937618766], [153263361, 153263693], [974596057, 974596498], [733187904, 733188130], [709046826, 709047053], [381977524, 381978030], [111689569, 111689865], [556191592, 556192577]], expected: 150, name: "Larger Random Case (n=150)"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.maxNonOverlappingFilms(tc.films)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
+            ),
+            Question(
+                id: "bank_account_data_race_actor_fix",
+                title: "Machine Coding Round: Thread-Safe BankAccount (Data Race, Actors, and Alternatives)",
+                category: "machineRound",
+                difficulty: "Medium",
+                topics: ["Concurrency", "Actors", "Data Race", "GCD", "Swift Concurrency"],
+                description: """
+This is a real "Machine Coding Round" — one of the most commonly repeated concurrency interview questions in Swift/iOS, precisely because it walks through the FULL progression an interviewer actually cares about: spot the bug, explain the underlying mechanism, fix it, then defend the fix against a series of follow-ups. Treat every TIER below as something you should be able to answer out loud, not just code.
+
+NOTE ON THIS APP'S CONSOLE RUNNER: this app's JS-transpiled console mocks `Task {}`/`withTaskGroup` and GCD queues as SYNCHRONOUS (matching this app's other concurrency-heavy machine coding question, the Honeywell AtomicStore one) — real threads never actually race in this sandbox, so it cannot reproduce the non-deterministic wrong output a genuine data race produces on a real device. All of the concurrency-critical code below (the actor, the DispatchQueue/NSLock alternatives) is real, correct reference code, graded by reading it against the explanation — not by running it. The one thing this console CAN run deterministically is a manual, non-threaded simulation of the exact "lost update" interleaving described in Tier 1, which is exactly what the runnable section at the bottom does.
+
+TIER 1 — Diagnose the Bug
+You are building a banking application. There is a shared `BankAccount` object. Five different network requests arrive simultaneously and each one deposits money into the account.
+
+    class BankAccount {
+        var balance = 0
+
+        func deposit(_ amount: Int) {
+            balance += amount
+        }
+
+        func getBalance() -> Int {
+            balance
+        }
+    }
+
+    let account = BankAccount()
+
+    Task {
+        await withTaskGroup(of: Void.self) { group in
+            for _ in 1...5 {
+                group.addTask {
+                    for _ in 1...1000 {
+                        account.deposit(1)
+                    }
+                }
+            }
+        }
+        print(account.getBalance())
+    }
+
+QUESTION: what is wrong with this implementation?
+
+ANSWER: there are five concurrent tasks, each executing `balance += 1` one thousand times. The expected final balance is 5000 (5 tasks x 1000 deposits). The ACTUAL output is non-deterministic and changes every run — 4873, 4958, 4991, 5000, 4937, always some number at or below 5000, never above it.
+
+WHY: `balance += 1` is not one atomic operation. Internally it is three separate steps: READ balance, ADD 1, WRITE balance. Trace through two tasks racing on the same starting value:
+
+    Balance = 100
+    Task A reads 100
+    Task B reads 100
+    Task A writes 101
+    Task B writes 101
+
+    Expected: 102 (two increments happened)
+    Actual:   101 (only one increment "stuck")
+
+Task B read the OLD value (100) before Task A's write (101) was visible, so Task B's write overwrites Task A's update with a value that doesn't account for it — Task A's increment is silently lost. With 5000 total increments racing this way, some non-deterministic number of them get lost on every run, which is exactly why the final balance is unpredictable but always <= 5000 (updates can only ever be LOST this way, never double-counted). This failure mode is called a DATA RACE — more precisely, a race condition caused by unsynchronized access to shared mutable state from multiple threads.
+
+TIER 2 — Follow-up: Can async/await Alone Solve This?
+ANSWER: No. `async`/`await` is only a SUSPENSION mechanism — it lets a function pause and resume without blocking a thread. It says nothing about SERIALIZING access to shared memory. Whether you spin up work with plain `Task { }` blocks or `withTaskGroup`, those tasks execute CONCURRENTLY, and `await` does not put a lock around `balance` — it just controls where a single task's own execution can be suspended and resumed. Multiple tasks can still simultaneously read-modify-write the exact same property with `await` sprinkled everywhere and race exactly as before, because `await` was never a synchronization primitive to begin with.
+
+TIER 3 — Fix With an Actor
+
+    actor BankAccount {
+        private var balance = 0
+
+        func deposit(_ amount: Int) {
+            balance += amount
+        }
+
+        func getBalance() -> Int {
+            balance
+        }
+    }
+
+    let account = BankAccount()
+
+    Task {
+        await withTaskGroup(of: Void.self) { group in
+            for _ in 1...5 {
+                group.addTask {
+                    for _ in 1...1000 {
+                        await account.deposit(1)
+                    }
+                }
+            }
+        }
+        print(await account.getBalance())
+    }
+
+Output: 5000. Always, every single run.
+
+WHY THIS FIXES IT: an actor guarantees that only ONE task at a time can access its own isolated mutable state. Instead of Task A, Task B, and Task C all racing to read-modify-write `balance` simultaneously, the actor serializes every call into its isolated region into a strict one-at-a-time queue — `deposit()`, then `deposit()`, then `deposit()`, then `deposit()`, never overlapping. This eliminates the possibility of two tasks ever reading the SAME stale value before either has written back, which is the entire mechanism the data race in Tier 1 depended on. Note that every external call site now needs `await` — `account.deposit(1)` becomes `await account.deposit(1)`, and `account.getBalance()` becomes `await account.getBalance()` — even though neither method is itself declared `async`; crossing into an actor's isolated region from outside always requires `await`, regardless of whether the specific method suspends internally.
+
+TIER 4 — Follow-up: Does the Caller Also Have to Be an Actor?
+ANSWER: No. The caller can be a class, a struct, an actor, or a view controller — anything at all. The only actual requirement is that actor-isolated methods are called asynchronously with `await`.
+
+    class PaymentService {
+        let account = BankAccount()
+
+        func makePayment() async {
+            await account.deposit(100)
+            let balance = await account.getBalance()
+            print(balance)
+        }
+    }
+
+`PaymentService` here is a plain `class`, not an actor — and this is completely correct and safe. Actor isolation is a property of the `BankAccount` type itself, protecting ITS OWN internal state; it says nothing about what kind of type is allowed to hold a reference to it or call into it. `makePayment()` only needs to be `async` because it AWAITS actor-isolated calls inside its own body — that's a requirement of using `await` at all, not a requirement specific to actors.
+
+TIER 5 — Extension: What If I Don't Want to Use an Actor?
+Actors are the modern, recommended Swift-native answer, but they're not the only correct one — this is exactly the kind of follow-up an interviewer asks to check whether you understand the underlying synchronization problem, or just memorized "use an actor." Two classic pre-Swift-Concurrency alternatives, both shown in full below as a bundled alternate solution:
+
+  - A SERIAL DispatchQueue: every `deposit`/`getBalance` call is routed through `queue.sync { ... }` on a queue created with no `.concurrent` attribute (serial by default) — GCD guarantees a serial queue only ever runs one enqueued block at a time, so two `deposit` calls can never interleave their read-modify-write steps.
+  - NSLock: a plain mutual-exclusion lock — `lock.lock()` before touching `balance`, `lock.unlock()` after — manually enforcing "only one thread inside this critical section at a time." Correct, but easy to get wrong in a bigger class (a forgotten `unlock()` on an early-return path, or on a thrown error, permanently deadlocks every future caller — an actor's compiler-enforced isolation can never have this specific bug class at all).
+
+Both are real, valid, still-used synchronization primitives — but both require the DEVELOPER to remember to route every single access through them correctly, forever, with no compiler help. An actor makes this the SAME guarantee enforced by the type system itself: the compiler simply refuses to compile code that touches actor-isolated state from outside without `await`, which is why it's the recommended default in modern Swift for exactly this "protect shared mutable state" problem.
+""",
+                templateCode: """
+import Foundation
+
+// This is the INITIAL code exactly as given in the interview - your task
+// is the same as the real one: identify what's wrong with it, explain WHY
+// (see Tier 1 in the problem description for the expected answer), then
+// fix it using an actor (see Tier 3). The corrected, actor-based version
+// is the SOLUTION reference - this file is deliberately left broken, as
+// a real "spot the bug" round would present it to you.
+
+class BankAccount {
+    var balance = 0
+
+    func deposit(_ amount: Int) {
+        balance += amount
+    }
+
+    func getBalance() -> Int {
+        balance
+    }
+}
+
+// TODO: explain why running this concurrently from 5 tasks does not
+// reliably produce 5000, then rewrite BankAccount as an `actor` (Tier 3).
+
+""",
+                solutionCode: """
+import Foundation
+
+// MARK: - Tier 3: The fix - BankAccount as an actor.
+//
+// An actor serializes every call into its isolated state into a strict
+// one-at-a-time queue, eliminating the read-modify-write race entirely -
+// see the PROBLEM DESCRIPTION (Tier 1) for exactly why the plain `class`
+// version above loses updates, and Tier 3 for why this specifically fixes
+// it. Every external call site needs `await`, even though neither method
+// below is itself declared `async` - crossing into an actor's isolated
+// region always requires it.
+actor BankAccount {
+    private var balance = 0
+
+    func deposit(_ amount: Int) {
+        balance += amount
+    }
+
+    func getBalance() -> Int {
+        balance
+    }
+}
+
+// MARK: - Tier 4: the caller does NOT need to be an actor itself - a
+// plain class works fine, as long as actor-isolated calls use `await`.
+class PaymentService {
+    let account = BankAccount()
+
+    func makePayment() async {
+        await account.deposit(100)
+        let balance = await account.getBalance()
+        print("PaymentService balance after deposit: \\(balance)")
+    }
+}
+
+// MARK: - Runnable demo (deterministic simulation of the Tier 1 "lost
+// update" interleaving, console-verifiable)
+//
+// The actor fix above is real, correct reference code - read it to see
+// the isolation guarantee - but it deliberately is not exercised with
+// real concurrent Tasks here. This app's JS-transpiled console mocks
+// Task {}/withTaskGroup as SYNCHRONOUS, so real threads never actually
+// race in this sandbox - running the fixed OR the broken version through
+// it would both just print 5000 every time, which would falsely "prove"
+// the broken version was fine too. Instead, this demo manually simulates
+// the EXACT interleaving from the problem description's own trace -
+// ordinary sequential code, no threads involved - to concretely verify
+// the "lost update" arithmetic itself: two operations that each read the
+// SAME stale value produce only one net increment instead of two.
+
+struct UnsynchronizedRead {
+    let taskName: String
+    let valueRead: Int
+}
+
+func simulateLostUpdate(startingBalance: Int) -> Int {
+    // Both "tasks" read the SAME starting value before either has
+    // written back - this is the exact race from the problem
+    // description: Task A reads 100, Task B reads 100 (not 101),
+    // because neither write has landed yet when the other reads.
+    let taskA = UnsynchronizedRead(taskName: "Task A", valueRead: startingBalance)
+    let taskB = UnsynchronizedRead(taskName: "Task B", valueRead: startingBalance)
+
+    // Each task computes its own "+1" against the STALE value it read,
+    // then writes back - Task B's write overwrites Task A's, silently
+    // discarding Task A's increment.
+    var balance = startingBalance
+    balance = taskA.valueRead + 1   // Task A writes 101
+    balance = taskB.valueRead + 1   // Task B writes 101 - Task A's update is LOST
+
+    return balance
+}
+
+let startingBalance = 100
+let racedResult = simulateLostUpdate(startingBalance: startingBalance)
+let expectedIfSerialized = startingBalance + 2   // two increments, properly serialized
+
+print("Starting balance: \\(startingBalance)")
+print("Expected after two properly serialized increments: \\(expectedIfSerialized)")
+print("Actual result from the raced interleaving: \\(racedResult)")
+print("Lost updates: \\(expectedIfSerialized - racedResult)")
+
+""",
+                testHarness: "",
+                alternateSolutionTitle: "Alternative Fixes Without an Actor: Serial DispatchQueue & NSLock",
+                alternateSolutionCode: """
+import Foundation
+
+// MARK: - Alternative 1: a serial DispatchQueue.
+//
+// `DispatchQueue(label:)` with no `.concurrent` attribute is SERIAL by
+// default - GCD guarantees a serial queue only ever runs one enqueued
+// block at a time, so two `queue.sync { balance += amount }` calls can
+// never interleave their read-modify-write steps, exactly like the
+// actor's isolation does.
+class BankAccountSerialQueue {
+    private var balance = 0
+    private let queue = DispatchQueue(label: "bank.queue")
+
+    func deposit(_ amount: Int) {
+        queue.sync {
+            balance += amount
+        }
+    }
+
+    func getBalance() -> Int {
+        queue.sync { balance }
+    }
+}
+
+// MARK: - Alternative 2: NSLock.
+//
+// A plain mutual-exclusion lock - `lock.lock()` before touching
+// `balance`, `lock.unlock()` after - manually enforcing "only one
+// thread inside this section at a time." Correct, but the developer
+// must remember to pair every lock() with an unlock() on EVERY exit
+// path (including early returns and thrown errors) - a forgotten
+// unlock() permanently deadlocks every future caller, a whole class of
+// bug an actor's compiler-enforced isolation cannot have at all.
+class BankAccountNSLock {
+    private var balance = 0
+    private let lock = NSLock()
+
+    func deposit(_ amount: Int) {
+        lock.lock()
+        balance += amount
+        lock.unlock()
+    }
+
+    func getBalance() -> Int {
+        lock.lock()
+        defer { lock.unlock() }   // `defer` is the practical fix for the
+                                   // "forgot to unlock on early return" bug -
+                                   // it always runs before this method returns,
+                                   // on every exit path.
+        return balance
+    }
+}
+
+// Both alternatives are real, valid, still-used synchronization
+// primitives - but both require the developer to remember to route
+// EVERY access through them correctly, forever, with no compiler help.
+// The actor (main solution) makes this the SAME guarantee enforced by
+// the type system itself, which is why it is the recommended default in
+// modern Swift for this exact "protect shared mutable state" problem.
+
+"""
             )
         ]
     }

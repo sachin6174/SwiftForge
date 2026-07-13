@@ -57,6 +57,16 @@ public struct SidebarView: View {
         }
     }
 
+    private var filteredQAItems: [QAItem] {
+        if searchText.isEmpty {
+            return appState.qaItems
+        }
+        return appState.qaItems.filter {
+            $0.question.localizedCaseInsensitiveContains(searchText) ||
+            $0.topics.contains(where: { $0.localizedCaseInsensitiveContains(searchText) })
+        }
+    }
+
     private func sectionKey(_ name: String, activeTab: String) -> String {
         "\(activeTab)::\(name)"
     }
@@ -66,6 +76,7 @@ public struct SidebarView: View {
         case .swiftPractice: return "network"
         case .mcq: return "questionmark.circle.fill"
         case .machineRound: return "gearshape.fill"
+        case .qa: return "books.vertical.fill"
         case .dsa: return "square.grid.3x3.fill"
         }
     }
@@ -78,6 +89,8 @@ public struct SidebarView: View {
             return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
         case .machineRound:
             return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
+        case .qa:
+            return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
         case .dsa:
             return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
         }
@@ -88,6 +101,7 @@ public struct SidebarView: View {
         case .swiftPractice: return [Color.blue.opacity(0.4), Color.blue.opacity(0.1)]
         case .mcq: return [Color.purple.opacity(0.4), Color.purple.opacity(0.1)]
         case .machineRound: return [Color.mint.opacity(0.4), Color.mint.opacity(0.1)]
+        case .qa: return [Color.yellow.opacity(0.4), Color.yellow.opacity(0.1)]
         case .dsa: return [Color.orange.opacity(0.4), Color.orange.opacity(0.1)]
         }
     }
@@ -114,6 +128,8 @@ public struct SidebarView: View {
             return (total, solved, "Solved Progress")
         case .mcq:
             return (appState.mcqQuestions.count, appState.mcqCorrectCount, "Correct Progress")
+        case .qa:
+            return (appState.qaItems.count, appState.qaViewedCount, "Read Progress")
         }
     }
 
@@ -122,6 +138,7 @@ public struct SidebarView: View {
         case .swiftPractice: return .blue
         case .mcq: return .purple
         case .machineRound: return .mint
+        case .qa: return .yellow
         case .dsa: return .orange
         }
     }
@@ -131,6 +148,7 @@ public struct SidebarView: View {
         case .swiftPractice: return LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
         case .mcq: return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
         case .machineRound: return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
+        case .qa: return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
         case .dsa: return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
         }
     }
@@ -199,6 +217,21 @@ public struct SidebarView: View {
             activeTab: "mcq"
         ) {
             appState.selectedMCQQuestion = question
+        }
+    }
+
+    @ViewBuilder
+    private func qaRow(_ item: QAItem) -> some View {
+        let isSelected = appState.selectedQAItem?.id == item.id
+        let isRead = appState.userActivity.qaViewedIds.contains(item.id)
+        SidebarButton(
+            title: item.question,
+            icon: isSelected ? "text.book.closed.fill" : "text.book.closed",
+            isSelected: isSelected,
+            isSolved: isRead,
+            activeTab: "qa"
+        ) {
+            appState.selectedQAItem = item
         }
     }
 
@@ -328,6 +361,14 @@ public struct SidebarView: View {
                     }
                 }) {
                     Label("Machine Round", systemImage: "gearshape.fill")
+                }
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.activeTab = .qa
+                    }
+                }) {
+                    Label("Q&A", systemImage: "books.vertical.fill")
                 }
             } label: {
                 HStack(spacing: 8) {
@@ -475,6 +516,34 @@ public struct SidebarView: View {
                             }
 
                             if filteredMCQQuestions.isEmpty {
+                                Text("No questions found")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 14)
+                                    .padding(.top, 8)
+                            }
+                        }
+                    } else if appState.activeTab == .qa {
+                        // ── Q&A Section ──
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(LinearGradient(colors: [.yellow, .indigo], startPoint: .top, endPoint: .bottom))
+                                    .frame(width: 5, height: 5)
+                                    .shadow(color: .yellow.opacity(0.6), radius: 3)
+                                Text("Q&A")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundColor(Color.white.opacity(0.3))
+                                    .tracking(1.0)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 6)
+
+                            ForEach(filteredQAItems) { item in
+                                qaRow(item)
+                            }
+
+                            if filteredQAItems.isEmpty {
                                 Text("No questions found")
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(.gray)
@@ -641,7 +710,7 @@ public struct SidebarView: View {
                 // Deep top accent glow
                 LinearGradient(
                     colors: [
-                        (appState.activeTab == .swiftPractice ? Color.blue : Color.orange).opacity(0.06),
+                        activeAccentColor.opacity(0.06),
                         Color.clear
                     ],
                     startPoint: .top, endPoint: .center

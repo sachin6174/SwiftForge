@@ -125,6 +125,7 @@ public struct SidebarButton: View {
         case "swiftPractice": return .blue
         case "mcq": return .purple
         case "machineRound": return .mint
+        case "qa": return .yellow
         default: return .orange
         }
     }
@@ -134,6 +135,7 @@ public struct SidebarButton: View {
         case "swiftPractice": return .cyan
         case "mcq": return .pink
         case "machineRound": return .teal
+        case "qa": return .indigo
         default: return .red
         }
     }

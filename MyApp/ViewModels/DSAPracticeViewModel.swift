@@ -386,7 +386,12 @@ public class DSAPracticeViewModel: ObservableObject {
             self.testcaseResults = parsedResults
         }
         if !parsedResults.isEmpty {
-            self.selectedTestCaseIndex = 0
+            // Jump straight to the first FAILING case rather than always
+            // resetting to 0 — with up to 50 cases per question now, forcing
+            // the user to manually scroll a long horizontal case-picker to
+            // find the one that broke is real friction. Falls back to 0
+            // (i.e. no-op) when everything passed.
+            self.selectedTestCaseIndex = parsedResults.first(where: { !$0.isPass })?.index ?? 0
             let passCount = parsedResults.filter { $0.isPass }.count
             let allPassed = passCount == parsedResults.count
             LoggerService.shared.log("Test suite summary for \(currentQuestion?.title ?? "Question"): \(passCount)/\(parsedResults.count) PASSED", level: allPassed ? .success : .warning, category: .codeRunner)

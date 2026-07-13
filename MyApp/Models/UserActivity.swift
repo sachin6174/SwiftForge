@@ -22,6 +22,10 @@ public struct UserActivity: Codable {
     public var mcqCorrectIds: Set<String>
     public var lastSelectedMCQQuestionId: String?
     public var lastSelectedMachineRoundQuestionId: String?
+    // Q&A practice progress — tracked as "viewed" (opened at least once),
+    // there being no right/wrong answer to grade here, unlike MCQ.
+    public var qaViewedIds: Set<String>
+    public var lastSelectedQAItemId: String?
 
     public init(
         solvedQuestionIds: Set<String> = [],
@@ -36,7 +40,9 @@ public struct UserActivity: Codable {
         mcqAnsweredIds: Set<String> = [],
         mcqCorrectIds: Set<String> = [],
         lastSelectedMCQQuestionId: String? = nil,
-        lastSelectedMachineRoundQuestionId: String? = nil
+        lastSelectedMachineRoundQuestionId: String? = nil,
+        qaViewedIds: Set<String> = [],
+        lastSelectedQAItemId: String? = nil
     ) {
         self.solvedQuestionIds = solvedQuestionIds
         self.draftCodes = draftCodes
@@ -51,6 +57,8 @@ public struct UserActivity: Codable {
         self.mcqCorrectIds = mcqCorrectIds
         self.lastSelectedMCQQuestionId = lastSelectedMCQQuestionId
         self.lastSelectedMachineRoundQuestionId = lastSelectedMachineRoundQuestionId
+        self.qaViewedIds = qaViewedIds
+        self.lastSelectedQAItemId = lastSelectedQAItemId
     }
 
     // Custom decoding: `mcqAnsweredIds`/`mcqCorrectIds` are non-optional
@@ -78,5 +86,7 @@ public struct UserActivity: Codable {
         mcqCorrectIds = try container.decodeIfPresent(Set<String>.self, forKey: .mcqCorrectIds) ?? []
         lastSelectedMCQQuestionId = try container.decodeIfPresent(String.self, forKey: .lastSelectedMCQQuestionId)
         lastSelectedMachineRoundQuestionId = try container.decodeIfPresent(String.self, forKey: .lastSelectedMachineRoundQuestionId)
+        qaViewedIds = try container.decodeIfPresent(Set<String>.self, forKey: .qaViewedIds) ?? []
+        lastSelectedQAItemId = try container.decodeIfPresent(String.self, forKey: .lastSelectedQAItemId)
     }
 }

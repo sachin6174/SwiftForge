@@ -6,6 +6,7 @@ public enum PracticeTab: String, CaseIterable, Identifiable {
     case swiftPractice = "Swift Practice"
     case mcq = "MCQ Practice"
     case machineRound = "Machine Round"
+    case qa = "Q&A"
 
     public var id: String { rawValue }
 }
@@ -14,6 +15,7 @@ public enum PracticeTab: String, CaseIterable, Identifiable {
 public class AppState: ObservableObject {
     @Published public var questions: [Question] = []
     @Published public var mcqQuestions: [MCQQuestion] = []
+    @Published public var qaItems: [QAItem] = []
     @Published public var selectedDSAQuestion: Question? {
         didSet {
             guard isRestoringSelection == false, oldValue?.id != selectedDSAQuestion?.id else { return }
@@ -39,6 +41,24 @@ public class AppState: ObservableObject {
         didSet {
             guard isRestoringSelection == false, oldValue?.id != selectedMachineRoundQuestion?.id else { return }
             userActivity.lastSelectedMachineRoundQuestionId = selectedMachineRoundQuestion?.id
+            saveActivity()
+        }
+    }
+    @Published public var selectedQAItem: QAItem? {
+        didSet {
+            guard oldValue?.id != selectedQAItem?.id else { return }
+            // Opening a Q&A item IS the "read" action here — there's no
+            // separate answer/submit step the way MCQ has, so selection
+            // itself is what marks it viewed for progress tracking. Marked
+            // even while restoring the last-open item on launch (unlike the
+            // persistence below) — that item is fully visible on screen the
+            // moment the app opens, so it should count as read immediately
+            // rather than only once the user navigates away and back.
+            if let id = selectedQAItem?.id {
+                userActivity.qaViewedIds.insert(id)
+            }
+            guard isRestoringSelection == false else { return }
+            userActivity.lastSelectedQAItemId = selectedQAItem?.id
             saveActivity()
         }
     }
@@ -78,7 +98,11 @@ public class AppState: ObservableObject {
     public var mcqCorrectCount: Int {
         mcqQuestions.filter { userActivity.mcqCorrectIds.contains($0.id) }.count
     }
-    
+
+    public var qaViewedCount: Int {
+        qaItems.filter { userActivity.qaViewedIds.contains($0.id) }.count
+    }
+
     private let databaseService: DatabaseServiceProtocol
     private let activityService: UserActivityServiceProtocol
     
@@ -94,6 +118,7 @@ public class AppState: ObservableObject {
     public func loadData() {
         self.questions = databaseService.loadQuestions()
         self.mcqQuestions = databaseService.loadMCQQuestions()
+        self.qaItems = databaseService.loadQAItems()
         self.userActivity = activityService.loadActivity()
         
         // Sanitize drafts: if draft matches solutionCode or invalid residual output, purge it!
@@ -131,6 +156,11 @@ public class AppState: ObservableObject {
             self.selectedMachineRoundQuestion = machineRoundQuestions.first(where: { $0.id == savedId }) ?? machineRoundQuestions.first
         } else {
             self.selectedMachineRoundQuestion = machineRoundQuestions.first
+        }
+        if let savedId = userActivity.lastSelectedQAItemId {
+            self.selectedQAItem = qaItems.first(where: { $0.id == savedId }) ?? qaItems.first
+        } else {
+            self.selectedQAItem = qaItems.first
         }
         isRestoringSelection = false
 

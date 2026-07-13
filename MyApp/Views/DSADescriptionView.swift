@@ -155,11 +155,16 @@ public struct DSADescriptionView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            if question.category == "swiftPractice" {
+                            switch question.category {
+                            case "swiftPractice":
                                 ConstraintBullet(text: "Ensure URLSession tasks are resumed using task.resume() call.")
                                 ConstraintBullet(text: "Handle network & decoding errors using clean do-catch syntax blocks.")
                                 ConstraintBullet(text: "Use DispatchSemaphore or Task groups to await asynchronous call execution.")
-                            } else {
+                            case "machineRound":
+                                ConstraintBullet(text: "Clarify the requirements and constraints out loud before writing any code.")
+                                ConstraintBullet(text: "Call out thread-safety, concurrency, and failure-mode trade-offs explicitly.")
+                                ConstraintBullet(text: "Design for the stated scale first — correctness and clarity beat cleverness.")
+                            default:
                                 ConstraintBullet(text: "Clarify input size limits and expected edge conditions upfront.")
                                 ConstraintBullet(text: "State the optimal Time & Space Complexity targets before coding.")
                                 ConstraintBullet(text: "Dry run your logical index transitions with base arrays first.")
