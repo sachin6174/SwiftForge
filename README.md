@@ -6,9 +6,10 @@
 
   **A native, high-performance macOS IDE for mastering Data Structures, Algorithms, and Core iOS/Swift Engineering.**
 
-  [![macOS](https://img.shields.io/badge/macOS-14.0%2B-blue?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
-  [![iOS](https://img.shields.io/badge/iOS-17.0%2B-black?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
-  [![iPadOS](https://img.shields.io/badge/iPadOS-17.0%2B-purple?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![macOS](https://img.shields.io/badge/macOS-12.0%2B-blue?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![iOS](https://img.shields.io/badge/iOS-15.0%2B-black?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![iPadOS](https://img.shields.io/badge/iPadOS-15.0%2B-purple?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
+  [![Homebrew](https://img.shields.io/badge/Homebrew-brew%20install--cask%20swiftforge-FBB040?style=flat-square&logo=homebrew&logoColor=white)](https://github.com/sachin6174/homebrew-swiftforge)
   [![Swift](https://img.shields.io/badge/Swift-5.10%2B-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
   [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-007ACC?style=flat-square&logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
   [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
@@ -56,13 +57,17 @@ Perfect for practice on the go, with fully responsive glassmorphic layouts optim
 
 ## 🌟 Key Features
 
-### 1. 🎯 Dual Practice Tracks
-- **DSA Practice Track**: LeetCode-style algorithmic challenges (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) written natively in idiomatic Swift.
-- **Swift & iOS Practice Track**: Real-world iOS concepts including ARC & retain cycles, `async`/`await` & Actors, Combine publishers, SwiftUI view hierarchy, value vs reference types, and protocol-oriented design.
+### 1. 🎯 Five Practice Tracks
+- **DSA Practice**: LeetCode-style algorithmic challenges (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) written natively in idiomatic Swift, with a real code editor and test-case runner.
+- **Swift & iOS Practice**: Real-world iOS concepts including ARC & retain cycles, `async`/`await` & Actors, Combine publishers, SwiftUI view hierarchy, value vs reference types, and protocol-oriented design.
+- **MCQ Practice**: Rapid-fire multiple-choice questions for quick concept checks.
+- **Machine Round**: Larger, system-design-style coding exercises modeled on real onsite "machine round" interview formats.
+- **Q&A**: A reading/comprehension track — deep prose explanations paired with a runnable Swift example and key-takeaway bullets for each interview question (no test harness, unlike DSA/Swift Practice).
 
-### 2. ⚡️ Local Code Runner & Execution Engine
-- Evaluates Swift code in real-time using a lightweight, native execution pipeline.
-- Instant console output capturing `stdout`, runtime errors, performance statistics, and memory usage.
+### 2. ⚡️ Dual-Path Code Execution Engine
+- **macOS (unsandboxed dev builds)**: shells out to the local `/usr/bin/swift` toolchain to compile and run submitted code against the question's test harness.
+- **Sandboxed / iOS builds**: since the shipping App Store build runs under `com.apple.security.app-sandbox`, subprocess spawning isn't available — code is instead transpiled from Swift to JavaScript and executed in-process via `JavaScriptCore`, with hand-built mocks for `DispatchQueue`, `Task`, `URLSession`, `UserDefaults`, `PassthroughSubject`, and more. This is the actual execution path for every real end user, not just a rare fallback.
+- Instant console output capturing `stdout`, runtime errors, performance statistics, and per-case timing.
 
 ### 3. 🧪 Interactive Test Suite & Assertion Runner
 - Comprehensive test case runner with side-by-side **Pass / Fail** indicators.
@@ -74,10 +79,13 @@ Perfect for practice on the go, with fully responsive glassmorphic layouts optim
 
 ### 5. 🔥 Developer Analytics & Daily Streak Counter
 - Automated daily activity logging and streak counter to foster consistent coding habits.
-- Local JSON persistence (`user_activity.json`) for code drafts, solved badges, run counts, and progress tracking.
+- Local JSON persistence for code drafts, solved badges, run counts, and progress tracking — no backend, no network calls.
 
-### 6. 🎨 Glassmorphic Dark UI
-- Built natively with SwiftUI using tailored dark modes, vibrant gradients, glowing focus rings, custom monospace code views, and responsive split-pane navigation.
+### 6. 📖 Open Book Mode
+- Side-by-side solution + editor pane (`Cmd+B` on macOS) for reading a reference solution while writing your own attempt.
+
+### 7. 🎨 Glassmorphic Dark UI
+- Built natively with SwiftUI using tailored dark modes, vibrant gradients, glowing focus rings, custom monospace code views with a hand-rolled line-number gutter, tactile press feedback, and responsive split-pane navigation.
 
 ---
 
@@ -85,57 +93,75 @@ Perfect for practice on the go, with fully responsive glassmorphic layouts optim
 
 | Layer | Technology | Description |
 | :--- | :--- | :--- |
-| **Framework** | SwiftUI | 100% native macOS user interface |
+| **Framework** | SwiftUI | 100% native macOS + iOS/iPadOS user interface |
 | **Language** | Swift 5.10+ | Modern Swift features, concurrency, and protocols |
 | **Reactive Core**| Combine | State management, user activity streams, and event handlers |
-| **Execution** | Local Subprocess / JSC | Fast, safe Swift evaluation engine |
-| **Persistence** | FileSystem JSON | Offline local database for challenges, drafts, & streaks |
+| **Execution** | `/usr/bin/swift` subprocess + JavaScriptCore | Native subprocess runner on macOS, Swift-to-JS transpiler + `JSContext` everywhere sandboxing blocks subprocess spawning |
+| **Persistence** | FileSystem JSON | Offline local database for challenges, drafts, & streaks — no backend |
 
 ---
 
 ## 🏗️ App Architecture
 
-SwiftForge follows a clean, decoupled **MVVM (Model-View-ViewModel)** architecture paired with modular Service Layers:
+SwiftForge follows a clean, decoupled **MVVM (Model-View-ViewModel)** architecture, all `@MainActor`, paired with modular Service Layers:
 
 ```
 SwiftForge/
 ├── MyApp/
-│   ├── ContentView.swift            # Root macOS Window & Split Layout
+│   ├── ContentView.swift              # Root view: macOS/iPad split-pane vs iOS compact tabbed workspace, Open Book mode
 │   ├── ViewModels/
-│   │   └── AppState.swift           # Central App State, Tabs & Streak Management
+│   │   ├── AppState.swift             # App-wide state: question lists, active PracticeTab, streak/activity
+│   │   └── DSAPracticeViewModel.swift # Per-question editor/runner state & run lifecycle
 │   ├── Services/
-│   │   ├── CodeRunnerService.swift  # Swift Code Execution & Evaluation Engine
-│   │   ├── DatabaseService.swift    # Challenge Loader & JSON Storage
-│   │   ├── UserActivityService.swift# Streak & Draft Code Saver
-│   │   └── LoggerService.swift      # Console Logging & Error Diagnostics
+│   │   ├── CodeRunnerService.swift    # Dual-path Swift execution: subprocess + JS/JavaScriptCore transpiler
+│   │   ├── DatabaseService.swift      # Question loader (bundled JSON, with hardcoded Swift-literal fallback)
+│   │   ├── UserActivityService.swift  # Streak, solved-set & code-draft persistence
+│   │   └── LoggerService.swift        # os.Logger wrapper, categories, file rotation
 │   ├── Models/
-│   │   ├── Question.swift           # Question & Category Schema
-│   │   ├── TestCase.swift           # Test Input, Expected & Actual Output
-│   │   └── UserActivity.swift       # Daily History, Streaks, & Solved Set
+│   │   ├── Question.swift             # DSA / Swift Practice / Machine Round question schema
+│   │   ├── MCQQuestion.swift          # Multiple-choice question schema
+│   │   ├── QAItem.swift               # Q&A track: prose explanation + runnable example + takeaways
+│   │   ├── QuestionSection.swift      # Grouped/sectioned question schema
+│   │   ├── TestCase.swift             # Test input, expected & actual output
+│   │   └── UserActivity.swift         # Daily history, streaks, drafts & solved set
 │   ├── Views/
-│   │   ├── SidebarView.swift        # Navigation Sidebar, Category Filters & Streaks
-│   │   ├── CodeEditorView.swift     # Syntax Editor, Line Numbers & Font Control
-│   │   ├── DSADescriptionView.swift # Markdown Problem Description & Hints
-│   │   ├── DSATestCasesView.swift   # Test Cases Runner & Execution Results
-│   │   ├── ConsoleView.swift        # Terminal Output & Log Console
-│   │   ├── MatrixVisualizerView.swift # 2D Grid & Array Renderer
-│   │   └── UIUtils.swift            # Design System, Buttons, Badges & Effects
+│   │   ├── SidebarView.swift          # Navigation sidebar, tab & category filters, streaks
+│   │   ├── CodeEditorView.swift       # Syntax editor with custom SwiftUI line-number gutter
+│   │   ├── DSADescriptionView.swift / DSASolutionView.swift / DSATestCasesView.swift
+│   │   ├── MCQPracticeView.swift      # MCQ track UI
+│   │   ├── QAPracticeView.swift       # Q&A track UI (interactive question reader)
+│   │   ├── ConsoleView.swift          # Terminal output & log console
+│   │   ├── SolvedCelebrationView.swift# Solve-confirmation feedback animation
+│   │   ├── DesignSystem.swift         # Design tokens (colors, spacing, motion)
+│   │   └── UIUtils.swift              # Shared buttons, badges & effects (incl. PressableButtonStyle)
 │   └── Resources/
-│       ├── questions.json           # Built-in Question Database
-│       └── user_activity.json       # User Profile & Activity Storage
-└── SwiftForge.xcodeproj             # Xcode Project Workspace
+│       ├── dsa_questions.json / swift_questions.json / mcq_questions.json
+│       ├── machine_round_questions.json / qa_questions.json
+│       └── (DatabaseService also carries a large hardcoded fallback if these fail to load)
+└── SwiftForge.xcodeproj               # Xcode Project Workspace
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-- **macOS**: 14.0 (Sonoma) or later
+### Option A — Install via Homebrew (recommended for just running the app)
+
+```bash
+brew tap sachin6174/swiftforge
+brew install --cask swiftforge
+```
+
+This installs a signed & notarized build straight from the [latest GitHub Release](https://github.com/sachin6174/SwiftForge/releases/latest) — no Xcode required. Update later with `brew upgrade --cask swiftforge`.
+
+### Option B — Build from source
+
+#### Prerequisites
+- **macOS**: 12.0 (Monterey) or later
 - **Xcode**: 15.0 or later
 - **Swift Toolchain**: Swift 5.10+
 
-### Installation & Setup
+#### Installation & Setup
 
 1. **Clone the Repository**
    ```bash
@@ -179,6 +205,15 @@ Master critical concepts required for iOS engineering roles:
 - **Concurrency & Actors**: `async`/`await`, Task Groups, Actor isolation, and thread safety.
 - **Combine Framework**: `PassthroughSubject`, `CurrentValueSubject`, operator chaining, and error handling.
 - **SwiftUI State & Binding**: Understanding `@State`, `@StateObject`, `@ObservedObject`, and `@EnvironmentObject`.
+
+### 🔹 MCQ Practice Track
+Quick multiple-choice checks across Swift language fundamentals, iOS frameworks, and CS basics — for fast concept review between coding sessions.
+
+### 🔹 Machine Round Track
+Larger, open-ended coding exercises modeled on real "machine round" interview formats — more design surface than a single-function DSA problem.
+
+### 🔹 Q&A Track
+A reading-first track: each entry pairs a prose explanation with a runnable Swift example and key-takeaway bullets, for interview questions that are better understood than "solved" (e.g. actor reentrancy, memory model subtleties).
 
 ---
 
