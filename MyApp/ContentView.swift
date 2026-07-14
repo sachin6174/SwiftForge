@@ -79,6 +79,7 @@ public struct ContentView: View {
         case .mcq: return .purple
         case .machineRound: return .mint
         case .qa: return .yellow
+        case .projects: return .pink
         case .dsa: return .orange
         }
     }
@@ -93,6 +94,8 @@ public struct ContentView: View {
             return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
         case .qa:
             return LinearGradient(colors: [Color.yellow, Color.indigo], startPoint: .leading, endPoint: .trailing)
+        case .projects:
+            return LinearGradient(colors: [Color.pink, Color.purple], startPoint: .leading, endPoint: .trailing)
         case .dsa:
             return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
         }
@@ -104,24 +107,25 @@ public struct ContentView: View {
         case .mcq: return "questionmark.circle.fill"
         case .machineRound: return "gearshape.fill"
         case .qa: return "books.vertical.fill"
+        case .projects: return "hammer.fill"
         case .dsa: return "square.grid.3x3.fill"
         }
     }
 
-    /// MCQ and Q&A are both pure reading/quiz formats with no code editor,
-    /// solution pane, or test runner behind them — everything gated on
-    /// `.mcq` alone before Q&A existed (Open Book toggle, breadcrumb,
-    /// dsaViewModel loading) applies identically to `.qa`.
+    /// MCQ, Q&A, and Projects are all pure reading formats with no code
+    /// editor, solution pane, or test runner behind them — everything gated
+    /// on `.mcq` alone before Q&A/Projects existed (Open Book toggle,
+    /// breadcrumb, dsaViewModel loading) applies identically to both.
     private var hasNoCodeWorkspace: Bool {
-        appState.activeTab == .mcq || appState.activeTab == .qa
+        appState.activeTab == .mcq || appState.activeTab == .qa || appState.activeTab == .projects
     }
 
     @ViewBuilder
     private var readingTabView: some View {
-        if appState.activeTab == .qa {
-            QAPracticeView(appState: appState)
-        } else {
-            MCQPracticeView(appState: appState)
+        switch appState.activeTab {
+        case .qa: QAPracticeView(appState: appState)
+        case .projects: ProjectsPracticeView(appState: appState)
+        default: MCQPracticeView(appState: appState)
         }
     }
 
@@ -414,6 +418,10 @@ public struct ContentView: View {
                             Text("\(appState.qaViewedCount)/\(appState.qaItems.count) read")
                                 .font(.system(size: 11, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
+                        } else if appState.activeTab == .projects {
+                            Text("\(appState.projectViewedCount)/\(appState.projectItems.count) reviewed")
+                                .font(.system(size: 11, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
                         } else {
                             let solved = appState.userActivity.solvedQuestionIds.count
                             Text("\(solved)/\(appState.questions.count) solved")
@@ -434,6 +442,7 @@ public struct ContentView: View {
                     .pulseOnChange(
                         appState.activeTab == .mcq ? appState.mcqCorrectCount :
                         appState.activeTab == .qa ? appState.qaViewedCount :
+                        appState.activeTab == .projects ? appState.projectViewedCount :
                         appState.userActivity.solvedQuestionIds.count
                     )
                 }
@@ -797,7 +806,7 @@ public struct ContentView: View {
         switch appState.activeTab {
         case .swiftPractice: initialQuestion = appState.selectedSwiftQuestion
         case .machineRound: initialQuestion = appState.selectedMachineRoundQuestion
-        case .dsa, .mcq, .qa: initialQuestion = appState.selectedDSAQuestion
+        case .dsa, .mcq, .qa, .projects: initialQuestion = appState.selectedDSAQuestion
         }
         if let question = initialQuestion ?? appState.selectedDSAQuestion {
             dsaViewModel.loadQuestion(question, draft: appState.userActivity.draftCodes[question.id])
@@ -818,6 +827,7 @@ func practiceTabAccentColor(_ tab: PracticeTab) -> Color {
     case .mcq: return .purple
     case .machineRound: return .mint
     case .qa: return .yellow
+    case .projects: return .pink
     case .dsa: return .orange
     }
 }
@@ -905,8 +915,32 @@ struct SplitDragHandle: View {
                         #endif
                     }
                     let proposed = (dragStartWidth ?? leftPaneWidth) + value.translation.width
-                    if collapsible && proposed < minLeft / 2 {
-                        leftPaneWidth = 0
+                    if collapsible {
+                        // Hysteresis, not a single shared threshold: collapsing
+                        // needs `proposed` below minLeft/2, but REOPENING needs
+                        // it past the full minLeft — a wider bar than the one
+                        // that closed it. With one shared threshold at minLeft/2,
+                        // the ordinary jitter in any real mouse/trackpad drag
+                        // (the pointer's instantaneous position isn't monotonic
+                        // even while the user's overall intent is) flips
+                        // `proposed` back and forth across that single line on
+                        // consecutive .onChanged callbacks, snapping the pane
+                        // between 0 and minLeft on every micro-jitter — visible
+                        // as exactly the rapid-fire flicker reported here. Which
+                        // threshold applies is read fresh from the CURRENT
+                        // leftPaneWidth each callback (not cached), so the gap
+                        // between minLeft/2 and minLeft is a dead zone once
+                        // collapsed: nothing changes until the pointer clears it
+                        // decisively in either direction.
+                        if leftPaneWidth <= 0 {
+                            if proposed > minLeft {
+                                leftPaneWidth = min(proposed, maxLeft)
+                            }
+                        } else if proposed < minLeft / 2 {
+                            leftPaneWidth = 0
+                        } else {
+                            leftPaneWidth = min(max(proposed, minLeft), maxLeft)
+                        }
                     } else {
                         leftPaneWidth = min(max(proposed, minLeft), maxLeft)
                     }
@@ -961,6 +995,11 @@ struct CustomSegmentedPicker<T: Hashable>: View {
         case .qa:
             return LinearGradient(
                 colors: [Color.yellow.opacity(0.85), Color.indigo.opacity(0.75)],
+                startPoint: .leading, endPoint: .trailing
+            )
+        case .projects:
+            return LinearGradient(
+                colors: [Color.pink.opacity(0.85), Color.purple.opacity(0.75)],
                 startPoint: .leading, endPoint: .trailing
             )
         case .dsa:

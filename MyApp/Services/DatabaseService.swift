@@ -4,6 +4,7 @@ public protocol DatabaseServiceProtocol {
     func loadQuestions() -> [Question]
     func loadMCQQuestions() -> [MCQQuestion]
     func loadQAItems() -> [QAItem]
+    func loadProjectItems() -> [ProjectItem]
 }
 
 public class DatabaseService: DatabaseServiceProtocol {
@@ -144,6 +145,35 @@ public class DatabaseService: DatabaseServiceProtocol {
 
         print("DatabaseService: Total Q&A items loaded: \(qaList.count)")
         return qaList
+    }
+
+    public func loadProjectItems() -> [ProjectItem] {
+        var projectList: [ProjectItem] = []
+
+        var projectsUrl = Bundle.main.url(forResource: "projects", withExtension: "json")
+        if projectsUrl == nil {
+            let localPath = "MyApp/Resources/projects.json"
+            if FileManager.default.fileExists(atPath: localPath) {
+                projectsUrl = URL(fileURLWithPath: localPath)
+            }
+        }
+
+        if let url = projectsUrl {
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                projectList = try decoder.decode([ProjectItem].self, from: data)
+            } catch {
+                print("DatabaseService: Error decoding projects JSON: \(error.localizedDescription)")
+            }
+        }
+
+        if projectList.isEmpty {
+            projectList = fallbackProjectItems
+        }
+
+        print("DatabaseService: Total Project items loaded: \(projectList.count)")
+        return projectList
     }
 
     // MARK: - Resilient Fallback DSA Questions
@@ -14523,6 +14553,113 @@ class BankAccountNSLock {
 // the type system itself, which is why it is the recommended default in
 // modern Swift for this exact "protect shared mutable state" problem.
 
+"""
+            )
+        ]
+    }
+
+    private var fallbackProjectItems: [ProjectItem] {
+        return [
+            ProjectItem(
+                id: "reader_app_offline_support",
+                title: "\"Reader\" App with Offline Support",
+                source: "External Take-Home Assignment",
+                topics: ["UIKit", "REST API", "Offline Caching", "Core Data", "MVVM", "Search"],
+                difficulty: "Medium",
+                description: """
+OBJECTIVE
+
+Create an iOS Reader app that fetches and displays news articles using a public API (e.g. NewsAPI.org or JSONPlaceholder). The app should support offline viewing, dynamic UI, and clean architecture.
+
+FEATURES TO IMPLEMENT
+
+1. Fetch Articles
+- Fetch a list of articles using a REST API (URLSession or any library).
+- Display title, author, and thumbnail image (if available).
+
+2. Offline Caching
+- Store fetched articles locally (e.g. Core Data, Realm, or file caching).
+- When offline, show cached data.
+
+3. Pull-to-Refresh
+- Refresh article list via UIRefreshControl.
+
+4. Search Articles
+- Add a search bar to filter news titles.
+
+5. Bookmark Articles (Bonus)
+- Allow the user to bookmark articles.
+- Provide a "Bookmarks" tab to view saved articles.
+
+EXPECTATIONS
+
+Architecture:
+- Use MVVM, Clean Architecture, or any modern pattern.
+- Maintain proper separation of concerns.
+
+Testing (Bonus):
+- Add basic unit tests (optional).
+
+UI:
+- Use UIKit.
+- Adaptive layout - Auto Layout.
+- Light/Dark mode support.
+
+Libraries (Optional):
+- SDWebImage, Kingfisher, Alamofire, etc. (optional, but explain usage in the README).
+
+Submission Instructions:
+- Push code to a public repo (GitHub/Bitbucket).
+"""
+            ),
+            ProjectItem(
+                id: "focus_productivity_app",
+                title: "User Focus & Productivity App",
+                source: "External Take-Home Assignment",
+                topics: ["SwiftUI", "Timer", "State Restoration", "Core Data", "Gamification"],
+                difficulty: "Medium",
+                description: """
+OBJECTIVE
+
+A user can enter one of four predefined Focus Modes (Work, Play, Rest, Sleep). Once they're in a particular mode, that focus mode starts a timer.
+
+TIMER BEHAVIOR
+
+- The timer shows the current elapsed time in 00:00 (mm:ss) form; once it crosses an hour mark, switch to 00:00:00 (hh:mm:ss) format.
+- Every 2 minutes, the user earns a Point and a badge.
+
+BADGES
+
+Assign any ONE badge at random (from any of the three types below) for every point earned:
+1. Trees: a leafy/tree-themed set of emoji badges.
+2. Leaves & Fungi: a leaf/mushroom-themed set of emoji badges.
+3. Animals: an animal-themed set of emoji badges.
+
+SESSION LIFECYCLE
+
+- The focus mode stays active until the user manually taps the "Stop Focusing" button.
+- Handle the edge case where the user closes the app mid-session:
+  - Ideally, the user should be redirected back into the SAME focus mode that was active.
+  - Session points earned so far shouldn't be lost.
+
+NAVIGATION & PROFILE
+
+- From the Home View, add a button to navigate to the Profile View.
+- Prefill a user name and a user image, and persist them to the DB.
+
+PROFILE VIEW LAYOUT
+
+- User image, centered.
+- User name.
+- Total points accumulated.
+- Total badges earned (show the badges themselves).
+- Recent Sessions — a list of recent sessions.
+
+Each session in that list should show:
+- Name
+- Duration of the session
+- Points earned
+- Session start time
 """
             )
         ]

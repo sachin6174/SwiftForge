@@ -26,6 +26,10 @@ public struct UserActivity: Codable {
     // there being no right/wrong answer to grade here, unlike MCQ.
     public var qaViewedIds: Set<String>
     public var lastSelectedQAItemId: String?
+    // Projects — same "viewed" tracking as Q&A (opened at least once); a
+    // full take-home spec has no single right/wrong answer to grade either.
+    public var projectViewedIds: Set<String>
+    public var lastSelectedProjectItemId: String?
 
     public init(
         solvedQuestionIds: Set<String> = [],
@@ -42,7 +46,9 @@ public struct UserActivity: Codable {
         lastSelectedMCQQuestionId: String? = nil,
         lastSelectedMachineRoundQuestionId: String? = nil,
         qaViewedIds: Set<String> = [],
-        lastSelectedQAItemId: String? = nil
+        lastSelectedQAItemId: String? = nil,
+        projectViewedIds: Set<String> = [],
+        lastSelectedProjectItemId: String? = nil
     ) {
         self.solvedQuestionIds = solvedQuestionIds
         self.draftCodes = draftCodes
@@ -59,6 +65,8 @@ public struct UserActivity: Codable {
         self.lastSelectedMachineRoundQuestionId = lastSelectedMachineRoundQuestionId
         self.qaViewedIds = qaViewedIds
         self.lastSelectedQAItemId = lastSelectedQAItemId
+        self.projectViewedIds = projectViewedIds
+        self.lastSelectedProjectItemId = lastSelectedProjectItemId
     }
 
     // Custom decoding: `mcqAnsweredIds`/`mcqCorrectIds` are non-optional
@@ -88,5 +96,7 @@ public struct UserActivity: Codable {
         lastSelectedMachineRoundQuestionId = try container.decodeIfPresent(String.self, forKey: .lastSelectedMachineRoundQuestionId)
         qaViewedIds = try container.decodeIfPresent(Set<String>.self, forKey: .qaViewedIds) ?? []
         lastSelectedQAItemId = try container.decodeIfPresent(String.self, forKey: .lastSelectedQAItemId)
+        projectViewedIds = try container.decodeIfPresent(Set<String>.self, forKey: .projectViewedIds) ?? []
+        lastSelectedProjectItemId = try container.decodeIfPresent(String.self, forKey: .lastSelectedProjectItemId)
     }
 }

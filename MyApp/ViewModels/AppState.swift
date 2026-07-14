@@ -7,6 +7,7 @@ public enum PracticeTab: String, CaseIterable, Identifiable {
     case mcq = "MCQ Practice"
     case machineRound = "Machine Round"
     case qa = "Q&A"
+    case projects = "Projects"
 
     public var id: String { rawValue }
 }
@@ -16,6 +17,7 @@ public class AppState: ObservableObject {
     @Published public var questions: [Question] = []
     @Published public var mcqQuestions: [MCQQuestion] = []
     @Published public var qaItems: [QAItem] = []
+    @Published public var projectItems: [ProjectItem] = []
     @Published public var selectedDSAQuestion: Question? {
         didSet {
             guard isRestoringSelection == false, oldValue?.id != selectedDSAQuestion?.id else { return }
@@ -62,6 +64,18 @@ public class AppState: ObservableObject {
             saveActivity()
         }
     }
+    @Published public var selectedProjectItem: ProjectItem? {
+        didSet {
+            guard oldValue?.id != selectedProjectItem?.id else { return }
+            // Same "opening it IS the read action" tracking as Q&A above.
+            if let id = selectedProjectItem?.id {
+                userActivity.projectViewedIds.insert(id)
+            }
+            guard isRestoringSelection == false else { return }
+            userActivity.lastSelectedProjectItemId = selectedProjectItem?.id
+            saveActivity()
+        }
+    }
     @Published public var activeTab: PracticeTab = .dsa {
         didSet {
             guard isRestoringSelection == false, oldValue != activeTab else { return }
@@ -103,6 +117,10 @@ public class AppState: ObservableObject {
         qaItems.filter { userActivity.qaViewedIds.contains($0.id) }.count
     }
 
+    public var projectViewedCount: Int {
+        projectItems.filter { userActivity.projectViewedIds.contains($0.id) }.count
+    }
+
     private let databaseService: DatabaseServiceProtocol
     private let activityService: UserActivityServiceProtocol
     
@@ -119,6 +137,7 @@ public class AppState: ObservableObject {
         self.questions = databaseService.loadQuestions()
         self.mcqQuestions = databaseService.loadMCQQuestions()
         self.qaItems = databaseService.loadQAItems()
+        self.projectItems = databaseService.loadProjectItems()
         self.userActivity = activityService.loadActivity()
         
         // Sanitize drafts: if draft matches solutionCode or invalid residual output, purge it!
@@ -161,6 +180,11 @@ public class AppState: ObservableObject {
             self.selectedQAItem = qaItems.first(where: { $0.id == savedId }) ?? qaItems.first
         } else {
             self.selectedQAItem = qaItems.first
+        }
+        if let savedId = userActivity.lastSelectedProjectItemId {
+            self.selectedProjectItem = projectItems.first(where: { $0.id == savedId }) ?? projectItems.first
+        } else {
+            self.selectedProjectItem = projectItems.first
         }
         isRestoringSelection = false
 

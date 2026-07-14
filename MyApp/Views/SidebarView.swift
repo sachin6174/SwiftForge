@@ -67,6 +67,17 @@ public struct SidebarView: View {
         }
     }
 
+    private var filteredProjectItems: [ProjectItem] {
+        if searchText.isEmpty {
+            return appState.projectItems
+        }
+        return appState.projectItems.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            $0.source.localizedCaseInsensitiveContains(searchText) ||
+            $0.topics.contains(where: { $0.localizedCaseInsensitiveContains(searchText) })
+        }
+    }
+
     private func sectionKey(_ name: String, activeTab: String) -> String {
         "\(activeTab)::\(name)"
     }
@@ -77,6 +88,7 @@ public struct SidebarView: View {
         case .mcq: return "questionmark.circle.fill"
         case .machineRound: return "gearshape.fill"
         case .qa: return "books.vertical.fill"
+        case .projects: return "hammer.fill"
         case .dsa: return "square.grid.3x3.fill"
         }
     }
@@ -91,6 +103,8 @@ public struct SidebarView: View {
             return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
         case .qa:
             return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
+        case .projects:
+            return LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
         case .dsa:
             return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
         }
@@ -102,6 +116,7 @@ public struct SidebarView: View {
         case .mcq: return [Color.purple.opacity(0.4), Color.purple.opacity(0.1)]
         case .machineRound: return [Color.mint.opacity(0.4), Color.mint.opacity(0.1)]
         case .qa: return [Color.yellow.opacity(0.4), Color.yellow.opacity(0.1)]
+        case .projects: return [Color.pink.opacity(0.4), Color.pink.opacity(0.1)]
         case .dsa: return [Color.orange.opacity(0.4), Color.orange.opacity(0.1)]
         }
     }
@@ -130,6 +145,8 @@ public struct SidebarView: View {
             return (appState.mcqQuestions.count, appState.mcqCorrectCount, "Correct Progress")
         case .qa:
             return (appState.qaItems.count, appState.qaViewedCount, "Read Progress")
+        case .projects:
+            return (appState.projectItems.count, appState.projectViewedCount, "Reviewed Progress")
         }
     }
 
@@ -139,6 +156,7 @@ public struct SidebarView: View {
         case .mcq: return .purple
         case .machineRound: return .mint
         case .qa: return .yellow
+        case .projects: return .pink
         case .dsa: return .orange
         }
     }
@@ -149,6 +167,7 @@ public struct SidebarView: View {
         case .mcq: return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
         case .machineRound: return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
         case .qa: return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
+        case .projects: return LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
         case .dsa: return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
         }
     }
@@ -232,6 +251,21 @@ public struct SidebarView: View {
             activeTab: "qa"
         ) {
             appState.selectedQAItem = item
+        }
+    }
+
+    @ViewBuilder
+    private func projectRow(_ item: ProjectItem) -> some View {
+        let isSelected = appState.selectedProjectItem?.id == item.id
+        let isReviewed = appState.userActivity.projectViewedIds.contains(item.id)
+        SidebarButton(
+            title: item.title,
+            icon: isSelected ? "hammer.fill" : "hammer",
+            isSelected: isSelected,
+            isSolved: isReviewed,
+            activeTab: "projects"
+        ) {
+            appState.selectedProjectItem = item
         }
     }
 
@@ -369,6 +403,14 @@ public struct SidebarView: View {
                     }
                 }) {
                     Label("Q&A", systemImage: "books.vertical.fill")
+                }
+
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.activeTab = .projects
+                    }
+                }) {
+                    Label("Projects", systemImage: "hammer.fill")
                 }
             } label: {
                 HStack(spacing: 8) {
@@ -545,6 +587,34 @@ public struct SidebarView: View {
 
                             if filteredQAItems.isEmpty {
                                 Text("No questions found")
+                                    .font(.system(size: 10, weight: .medium))
+                                    .foregroundColor(.gray)
+                                    .padding(.horizontal, 14)
+                                    .padding(.top, 8)
+                            }
+                        }
+                    } else if appState.activeTab == .projects {
+                        // ── Projects Section ──
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(LinearGradient(colors: [.pink, .purple], startPoint: .top, endPoint: .bottom))
+                                    .frame(width: 5, height: 5)
+                                    .shadow(color: .pink.opacity(0.6), radius: 3)
+                                Text("PROJECTS")
+                                    .font(.system(size: 9, weight: .black))
+                                    .foregroundColor(Color.white.opacity(0.3))
+                                    .tracking(1.0)
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.bottom, 6)
+
+                            ForEach(filteredProjectItems) { item in
+                                projectRow(item)
+                            }
+
+                            if filteredProjectItems.isEmpty {
+                                Text("No projects found")
                                     .font(.system(size: 10, weight: .medium))
                                     .foregroundColor(.gray)
                                     .padding(.horizontal, 14)
