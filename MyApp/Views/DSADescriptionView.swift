@@ -63,9 +63,8 @@ public struct DSADescriptionView: View {
                         
                         VStack(alignment: .leading, spacing: 10) {
                             Text("API ENDPOINT DETAILED SCHEMA")
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundColor(Color.white.opacity(0.35))
-                                .tracking(0.5)
+                                .tracking(0.8)
+                                .eyebrowStyle()
                             
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack(spacing: 8) {
@@ -128,9 +127,8 @@ public struct DSADescriptionView: View {
                     // ── Challenge Body Description ──
                     VStack(alignment: .leading, spacing: 10) {
                         Text("PROBLEM DESCRIPTION")
-                            .font(.system(size: 9, weight: .black))
-                            .foregroundColor(Color.white.opacity(0.35))
-                            .tracking(0.5)
+                            .tracking(0.8)
+                            .eyebrowStyle()
                         
                         Text(question.description)
                             .font(.system(size: 13, weight: .regular, design: .rounded))
@@ -157,13 +155,13 @@ public struct DSADescriptionView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             switch question.category {
                             case "swiftPractice":
-                                ConstraintBullet(text: "Ensure URLSession tasks are resumed using task.resume() call.")
-                                ConstraintBullet(text: "Handle network & decoding errors using clean do-catch syntax blocks.")
-                                ConstraintBullet(text: "Use DispatchSemaphore or Task groups to await asynchronous call execution.")
+                                ConstraintBullet(text: "Ensure URLSession tasks are resumed using task.resume() call.", accent: TabAccents.swiftPractice.primary)
+                                ConstraintBullet(text: "Handle network & decoding errors using clean do-catch syntax blocks.", accent: TabAccents.swiftPractice.primary)
+                                ConstraintBullet(text: "Use DispatchSemaphore or Task groups to await asynchronous call execution.", accent: TabAccents.swiftPractice.primary)
                             case "machineRound":
-                                ConstraintBullet(text: "Clarify the requirements and constraints out loud before writing any code.")
-                                ConstraintBullet(text: "Call out thread-safety, concurrency, and failure-mode trade-offs explicitly.")
-                                ConstraintBullet(text: "Design for the stated scale first — correctness and clarity beat cleverness.")
+                                ConstraintBullet(text: "Clarify the requirements and constraints out loud before writing any code.", accent: TabAccents.machineRound.primary)
+                                ConstraintBullet(text: "Call out thread-safety, concurrency, and failure-mode trade-offs explicitly.", accent: TabAccents.machineRound.primary)
+                                ConstraintBullet(text: "Design for the stated scale first — correctness and clarity beat cleverness.", accent: TabAccents.machineRound.primary)
                             default:
                                 ConstraintBullet(text: "Clarify input size limits and expected edge conditions upfront.")
                                 ConstraintBullet(text: "State the optimal Time & Space Complexity targets before coding.")
@@ -179,22 +177,18 @@ public struct DSADescriptionView: View {
                         )
                     }
                 } else {
-                    VStack(spacing: 12) {
-                        Image(systemName: "folder.badge.questionmark")
-                            .font(.system(size: 32))
-                            .foregroundColor(.gray.opacity(0.5))
-                        Text("Select a challenge to display details")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.gray)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 100)
+                    ForgeEmptyState(
+                        icon: "folder.badge.questionmark",
+                        title: "Select a challenge",
+                        subtitle: "Choose a question from the sidebar to see its full description here."
+                    )
+                    .padding(.top, 60)
                 }
             }
             .padding(18)
         }
         .id(question?.id ?? "empty")
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .background(Surface.base)
     }
     
     private func getDifficultyColor(_ diff: String) -> Color {

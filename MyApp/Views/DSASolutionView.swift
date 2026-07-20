@@ -21,22 +21,11 @@ public struct DSASolutionView: View {
     /// wrong brand color when viewing a Swift Practice or Machine Round
     /// solution (blue/mint elsewhere in those tabs, orange only here).
     private var accentGradient: LinearGradient {
-        switch question?.category {
-        case "swiftPractice":
-            return LinearGradient(colors: [Color(red: 0.1, green: 0.6, blue: 1.0), Color(red: 0.0, green: 0.85, blue: 0.9)], startPoint: .leading, endPoint: .trailing)
-        case "machineRound":
-            return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
-        default:
-            return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
-        }
+        TabAccents.forCategory(question?.category ?? "dsa").gradient
     }
 
     private var accentShadowColor: Color {
-        switch question?.category {
-        case "swiftPractice": return .blue
-        case "machineRound": return .mint
-        default: return .orange
-        }
+        TabAccents.forCategory(question?.category ?? "dsa").primary
     }
 
     public init(question: Question?, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, onInsertToEditor: @escaping (String) -> Void = { _ in }) {
@@ -79,14 +68,14 @@ public struct DSASolutionView: View {
                                     Text(isFocused ? "Exit Full" : "Full Screen")
                                         .font(.system(size: 10, weight: .bold))
                                 }
-                                .foregroundColor(isFocused ? .orange : Color.white.opacity(0.7))
+                                .foregroundColor(isFocused ? accentShadowColor : Color.white.opacity(0.7))
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 5)
-                                .background(isFocused ? Color.orange.opacity(0.15) : Color.white.opacity(0.04))
+                                .background(isFocused ? accentShadowColor.opacity(0.15) : Color.white.opacity(0.04))
                                 .cornerRadius(6)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 6)
-                                        .stroke(isFocused ? Color.orange.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
+                                        .stroke(isFocused ? accentShadowColor.opacity(0.4) : Color.white.opacity(0.1), lineWidth: 0.75)
                                 )
                             }
                             .buttonStyle(PressableButtonStyle())
@@ -109,9 +98,8 @@ public struct DSASolutionView: View {
                     // ── Solution Code Block ──
                     VStack(alignment: .leading, spacing: 8) {
                         Text("SWIFT REFERENCE CODE")
-                            .font(.system(size: 9, weight: .black))
-                            .foregroundColor(Color.white.opacity(0.35))
-                            .tracking(0.5)
+                            .tracking(0.8)
+                            .eyebrowStyle()
 
                         ScrollView([.horizontal, .vertical]) {
                             Text(SyntaxHighlightingEngine.highlight(code: question.solutionCode))
@@ -119,7 +107,7 @@ public struct DSASolutionView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .textSelection(.enabled)
                         }
-                        .background(Color(red: 0.04, green: 0.05, blue: 0.07))
+                        .background(Surface.well)
                         .cornerRadius(10)
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
@@ -144,9 +132,8 @@ public struct DSASolutionView: View {
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text((question.alternateSolutionTitle ?? "ALTERNATE SOLUTION").uppercased())
-                                .font(.system(size: 9, weight: .black))
-                                .foregroundColor(Color.white.opacity(0.35))
-                                .tracking(0.5)
+                                .tracking(0.8)
+                                .eyebrowStyle()
 
                             ScrollView([.horizontal, .vertical]) {
                                 Text(SyntaxHighlightingEngine.highlight(code: alternateCode))
@@ -154,7 +141,7 @@ public struct DSASolutionView: View {
                                     .frame(maxWidth: .infinity, alignment: .leading)
                                     .textSelection(.enabled)
                             }
-                            .background(Color(red: 0.04, green: 0.05, blue: 0.07))
+                            .background(Surface.well)
                             .cornerRadius(10)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 10)
@@ -163,22 +150,18 @@ public struct DSASolutionView: View {
                         }
                     }
                 } else {
-                    VStack(spacing: 12) {
-                        Image(systemName: "lightbulb.slash")
-                            .font(.system(size: 32))
-                            .foregroundColor(.gray.opacity(0.5))
-                        Text("No question selected")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.gray)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.top, 100)
+                    ForgeEmptyState(
+                        icon: "lightbulb.slash",
+                        title: "No question selected",
+                        subtitle: "Pick a question to see its reference solution."
+                    )
+                    .padding(.top, 60)
                 }
             }
             .padding(18)
         }
         .id(question?.id ?? "empty")
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .background(Surface.base)
     }
     
     @ViewBuilder

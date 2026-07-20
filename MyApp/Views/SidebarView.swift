@@ -82,43 +82,21 @@ public struct SidebarView: View {
         "\(activeTab)::\(name)"
     }
 
+    // Sourced from the single TabAccents palette in DesignSystem.swift — see
+    // ContentView's activeAccentColor/activeAccentGradient/headerIconName
+    // for the matching cleanup there. These three used plain system
+    // .blue/.cyan for Swift Practice where ContentView/DSASolutionView used
+    // a richer custom blue→cyan; now all four agree.
     private var modePickerIconName: String {
-        switch appState.activeTab {
-        case .swiftPractice: return "network"
-        case .mcq: return "questionmark.circle.fill"
-        case .machineRound: return "gearshape.fill"
-        case .qa: return "books.vertical.fill"
-        case .projects: return "hammer.fill"
-        case .dsa: return "square.grid.3x3.fill"
-        }
+        appState.activeTab.accent.icon
     }
 
     private var modePickerGradient: LinearGradient {
-        switch appState.activeTab {
-        case .swiftPractice:
-            return LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
-        case .mcq:
-            return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
-        case .machineRound:
-            return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
-        case .qa:
-            return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
-        case .projects:
-            return LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
-        case .dsa:
-            return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-        }
+        appState.activeTab.accent.gradient
     }
 
     private var modePickerStrokeColors: [Color] {
-        switch appState.activeTab {
-        case .swiftPractice: return [Color.blue.opacity(0.4), Color.blue.opacity(0.1)]
-        case .mcq: return [Color.purple.opacity(0.4), Color.purple.opacity(0.1)]
-        case .machineRound: return [Color.mint.opacity(0.4), Color.mint.opacity(0.1)]
-        case .qa: return [Color.yellow.opacity(0.4), Color.yellow.opacity(0.1)]
-        case .projects: return [Color.pink.opacity(0.4), Color.pink.opacity(0.1)]
-        case .dsa: return [Color.orange.opacity(0.4), Color.orange.opacity(0.1)]
-        }
+        appState.activeTab.accent.strokeGradientColors
     }
 
     /// Not computed inline in `body` — a plain (non-View-returning) `switch`
@@ -151,25 +129,11 @@ public struct SidebarView: View {
     }
 
     private var activeAccentColor: Color {
-        switch appState.activeTab {
-        case .swiftPractice: return .blue
-        case .mcq: return .purple
-        case .machineRound: return .mint
-        case .qa: return .yellow
-        case .projects: return .pink
-        case .dsa: return .orange
-        }
+        appState.activeTab.accent.primary
     }
 
     private var activeAccentGradient: LinearGradient {
-        switch appState.activeTab {
-        case .swiftPractice: return LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing)
-        case .mcq: return LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)
-        case .machineRound: return LinearGradient(colors: [.mint, .teal], startPoint: .leading, endPoint: .trailing)
-        case .qa: return LinearGradient(colors: [.yellow, .indigo], startPoint: .leading, endPoint: .trailing)
-        case .projects: return LinearGradient(colors: [.pink, .purple], startPoint: .leading, endPoint: .trailing)
-        case .dsa: return LinearGradient(colors: [.orange, .red], startPoint: .leading, endPoint: .trailing)
-        }
+        appState.activeTab.accent.gradient
     }
 
     /// Not called inline in `questionRow`'s `@ViewBuilder` body for the same
@@ -270,11 +234,7 @@ public struct SidebarView: View {
     }
 
     private func sectionAccentColor(for activeTab: String) -> Color {
-        switch activeTab {
-        case "swiftPractice": return .blue
-        case "machineRound": return .mint
-        default: return .orange
-        }
+        TabAccents.forCategory(activeTab).primary
     }
 
     @ViewBuilder
@@ -314,7 +274,7 @@ public struct SidebarView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
                             LinearGradient(
-                                colors: [Color.orange.opacity(0.35), Color.red.opacity(0.2)],
+                                colors: [Color.orange.opacity(0.4), Color.red.opacity(0.22)],
                                 startPoint: .topLeading, endPoint: .bottomTrailing
                             )
                         )
@@ -322,11 +282,19 @@ public struct SidebarView: View {
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    LinearGradient(colors: [Color.orange.opacity(0.5), Color.red.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                                    LinearGradient(colors: [Color.orange.opacity(0.55), Color.red.opacity(0.12)], startPoint: .topLeading, endPoint: .bottomTrailing),
                                     lineWidth: 1
                                 )
                         )
-                        .shadow(color: Color.orange.opacity(0.3), radius: 8, x: 0, y: 3)
+                        // Thin inset highlight for a touch of glassy depth on
+                        // the brand mark — independent of the outer stroke
+                        // above, so it doesn't disturb that gradient's colors.
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 11)
+                                .stroke(Color.white.opacity(0.12), lineWidth: 0.75)
+                                .padding(1)
+                        )
+                        .shadow(color: Color.orange.opacity(0.35), radius: 10, x: 0, y: 4)
 
                     Image(systemName: "swift")
                         .resizable()
@@ -338,12 +306,15 @@ public struct SidebarView: View {
                                 startPoint: .topLeading, endPoint: .bottomTrailing
                             )
                         )
+                        .shadow(color: Color.orange.opacity(0.4), radius: 6)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("SwiftForge")
                         .font(.system(size: 16, weight: .black))
-                        .foregroundColor(.white)
+                        .foregroundStyle(
+                            LinearGradient(colors: [.white, .white.opacity(0.78)], startPoint: .top, endPoint: .bottom)
+                        )
                     Text("DSA & iOS Studio")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .foregroundColor(Color.white.opacity(0.35))
@@ -548,7 +519,7 @@ public struct SidebarView: View {
                                 Text("MCQ TRIVIA")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -576,7 +547,7 @@ public struct SidebarView: View {
                                 Text("Q&A")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -604,7 +575,7 @@ public struct SidebarView: View {
                                 Text("PROJECTS")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -632,7 +603,7 @@ public struct SidebarView: View {
                                 Text("DSA CHALLENGES")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -668,7 +639,7 @@ public struct SidebarView: View {
                                 Text("MACHINE ROUND")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -704,7 +675,7 @@ public struct SidebarView: View {
                                 Text("SWIFT PRACTICE")
                                     .font(.system(size: 9, weight: .black))
                                     .foregroundColor(Color.white.opacity(0.3))
-                                    .tracking(1.0)
+                                    .tracking(0.8)
                             }
                             .padding(.horizontal, 14)
                             .padding(.bottom, 6)
@@ -773,20 +744,7 @@ public struct SidebarView: View {
         // Width is applied by the caller (a draggable, resizable sidebar on
         // macOS/iPad via SplitDragHandle; fills available width on iOS).
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(
-            ZStack {
-                Color(red: 0.05, green: 0.06, blue: 0.09)
-                
-                // Deep top accent glow
-                LinearGradient(
-                    colors: [
-                        activeAccentColor.opacity(0.06),
-                        Color.clear
-                    ],
-                    startPoint: .top, endPoint: .center
-                )
-            }
-        )
+        .forgeCanvas(Surface.canvas, glow: activeAccentColor, glowIntensity: 0.06)
         .onAppear { statusPulse = true }
     }
 }

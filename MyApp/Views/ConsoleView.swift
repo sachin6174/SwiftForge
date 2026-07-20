@@ -71,7 +71,7 @@ public struct ConsoleView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+            .background(Surface.raised)
 
             Divider()
                 .background(Color.white.opacity(0.06))
@@ -131,7 +131,7 @@ public struct ConsoleView: View {
                     }
                 }
             }
-            .background(Color(red: 0.05, green: 0.06, blue: 0.08))
+            .background(Surface.canvas)
         }
     }
 }

@@ -29,9 +29,22 @@ public struct SolvedCelebrationView: View {
 
             VStack(spacing: 10) {
                 ZStack {
+                    // Soft ambient glow ring behind the badge — purely
+                    // decorative, shares the badge's own scale/opacity
+                    // animation below rather than any independent timing.
+                    Circle()
+                        .fill(accentColor.opacity(0.35))
+                        .frame(width: 110, height: 110)
+                        .blur(radius: 24)
+
                     Circle()
                         .fill(LinearGradient(colors: [accentColor, accentColor.opacity(0.6)], startPoint: .top, endPoint: .bottom))
                         .frame(width: 64, height: 64)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                                .padding(2)
+                        )
                         .shadow(color: accentColor.opacity(0.65), radius: 18)
                     Image(systemName: "checkmark")
                         .font(.system(size: 26, weight: .black))
@@ -44,6 +57,7 @@ public struct SolvedCelebrationView: View {
                     .padding(.horizontal, 14)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(Color.black.opacity(0.55)))
+                    .overlay(Capsule().stroke(accentColor.opacity(0.4), lineWidth: 0.75))
             }
             .scaleEffect(badgeScale)
             .opacity(badgeOpacity)

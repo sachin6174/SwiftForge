@@ -73,43 +73,20 @@ public struct ContentView: View {
         #endif
     }
     
+    // Sourced from the single TabAccents palette in DesignSystem.swift —
+    // previously three independent switch statements here (plus matching
+    // ones in SidebarView, DSASolutionView, and UIUtils) that had already
+    // drifted out of sync for Swift Practice's blue.
     private var activeAccentColor: Color {
-        switch appState.activeTab {
-        case .swiftPractice: return .blue
-        case .mcq: return .purple
-        case .machineRound: return .mint
-        case .qa: return .yellow
-        case .projects: return .pink
-        case .dsa: return .orange
-        }
+        appState.activeTab.accent.primary
     }
 
     private var activeAccentGradient: LinearGradient {
-        switch appState.activeTab {
-        case .swiftPractice:
-            return LinearGradient(colors: [Color(red: 0.1, green: 0.6, blue: 1.0), Color(red: 0.0, green: 0.85, blue: 0.9)], startPoint: .leading, endPoint: .trailing)
-        case .mcq:
-            return LinearGradient(colors: [Color.purple, Color.pink], startPoint: .leading, endPoint: .trailing)
-        case .machineRound:
-            return LinearGradient(colors: [Color.mint, Color.teal], startPoint: .leading, endPoint: .trailing)
-        case .qa:
-            return LinearGradient(colors: [Color.yellow, Color.indigo], startPoint: .leading, endPoint: .trailing)
-        case .projects:
-            return LinearGradient(colors: [Color.pink, Color.purple], startPoint: .leading, endPoint: .trailing)
-        case .dsa:
-            return LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing)
-        }
+        appState.activeTab.accent.gradient
     }
 
     private var headerIconName: String {
-        switch appState.activeTab {
-        case .swiftPractice: return "network"
-        case .mcq: return "questionmark.circle.fill"
-        case .machineRound: return "gearshape.fill"
-        case .qa: return "books.vertical.fill"
-        case .projects: return "hammer.fill"
-        case .dsa: return "square.grid.3x3.fill"
-        }
+        appState.activeTab.accent.icon
     }
 
     /// MCQ, Q&A, and Projects are all pure reading formats with no code
@@ -160,7 +137,7 @@ public struct ContentView: View {
                             isSidebarPresented = false
                         }
                     )
-                    .background(Color(red: 0.05, green: 0.06, blue: 0.09))
+                    .background(Surface.canvas)
                 }
             } else {
                 // ── macOS & iPad Regular Desktop Layout ──────────────
@@ -450,7 +427,8 @@ public struct ContentView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .background(Surface.raised)
+        .shadow(color: Color.black.opacity(0.28), radius: 10, x: 0, y: 4)
     }
 
     // MARK: - Mobile Segmented Tab Bar (iOS)
@@ -490,7 +468,7 @@ public struct ContentView: View {
             }
         }
         .padding(4)
-        .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+        .background(Surface.raised)
     }
 
     // MARK: - Mobile Workspace (iOS)
@@ -523,7 +501,7 @@ public struct ContentView: View {
                 }
             }
         }
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .forgeCanvas(Surface.base, glow: activeAccentColor, glowIntensity: 0.05)
     }
 
     // MARK: - Desktop / iPad DSA Workspace
@@ -567,7 +545,7 @@ public struct ContentView: View {
                     }
                 }
             }
-            .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+            .forgeCanvas(Surface.base, glow: activeAccentColor, glowIntensity: 0.05)
         }
     }
 
@@ -582,7 +560,7 @@ public struct ContentView: View {
             }
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .background(Surface.base)
     }
 
     // MARK: - Open Book Editor Pane
@@ -591,10 +569,11 @@ public struct ContentView: View {
             code: $dsaViewModel.code,
             fileName: "Solution.swift",
             isFocused: false,
-            onToggleFocus: {}
+            onToggleFocus: {},
+            accent: activeAccentColor
         )
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.05, green: 0.06, blue: 0.08))
+        .background(Surface.canvas)
     }
 
     // MARK: - Left Pane
@@ -675,7 +654,7 @@ public struct ContentView: View {
             }
             .frame(maxHeight: .infinity)
         }
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .background(Surface.base)
     }
 
     // MARK: - Right Pane
@@ -691,7 +670,8 @@ public struct ContentView: View {
                             focusMode = (focusMode == .editorFocused) ? .split : .editorFocused
                         }
                     }
-                }
+                },
+                accent: activeAccentColor
             )
             .frame(maxHeight: .infinity)
 
@@ -761,7 +741,7 @@ public struct ContentView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+            .background(Surface.raised)
 
             Divider().background(Color.white.opacity(0.06))
 
@@ -822,14 +802,7 @@ public struct ContentView: View {
 /// defaulted BOTH `.mcq` and `.machineRound` to the DSA orange with no
 /// dedicated case for either.
 func practiceTabAccentColor(_ tab: PracticeTab) -> Color {
-    switch tab {
-    case .swiftPractice: return .blue
-    case .mcq: return .purple
-    case .machineRound: return .mint
-    case .qa: return .yellow
-    case .projects: return .pink
-    case .dsa: return .orange
-    }
+    tab.accent.primary
 }
 
 struct SplitDragHandle: View {
@@ -976,38 +949,10 @@ struct CustomSegmentedPicker<T: Hashable>: View {
     let activeTab: PracticeTab
 
     private var pickerGradient: LinearGradient {
-        switch activeTab {
-        case .swiftPractice:
-            return LinearGradient(
-                colors: [Color.blue.opacity(0.85), Color.cyan.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        case .machineRound:
-            return LinearGradient(
-                colors: [Color.mint.opacity(0.85), Color.teal.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        case .mcq:
-            return LinearGradient(
-                colors: [Color.purple.opacity(0.85), Color.pink.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        case .qa:
-            return LinearGradient(
-                colors: [Color.yellow.opacity(0.85), Color.indigo.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        case .projects:
-            return LinearGradient(
-                colors: [Color.pink.opacity(0.85), Color.purple.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        case .dsa:
-            return LinearGradient(
-                colors: [Color.orange.opacity(0.85), Color.red.opacity(0.75)],
-                startPoint: .leading, endPoint: .trailing
-            )
-        }
+        LinearGradient(
+            colors: [activeTab.accent.primary.opacity(0.85), activeTab.accent.secondary.opacity(0.75)],
+            startPoint: .leading, endPoint: .trailing
+        )
     }
 
     var body: some View {

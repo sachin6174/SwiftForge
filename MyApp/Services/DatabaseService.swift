@@ -4188,6 +4188,81 @@ for (index, tc) in testCases.enumerated() {
 print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
 print("---DSA_TEST_RESULTS_END---")
 """
+            ),
+            Question(
+                id: "maximum_subarray",
+                title: "53. Maximum Subarray",
+                category: "dsa",
+                difficulty: "Medium",
+                topics: ["Array", "Divide and Conquer", "Dynamic Programming"],
+                description: "Given an integer array nums, find the subarray with the largest sum, and return its sum.",
+                templateCode: """
+class Solution {
+    func maxSubArray(_ nums: [Int]) -> Int {
+        // TODO: Write your solution here
+        return 0
+    }
+}
+""",
+                solutionCode: """
+class Solution {
+    func maxSubArray(_ nums: [Int]) -> Int {
+        var sum = 0
+        var ans = Int.min
+        for num in nums {
+            if sum < 0 { // compare first
+                sum = 0
+            }
+            sum += num
+            ans = max(sum ,ans)
+        }
+
+        return ans
+    }
+}
+""",
+                testHarness: """
+let solution = Solution()
+struct TestCase {
+    let nums: [Int]
+    let expected: Int
+    let name: String
+}
+let testCases: [TestCase] = [
+    TestCase(nums: [-2, 1, -3, 4, -1, 2, 1, -5, 4], expected: 6, name: "Example 1"),
+    TestCase(nums: [1], expected: 1, name: "Example 2 (Single Element)"),
+    TestCase(nums: [5, 4, -1, 7, 8], expected: 23, name: "Example 3 (All Ascending Sum)"),
+    TestCase(nums: [-1], expected: -1, name: "Single Negative Element"),
+    TestCase(nums: [-2, -1], expected: -1, name: "Two Negatives"),
+    TestCase(nums: [-3, -2, -1, -5], expected: -1, name: "All Negative Numbers"),
+    TestCase(nums: [1, 2, 3, 4, 5], expected: 15, name: "All Positive Numbers"),
+    TestCase(nums: [0, 0, 0, 0], expected: 0, name: "All Zeroes"),
+    TestCase(nums: [-1, 0, -2], expected: 0, name: "Zero Amid Negatives"),
+    TestCase(nums: [8, -19, 5, -4, 20], expected: 21, name: "Mixed Values"),
+    TestCase(nums: [-2, -3, 4, -1, -2, 1, 5, -3], expected: 7, name: "Classic Kadane Case"),
+    TestCase(nums: [10000, -10000, 10000], expected: 10000, name: "Boundary Value Range"),
+    TestCase(nums: [-10000, -10000], expected: -10000, name: "All Minimum Boundary Negative"),
+    TestCase(nums: Array(repeating: 1, count: 1000), expected: 1000, name: "Large All-Positive Array"),
+    TestCase(nums: Array(repeating: -1, count: 1000), expected: -1, name: "Large All-Negative Array"),
+]
+var passedCount = 0
+print("---DSA_TEST_RESULTS_START---")
+for (index, tc) in testCases.enumerated() {
+    let startTime = DispatchTime.now()
+    let result = solution.maxSubArray(tc.nums)
+    let endTime = DispatchTime.now()
+    let nanoTime = endTime.uptimeNanoseconds - startTime.uptimeNanoseconds
+    let timeInterval = Double(nanoTime) / 1_000_000.0
+    if result == tc.expected {
+        print("CASE \\(index) | PASS | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+        passedCount += 1
+    } else {
+        print("CASE \\(index) | FAIL | Name: \\(tc.name) | Output: \\(result) | Expected: \\(tc.expected) | Time: \\(String(format: "%.3f", timeInterval))ms")
+    }
+}
+print("SUMMARY | \\(passedCount)/\\(testCases.count) PASSED")
+print("---DSA_TEST_RESULTS_END---")
+"""
             )
         ]
     }

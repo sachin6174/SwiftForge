@@ -7,7 +7,15 @@ public struct DSATestCasesView: View {
     public init(viewModel: DSAPracticeViewModel) {
         self.viewModel = viewModel
     }
-    
+
+    /// Matches whichever practice tab the current question belongs to,
+    /// instead of the hardcoded DSA orange this pane used unconditionally
+    /// before — most visible on the selected test-case chip and the
+    /// "Ready to run" placeholder.
+    private var categoryAccent: Color {
+        TabAccents.forCategory(viewModel.currentQuestion?.category ?? "dsa").primary
+    }
+
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Suite Results")
@@ -79,17 +87,12 @@ public struct DSATestCasesView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.testcaseResults.isEmpty {
-                VStack(spacing: 12) {
-                    Image(systemName: "play.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.orange.opacity(0.65))
-                        .shadow(color: Color.orange.opacity(0.3), radius: 6)
-                    Text("Run suite to test reference cases.")
-                        .foregroundColor(Color.white.opacity(0.4))
-                        .font(.system(size: 11, weight: .bold))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ForgeEmptyState(
+                    icon: "play.circle.fill",
+                    title: "Ready to run",
+                    subtitle: "Run suite to test against the reference cases.",
+                    accent: categoryAccent
+                )
             } else {
                 let allPassed = viewModel.testcaseResults.allSatisfy { $0.isPass }
                 let failedCount = viewModel.testcaseResults.filter { !$0.isPass }.count
@@ -164,11 +167,11 @@ public struct DSATestCasesView: View {
                                     .padding(.vertical, 6)
                                     .background(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .fill(viewModel.selectedTestCaseIndex == result.index ? Color.orange.opacity(0.18) : Color.white.opacity(0.04))
+                                            .fill(viewModel.selectedTestCaseIndex == result.index ? categoryAccent.opacity(0.18) : Color.white.opacity(0.04))
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
-                                            .stroke(viewModel.selectedTestCaseIndex == result.index ? Color.orange.opacity(0.6) : Color.clear, lineWidth: 1)
+                                            .stroke(viewModel.selectedTestCaseIndex == result.index ? categoryAccent.opacity(0.6) : Color.clear, lineWidth: 1)
                                     )
                                 }
                                 .buttonStyle(PressableButtonStyle(scale: 0.94))
@@ -267,7 +270,7 @@ public struct DSATestCasesView: View {
                 }
             }
         }
-        .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+        .background(Surface.raised)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)

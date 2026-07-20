@@ -51,7 +51,7 @@ public struct QAPracticeView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(red: 0.08, green: 0.09, blue: 0.12))
+        .forgeCanvas(Surface.base, glow: .yellow, glowIntensity: 0.05)
     }
 
     private var header: some View {
@@ -89,7 +89,7 @@ public struct QAPracticeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
-        .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+        .background(Surface.raised)
     }
 
     private var navigationBar: some View {
@@ -142,19 +142,11 @@ public struct QAPracticeView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
-        .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+        .background(Surface.raised)
     }
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
-            Image(systemName: "text.book.closed")
-                .font(.system(size: 32))
-                .foregroundColor(Color.white.opacity(0.2))
-            Text("No Q&A items available")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color.white.opacity(0.4))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ForgeEmptyState(icon: "text.book.closed", title: "No Q&A items available", accent: .yellow)
     }
 
     private func goToNext() {

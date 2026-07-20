@@ -10,13 +10,19 @@ public struct CodeEditorView: View {
     let fileName: String
     let isFocused: Bool
     let onToggleFocus: (() -> Void)?
+    /// Tints the header's file icon, "FULL SCREEN" badge, and full-screen
+    /// toggle button so the editor's own chrome matches whichever practice
+    /// tab it's embedded in, instead of always reading as DSA orange even
+    /// inside the Swift Practice (blue) or Machine Round (mint) workspace.
+    let accent: Color
     @State private var scrollOffsetY: CGFloat = 0
 
-    public init(code: Binding<String>, fileName: String, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil) {
+    public init(code: Binding<String>, fileName: String, isFocused: Bool = false, onToggleFocus: (() -> Void)? = nil, accent: Color = .orange) {
         self._code = code
         self.fileName = fileName
         self.isFocused = isFocused
         self.onToggleFocus = onToggleFocus
+        self.accent = accent
     }
     
     public var body: some View {
@@ -26,8 +32,8 @@ public struct CodeEditorView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "doc.text.fill")
                         .font(.system(size: 11))
-                        .foregroundColor(.orange)
-                        .shadow(color: .orange.opacity(0.4), radius: 3)
+                        .foregroundColor(accent)
+                        .shadow(color: accent.opacity(0.4), radius: 3)
                     
                     Text(fileName)
                         .font(.system(size: 11, weight: .bold, design: .monospaced))
@@ -50,16 +56,16 @@ public struct CodeEditorView: View {
                     if isFocused {
                         Text("FULL SCREEN")
                             .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.orange)
+                            .foregroundColor(accent)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.15))
+                            .background(accent.opacity(0.15))
                             .cornerRadius(4)
                     }
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+                .background(Surface.raised)
                 
                 Spacer()
                 
@@ -71,14 +77,14 @@ public struct CodeEditorView: View {
                             Text(isFocused ? "Exit Full Screen" : "Full Screen Editor")
                                 .font(.system(size: 9, weight: .bold))
                         }
-                        .foregroundColor(isFocused ? .orange : Color.white.opacity(0.65))
+                        .foregroundColor(isFocused ? accent : Color.white.opacity(0.65))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4.5)
-                        .background(isFocused ? Color.orange.opacity(0.12) : Color.white.opacity(0.04))
+                        .background(isFocused ? accent.opacity(0.12) : Color.white.opacity(0.04))
                         .cornerRadius(6)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
-                                .stroke(isFocused ? Color.orange.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 0.75)
+                                .stroke(isFocused ? accent.opacity(0.3) : Color.white.opacity(0.08), lineWidth: 0.75)
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -86,7 +92,7 @@ public struct CodeEditorView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
-            .background(Color(red: 0.1, green: 0.11, blue: 0.14))
+            .background(Surface.raised)
             
             Divider()
                 .background(Color.white.opacity(0.06))
@@ -104,7 +110,7 @@ public struct CodeEditorView: View {
             }
             .frame(maxHeight: .infinity)
         }
-        .background(Color(red: 0.05, green: 0.06, blue: 0.08))
+        .background(Surface.canvas)
     }
 }
 
@@ -163,7 +169,7 @@ struct LineNumberGutterView: View {
             .frame(width: proxy.size.width, alignment: .top)
         }
         .frame(width: 40)
-        .background(Color(red: 0.05, green: 0.05, blue: 0.07))
+        .background(Surface.canvas)
         .clipped()
     }
 }

@@ -4,20 +4,37 @@ import SwiftUI
 public struct GlassCard: ViewModifier {
     public func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
+            // Material + a subtle diagonal sheen combined into ONE
+            // background call (a ZStack, not two chained `.background()`
+            // modifiers) — chaining would put the sheen BEHIND the material
+            // instead of layered on top of it, since each `.background()`
+            // nests further back than the last.
+            .background(
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial)
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.06), Color.clear, Color.black.opacity(0.10)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         LinearGradient(
-                            colors: [Color.white.opacity(0.15), Color.white.opacity(0.03)],
+                            colors: [Color.white.opacity(0.18), Color.white.opacity(0.03)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
                         lineWidth: 0.75
                     )
             )
-            .shadow(color: Color.black.opacity(0.35), radius: 10, x: 0, y: 5)
+            // Layered shadow (soft wide ambient + tight contact shadow) reads
+            // as a genuinely floating card instead of a flat drop-shadow.
+            .shadow(color: Color.black.opacity(0.4), radius: 18, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.22), radius: 3, x: 0, y: 1)
     }
 }
 
@@ -62,7 +79,7 @@ public struct SidebarSectionHeader: View {
                 Text(title.uppercased())
                     .font(.system(size: 9, weight: .black))
                     .foregroundColor(Color.white.opacity(0.45))
-                    .tracking(0.6)
+                    .tracking(0.8)
                     .lineLimit(1)
                     .layoutPriority(1)
 
@@ -121,25 +138,11 @@ public struct SidebarButton: View {
     /// was centralized (there was no "mcq" or "machineRound" case anywhere
     /// in this file; every ternary here only ever checked "swiftPractice").
     private var accentSolidColor: Color {
-        switch activeTab {
-        case "swiftPractice": return .blue
-        case "mcq": return .purple
-        case "machineRound": return .mint
-        case "qa": return .yellow
-        case "projects": return .pink
-        default: return .orange
-        }
+        TabAccents.forCategory(activeTab).primary
     }
 
     private var accentSecondaryColor: Color {
-        switch activeTab {
-        case "swiftPractice": return .cyan
-        case "mcq": return .pink
-        case "machineRound": return .teal
-        case "qa": return .indigo
-        case "projects": return .purple
-        default: return .red
-        }
+        TabAccents.forCategory(activeTab).secondary
     }
 
     private var accentGradient: LinearGradient {
@@ -262,20 +265,23 @@ public struct SidebarButton: View {
 
 public struct ConstraintBullet: View {
     let text: String
-    
-    public init(text: String) {
+    let accent: Color
+
+    public init(text: String, accent: Color = .orange) {
         self.text = text
+        self.accent = accent
     }
-    
+
     public var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Image(systemName: "circle.fill")
                 .font(.system(size: 5))
-                .foregroundColor(.orange)
+                .foregroundColor(accent)
+                .shadow(color: accent.opacity(0.5), radius: 3)
                 .padding(.top, 6)
             Text(text)
                 .font(.system(size: 11, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(.white.opacity(0.75))
         }
     }
 }
@@ -379,18 +385,23 @@ public struct DSARunButton: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 7)
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(
                         LinearGradient(
-                            colors: isRunning 
+                            colors: isRunning
                                 ? [Color.gray.opacity(0.4), Color.gray.opacity(0.3)]
                                 : [Color(red: 0.15, green: 0.75, blue: 0.45), Color(red: 0.0, green: 0.65, blue: 0.55)],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.white.opacity(isRunning ? 0.0 : 0.18), lineWidth: 0.75)
+                            .blendMode(.overlay)
+                    )
             )
-            .shadow(color: isRunning ? Color.clear : Color.green.opacity(isHovered ? 0.45 : 0.25), radius: 6, x: 0, y: 3)
+            .shadow(color: isRunning ? Color.clear : Color.green.opacity(isHovered ? 0.5 : 0.28), radius: isHovered ? 10 : 6, x: 0, y: 3)
             .scaleEffect(isHovered ? 1.02 : 1.0)
         }
         .disabled(isRunning)
