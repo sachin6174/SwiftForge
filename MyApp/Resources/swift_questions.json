@@ -1,7 +1,7 @@
 [
   {
     "id": "fetch_todo",
-    "title": "1. Network GET Request (URLSession)",
+    "title": "Network GET Request (URLSession)",
     "category": "swiftPractice",
     "difficulty": "Easy",
     "topics": [
@@ -16,7 +16,7 @@
   },
   {
     "id": "post_todo",
-    "title": "2. Network POST Request (Codable)",
+    "title": "Network POST Request (Codable)",
     "category": "swiftPractice",
     "difficulty": "Medium",
     "topics": [
@@ -31,7 +31,7 @@
   },
   {
     "id": "retain_cycle_fix",
-    "title": "3. ARC & Memory Leaks (Retain Cycle Fix)",
+    "title": "ARC & Memory Leaks (Retain Cycle Fix)",
     "category": "swiftPractice",
     "difficulty": "Hard",
     "topics": [
@@ -45,7 +45,7 @@
   },
   {
     "id": "actor_cache",
-    "title": "4. Swift Concurrency (Thread-Safe Actor Cache)",
+    "title": "Swift Concurrency (Thread-Safe Actor Cache)",
     "category": "swiftPractice",
     "difficulty": "Hard",
     "topics": [
@@ -59,7 +59,7 @@
   },
   {
     "id": "combine_search_debounce",
-    "title": "5. Combine Reactive Search Bar (Debouncer)",
+    "title": "Combine Reactive Search Bar (Debouncer)",
     "category": "swiftPractice",
     "difficulty": "Hard",
     "topics": [
@@ -73,7 +73,7 @@
   },
   {
     "id": "userdefault_property_wrapper",
-    "title": "6. Custom @UserDefault Property Wrapper",
+    "title": "Custom @UserDefault Property Wrapper",
     "category": "swiftPractice",
     "difficulty": "Medium",
     "topics": [
@@ -87,7 +87,7 @@
   },
   {
     "id": "cow_optimization",
-    "title": "7. Copy-on-Write (COW) Custom Data Structure",
+    "title": "Copy-on-Write (COW) Custom Data Structure",
     "category": "swiftPractice",
     "difficulty": "Hard",
     "topics": [
@@ -116,7 +116,7 @@
   },
   {
     "id": "actor_reentrancy_bug_fix",
-    "title": "8. Fix the Actor Reentrancy Bug (Bank Account Race Condition)",
+    "title": "Fix the Actor Reentrancy Bug (Bank Account Race Condition)",
     "category": "swiftPractice",
     "difficulty": "Hard",
     "topics": [

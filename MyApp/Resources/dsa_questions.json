@@ -1,7 +1,7 @@
 [
   {
     "id": "two_sum",
-    "title": "1. Two Sum",
+    "title": "Two Sum",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -15,7 +15,7 @@
   },
   {
     "id": "valid_parentheses",
-    "title": "20. Valid Parentheses",
+    "title": "Valid Parentheses",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -29,7 +29,7 @@
   },
   {
     "id": "climb_stairs",
-    "title": "70. Climbing Stairs",
+    "title": "Climbing Stairs",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -57,7 +57,7 @@
   },
   {
     "id": "reverse_linked_list",
-    "title": "206. Reverse Linked List",
+    "title": "Reverse Linked List",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -71,7 +71,7 @@
   },
   {
     "id": "maximal_square",
-    "title": "221. Maximal Square",
+    "title": "Maximal Square",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [
@@ -85,7 +85,7 @@
   },
   {
     "id": "max_vowels_substring",
-    "title": "1456. Maximum Number of Vowels in a Substring of Given Length",
+    "title": "Maximum Number of Vowels in a Substring of Given Length",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [
@@ -284,7 +284,7 @@
   },
   {
     "id": "minimum_size_subarray_sum",
-    "title": "209. Minimum Size Subarray Sum",
+    "title": "Minimum Size Subarray Sum",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [
@@ -302,7 +302,7 @@
   },
   {
     "id": "course_schedule",
-    "title": "207. Course Schedule",
+    "title": "Course Schedule",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [
@@ -317,7 +317,7 @@
   },
   {
     "id": "set_matrix_zeroes",
-    "title": "73. Set Matrix Zeroes",
+    "title": "Set Matrix Zeroes",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [
@@ -346,7 +346,7 @@
   },
   {
     "id": "move_zeroes",
-    "title": "283. Move Zeroes",
+    "title": "Move Zeroes",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -360,7 +360,7 @@
   },
   {
     "id": "pascals_triangle",
-    "title": "118. Pascal's Triangle",
+    "title": "Pascal's Triangle",
     "category": "dsa",
     "difficulty": "Easy",
     "topics": [
@@ -374,7 +374,7 @@
   },
   {
     "id": "maximum_subarray",
-    "title": "53. Maximum Subarray",
+    "title": "Maximum Subarray",
     "category": "dsa",
     "difficulty": "Medium",
     "topics": [

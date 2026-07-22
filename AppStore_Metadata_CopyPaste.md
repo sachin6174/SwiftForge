@@ -26,7 +26,7 @@ Unlike web-based coding platforms, CodeForge runs completely offline on your Mac
 FEATURES & HIGHLIGHTS
 
 • DUAL PRACTICE TRACKS
-Master LeetCode-style Data Structures & Algorithms (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) alongside real-world iOS Engineering concepts (ARC & Retain Cycles, Swift Concurrency async/await, Combine Publishers, Value vs Reference types, and SwiftUI State).
+Master classic coding-interview Data Structures & Algorithms (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) alongside real-world iOS Engineering concepts (ARC & Retain Cycles, Swift Concurrency async/await, Combine Publishers, Value vs Reference types, and SwiftUI State).
 
 • EMBEDDED SWIFT CODE EDITOR
 Enjoy a high-performance syntax-highlighted code editor with line numbers, customizable font sizes, bracket auto-closing, and automatic local draft persistence so you never lose your progress.
@@ -57,7 +57,7 @@ Boost your Swift and iOS engineering skills today with CodeForge!
 *Limit: 100 characters*
 
 ```text
-swift,dsa,leetcode,ios,developer,ide,algorithms,coding,interview,prep,swiftui,combine,macos
+swift,dsa,coding,ios,developer,ide,algorithms,challenges,interview,prep,swiftui,combine,macos
 ```
 
 ---

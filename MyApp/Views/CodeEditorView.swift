@@ -302,10 +302,10 @@ struct MacCodeEditor: NSViewRepresentable {
             let font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
             let boldFont = NSFont.monospacedSystemFont(ofSize: 13, weight: .bold)
 
-            // Theme Colors (LeetCode Dark Palette)
+            // Theme Colors (Editor Dark Palette)
             let defaultColor = NSColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)      // Off-white
-            let keywordColor = NSColor(red: 0.33, green: 0.61, blue: 0.94, alpha: 1.0)      // LeetCode Cyan/Blue (#569CD6)
-            let typeColor = NSColor(red: 0.30, green: 0.78, blue: 0.69, alpha: 1.0)         // LeetCode Emerald Teal (#4EC9B0)
+            let keywordColor = NSColor(red: 0.33, green: 0.61, blue: 0.94, alpha: 1.0)      // Editor Cyan/Blue (#569CD6)
+            let typeColor = NSColor(red: 0.30, green: 0.78, blue: 0.69, alpha: 1.0)         // Editor Emerald Teal (#4EC9B0)
             let stringColor = NSColor(red: 0.80, green: 0.56, blue: 0.47, alpha: 1.0)       // Warm Amber/Orange (#CE9178)
             let numberColor = NSColor(red: 0.70, green: 0.80, blue: 0.65, alpha: 1.0)       // Lime Green (#B5CEA8)
             let commentColor = NSColor(red: 0.41, green: 0.60, blue: 0.33, alpha: 1.0)      // Muted Green/Gray (#6A9955)
@@ -472,10 +472,10 @@ struct IOSCodeEditor: UIViewRepresentable {
             let font = UIFont.monospacedSystemFont(ofSize: 13, weight: .regular)
             let boldFont = UIFont.monospacedSystemFont(ofSize: 13, weight: .bold)
 
-            // Theme Colors (LeetCode Dark Palette - Identical to macOS)
+            // Theme Colors (Editor Dark Palette - Identical to macOS)
             let defaultColor = UIColor(red: 0.85, green: 0.85, blue: 0.85, alpha: 1.0)      // Off-white
-            let keywordColor = UIColor(red: 0.33, green: 0.61, blue: 0.94, alpha: 1.0)      // LeetCode Cyan/Blue (#569CD6)
-            let typeColor = UIColor(red: 0.30, green: 0.78, blue: 0.69, alpha: 1.0)         // LeetCode Emerald Teal (#4EC9B0)
+            let keywordColor = UIColor(red: 0.33, green: 0.61, blue: 0.94, alpha: 1.0)      // Editor Cyan/Blue (#569CD6)
+            let typeColor = UIColor(red: 0.30, green: 0.78, blue: 0.69, alpha: 1.0)         // Editor Emerald Teal (#4EC9B0)
             let stringColor = UIColor(red: 0.80, green: 0.56, blue: 0.47, alpha: 1.0)       // Warm Amber/Orange (#CE9178)
             let numberColor = UIColor(red: 0.70, green: 0.80, blue: 0.65, alpha: 1.0)       // Lime Green (#B5CEA8)
             let commentColor = UIColor(red: 0.41, green: 0.60, blue: 0.33, alpha: 1.0)      // Muted Green/Gray (#6A9955)

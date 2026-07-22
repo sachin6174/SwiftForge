@@ -181,7 +181,7 @@ public class DatabaseService: DatabaseServiceProtocol {
         return [
             Question(
                 id: "two_sum",
-                title: "1. Two Sum",
+                title: "Two Sum",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["Array", "Hash Table"],
@@ -290,7 +290,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "valid_parentheses",
-                title: "20. Valid Parentheses",
+                title: "Valid Parentheses",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["Stack", "String"],
@@ -400,7 +400,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "reverse_linked_list",
-                title: "206. Reverse Linked List",
+                title: "Reverse Linked List",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["Linked List", "Recursion"],
@@ -547,7 +547,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "maximal_square",
-                title: "221. Maximal Square",
+                title: "Maximal Square",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["DP", "Matrix"],
@@ -661,7 +661,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "climb_stairs",
-                title: "70. Climbing Stairs",
+                title: "Climbing Stairs",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["DP", "Math"],
@@ -881,7 +881,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "max_vowels_substring",
-                title: "1456. Maximum Number of Vowels in a Substring of Given Length",
+                title: "Maximum Number of Vowels in a Substring of Given Length",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["String", "Sliding Window"],
@@ -3383,7 +3383,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "minimum_size_subarray_sum",
-                title: "209. Minimum Size Subarray Sum",
+                title: "Minimum Size Subarray Sum",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["Array", "Binary Search", "Sliding Window", "Prefix Sum"],
@@ -3574,7 +3574,7 @@ class Solution {
             ),
             Question(
                 id: "course_schedule",
-                title: "207. Course Schedule",
+                title: "Course Schedule",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["Graph", "BFS", "Topological Sort"],
@@ -3738,7 +3738,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "set_matrix_zeroes",
-                title: "73. Set Matrix Zeroes",
+                title: "Set Matrix Zeroes",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["Array", "Matrix"],
@@ -4027,7 +4027,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "move_zeroes",
-                title: "283. Move Zeroes",
+                title: "Move Zeroes",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["Array", "Two Pointers"],
@@ -4118,7 +4118,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "pascals_triangle",
-                title: "118. Pascal's Triangle",
+                title: "Pascal's Triangle",
                 category: "dsa",
                 difficulty: "Easy",
                 topics: ["Array", "Dynamic Programming"],
@@ -4191,7 +4191,7 @@ print("---DSA_TEST_RESULTS_END---")
             ),
             Question(
                 id: "maximum_subarray",
-                title: "53. Maximum Subarray",
+                title: "Maximum Subarray",
                 category: "dsa",
                 difficulty: "Medium",
                 topics: ["Array", "Divide and Conquer", "Dynamic Programming"],
@@ -4272,7 +4272,7 @@ print("---DSA_TEST_RESULTS_END---")
         return [
             Question(
                 id: "fetch_todo",
-                title: "1. Network GET Request (URLSession)",
+                title: "Network GET Request (URLSession)",
                 category: "swiftPractice",
                 difficulty: "Easy",
                 topics: ["URLSession", "Codable", "Networking"],
@@ -4340,7 +4340,7 @@ performFetch()
             ),
             Question(
                 id: "post_todo",
-                title: "2. Network POST Request (Codable)",
+                title: "Network POST Request (Codable)",
                 category: "swiftPractice",
                 difficulty: "Medium",
                 topics: ["URLSession", "HTTP POST", "Codable"],
@@ -4437,7 +4437,7 @@ createTodo()
             ),
             Question(
                 id: "retain_cycle_fix",
-                title: "3. ARC & Memory Leaks (Retain Cycle Fix)",
+                title: "ARC & Memory Leaks (Retain Cycle Fix)",
                 category: "swiftPractice",
                 difficulty: "Hard",
                 topics: ["ARC", "Memory Management", "Closures"],
@@ -4514,7 +4514,7 @@ testMemoryLeak()
             ),
             Question(
                 id: "actor_cache",
-                title: "4. Swift Concurrency (Thread-Safe Actor Cache)",
+                title: "Swift Concurrency (Thread-Safe Actor Cache)",
                 category: "swiftPractice",
                 difficulty: "Hard",
                 topics: ["Actors", "Concurrency", "Data Race Safety"],
@@ -4587,7 +4587,7 @@ semaphore.wait()
             ),
             Question(
                 id: "combine_search_debounce",
-                title: "5. Combine Reactive Search Bar (Debouncer)",
+                title: "Combine Reactive Search Bar (Debouncer)",
                 category: "swiftPractice",
                 difficulty: "Hard",
                 topics: ["Combine", "Publishers", "Debounce"],
@@ -4650,7 +4650,7 @@ RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.5))
             ),
             Question(
                 id: "userdefault_property_wrapper",
-                title: "6. Custom @UserDefault Property Wrapper",
+                title: "Custom @UserDefault Property Wrapper",
                 category: "swiftPractice",
                 difficulty: "Medium",
                 topics: ["Property Wrappers", "Generics", "UserDefaults"],
@@ -4715,7 +4715,7 @@ print("=========================================")
             ),
             Question(
                 id: "cow_optimization",
-                title: "7. Copy-on-Write (COW) Custom Data Structure",
+                title: "Copy-on-Write (COW) Custom Data Structure",
                 category: "swiftPractice",
                 difficulty: "Hard",
                 topics: ["Copy-On-Write", "COW", "Memory Optimization"],
@@ -4845,7 +4845,7 @@ for repo in repositories {
             ),
             Question(
                 id: "actor_reentrancy_bug_fix",
-                title: "8. Fix the Actor Reentrancy Bug (Bank Account Race Condition)",
+                title: "Fix the Actor Reentrancy Bug (Bank Account Race Condition)",
                 category: "swiftPractice",
                 difficulty: "Hard",
                 topics: ["Actors", "Concurrency", "Data Race Safety"],

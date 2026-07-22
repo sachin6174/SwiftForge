@@ -58,7 +58,7 @@ Perfect for practice on the go, with fully responsive glassmorphic layouts optim
 ## 🌟 Key Features
 
 ### 1. 🎯 Five Practice Tracks
-- **DSA Practice**: LeetCode-style algorithmic challenges (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) written natively in idiomatic Swift, with a real code editor and test-case runner.
+- **DSA Practice**: Classic coding-interview algorithmic challenges (Arrays, Hash Maps, Linked Lists, Trees, Dynamic Programming, Graphs) written natively in idiomatic Swift, with a real code editor and test-case runner.
 - **Swift & iOS Practice**: Real-world iOS concepts including ARC & retain cycles, `async`/`await` & Actors, Combine publishers, SwiftUI view hierarchy, value vs reference types, and protocol-oriented design.
 - **MCQ Practice**: Rapid-fire multiple-choice questions for quick concept checks.
 - **Machine Round**: Larger, system-design-style coding exercises modeled on real onsite "machine round" interview formats.

@@ -442,23 +442,23 @@ public enum SyntaxHighlightingEngine {
         // 1. Comments (Muted Silver Blue)
         applyRegex(pattern: "//.*$|/\\*[\\s\\S]*?\\*/", options: [.anchorsMatchLines], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.45, green: 0.52, blue: 0.62, alpha: 1.0))
         
-        // 2. String Literals (LeetCode Light Green #98C379)
+        // 2. String Literals (Editor Light Green #98C379)
         applyRegex(pattern: "\".*?\"", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.55, green: 0.78, blue: 0.42, alpha: 1.0))
         
-        // 3. Swift Keywords (LeetCode Magenta/Pink #D15A98)
+        // 3. Swift Keywords (Editor Magenta/Pink #D15A98)
         let keywords = ["func", "let", "var", "class", "struct", "enum", "import", "return", "if", "else", "for", "in", "while", "guard", "switch", "case", "default", "try", "await", "async", "public", "private", "override", "mutating", "self", "super", "nil", "true", "false"]
         let keywordPattern = "\\b(" + keywords.joined(separator: "|") + ")\\b"
         applyRegex(pattern: keywordPattern, options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.88, green: 0.38, blue: 0.57, alpha: 1.0))
         
-        // 4. Swift Standard Types (LeetCode Cyan #56B6C2)
+        // 4. Swift Standard Types (Editor Cyan #56B6C2)
         let types = ["Int", "String", "Bool", "Double", "Float", "Character", "Array", "Dictionary", "Set", "ListNode", "Solution", "TestCase", "URLSession", "URL", "JSONDecoder", "Data", "Date", "Error"]
         let typePattern = "\\b(" + types.joined(separator: "|") + ")\\b"
         applyRegex(pattern: typePattern, options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.30, green: 0.75, blue: 0.85, alpha: 1.0))
         
-        // 5. Numbers (LeetCode Orange/Gold #D19A66)
+        // 5. Numbers (Editor Orange/Gold #D19A66)
         applyRegex(pattern: "\\b\\d+(\\.\\d+)?\\b", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.86, green: 0.58, blue: 0.36, alpha: 1.0))
         
-        // 6. Swift Attributes (LeetCode Purple #C678DD)
+        // 6. Swift Attributes (Editor Purple #C678DD)
         applyRegex(pattern: "@[A-Za-z0-9_]+", options: [], code: code, fullRange: fullRange, attributed: &attributed, color: PlatformColor(red: 0.75, green: 0.45, blue: 0.90, alpha: 1.0))
         
         return attributed
