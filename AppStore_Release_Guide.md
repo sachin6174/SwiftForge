@@ -1,6 +1,8 @@
-# 🚀 SwiftForge — App Store Release & Automation Guide
+# 🚀 CodeForge — App Store Release & Automation Guide
 
-This guide details the complete process for building, signing, and releasing **SwiftForge** to **App Store Connect**, **TestFlight**, and the **Mac App Store** using CLI scripts, Fastlane, and GitHub Actions CI/CD.
+This guide details the complete process for building, signing, and releasing **CodeForge** to **App Store Connect**, **TestFlight**, and the **Mac App Store** using CLI scripts, Fastlane, and GitHub Actions CI/CD.
+
+> **Naming note:** the App Store-facing app name is **CodeForge** (following an App Store trademark rejection of the original "SwiftForge" name/icon). The Xcode project file, scheme, and Bundle ID remain `SwiftForge`/`in.sachinserver.swiftforge` intentionally — only the public-facing Name/Subtitle/Icon changed. See `CLAUDE.md` for the full explanation.
 
 ---
 
@@ -26,7 +28,7 @@ Before releasing to the Mac App Store, ensure you have:
 | Field | Value | Description |
 | :--- | :--- | :--- |
 | **Platforms** | ✅ `iOS`, ✅ `macOS` | Enable both iOS and macOS support |
-| **Name** | `SwiftForge` | Public App Store name |
+| **Name** | `CodeForge: DSA Interview Prep` | Public App Store name (must not contain "Swift" — see naming note above) |
 | **Primary Language** | `English (U.S.)` | Default store localization |
 | **Bundle ID** | `SwiftForge - in.sachinserver.swiftforge` | Registered App ID |
 | **SKU** | `SWIFTFORGE-2026-001` | Internal unique tracking ID |
@@ -47,7 +49,7 @@ Using App Store Connect API Keys allows 100% automated uploads without requiring
 
 1. Go to [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/api).
 2. Click **+** to generate a new key:
-   - Name: `SwiftForge Release Key`
+   - Name: `CodeForge Release Key`
    - Access: **App Manager** or **Admin**
 3. Note the following values:
    - **Key ID**: e.g., `A1B2C3D4E5`

@@ -1,6 +1,6 @@
 # 🤖 Playwright App Store Connect Automation Guide
 
-This guide details how the automated Playwright browser script logs into **App Store Connect**, manages **2-Factor Authentication (2FA)**, and navigates the App Store publishing workflow for **SwiftForge**.
+This guide details how the automated Playwright browser script logs into **App Store Connect**, manages **2-Factor Authentication (2FA)**, and navigates the App Store publishing workflow for **CodeForge**.
 
 ---
 
