@@ -1,6 +1,6 @@
-SwiftForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
+CodeForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
 
-Unlike web-based coding platforms, SwiftForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
+Unlike web-based coding platforms, CodeForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
 
 FEATURES & HIGHLIGHTS
 
@@ -27,4 +27,4 @@ Build a consistent daily coding habit with automated streak counters, solved cha
 • Sleek GLASSMORPHIC DARK DESIGN
 Designed natively for macOS Sonoma & Sequoia with custom dark glassmorphic panels, glowing accent gradients, and fluid split-pane workspace views.
 
-Boost your Swift and iOS engineering skills today with SwiftForge!
+Boost your Swift and iOS engineering skills today with CodeForge!

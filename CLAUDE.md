@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 SwiftForge is a native SwiftUI app (macOS + iOS/iPadOS) for practicing DSA and Swift/iOS interview questions offline: a code editor, a Swift execution engine, and a test-case runner, all running locally with no backend.
 
+**Naming note:** following an Apple App Review rejection (Guideline 5.2.5 — the app name/subtitle/icon leveraged Apple's "Swift" trademark and logo), the shipped/displayed app name and icon were changed to **CodeForge** (`PRODUCT_NAME` / `INFOPLIST_KEY_CFBundleDisplayName` build settings, the app icon, in-app UI text, and all App Store Connect metadata in `fastlane/metadata/`). The `.xcodeproj` filename, Xcode target/scheme name, bundle ID (`in.sachinserver.swiftforge`), and repo/folder name were deliberately left as `SwiftForge` — Apple's guidance explicitly warns against changing the bundle ID, and renaming the project file itself wasn't necessary to resolve the rejection. This means build scripts reference `-scheme SwiftForge` / `SwiftForge.xcodeproj` but produce `CodeForge.app` / `CodeForge.pkg` / `CodeForge.ipa` / `CodeForge.dmg` as build output — that split is intentional, not a bug.
+
 ## Build & run
 
 ```bash

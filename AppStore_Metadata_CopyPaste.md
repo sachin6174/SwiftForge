@@ -1,6 +1,6 @@
-# SwiftForge App Store Connect Metadata (Copy-Paste)
+# CodeForge App Store Connect Metadata (Copy-Paste)
 
-This file contains all the metadata text fields required for the SwiftForge iOS/macOS submission on App Store Connect.
+This file contains all the metadata text fields required for the CodeForge iOS/macOS submission on App Store Connect.
 
 ---
 
@@ -19,9 +19,9 @@ Master Swift Data Structures, Algorithms, and iOS Engineering offline on your Ma
 *Limit: 4,000 characters*
 
 ```text
-SwiftForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
+CodeForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
 
-Unlike web-based coding platforms, SwiftForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
+Unlike web-based coding platforms, CodeForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
 
 FEATURES & HIGHLIGHTS
 
@@ -48,7 +48,7 @@ Build a consistent daily coding habit with automated streak counters, solved cha
 • SLEEK GLASSMORPHIC DARK DESIGN
 Designed natively for macOS Sonoma & Sequoia with custom dark glassmorphic panels, glowing accent gradients, and fluid split-pane workspace views.
 
-Boost your Swift and iOS engineering skills today with SwiftForge!
+Boost your Swift and iOS engineering skills today with CodeForge!
 ```
 
 ---
@@ -103,7 +103,7 @@ https://github.com/sachin6174/SwiftForge/blob/master/PRIVACY_POLICY.md
 
 ### Sign-In Information
 *   **Sign-in required**: Unchecked (No)
-*   *Note: SwiftForge operates entirely offline; no account creation, internet connection, or external backend authentication is needed to access any of its features.*
+*   *Note: CodeForge operates entirely offline; no account creation, internet connection, or external backend authentication is needed to access any of its features.*
 
 ---
 
@@ -119,10 +119,10 @@ https://github.com/sachin6174/SwiftForge/blob/master/PRIVACY_POLICY.md
 *Limit: 4,000 characters*
 
 ```text
-Thank you for reviewing SwiftForge!
+Thank you for reviewing CodeForge!
 
 App Overview:
-SwiftForge is an offline native macOS IDE for practicing Swift Data Structures, Algorithms, and iOS networking concepts.
+CodeForge is an offline native macOS IDE for practicing Swift Data Structures, Algorithms, and iOS networking concepts.
 
 Testing Guidance:
 1. Launch the app. The sidebar displays two primary practice tracks: "DSA Practice" and "Swift Practice".
@@ -140,8 +140,8 @@ These settings apply to the app level in App Store Connect:
 
 ### Localizable Information
 *   **Primary Language**: `English (U.S.)`
-*   **Name**: `SwiftForge` *(Note: If already taken, you can use `SwiftForge: DSA & iOS Studio`)*
-*   **Subtitle**: `DSA & iOS Engineering IDE`
+*   **Name**: `CodeForge: DSA Interview Prep`
+*   **Subtitle**: `DSA & Coding Interview Prep`
 
 ### General Information
 *   **Bundle ID**: `in.sachinserver.swiftforge`

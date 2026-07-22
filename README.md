@@ -1,4 +1,4 @@
-# ⚡️ SwiftForge — DSA & iOS Studio for macOS
+# ⚡️ CodeForge — DSA & Interview Prep for macOS
 
 <div align="center">
 
@@ -23,9 +23,9 @@
 
 ## 📖 Overview
 
-**SwiftForge** is a premium, native macOS application crafted specifically for iOS developers, Swift engineers, and computer science enthusiasts. Unlike web-based coding platforms, SwiftForge runs completely offline on your Mac, delivering ultra-low latency code execution, interactive test case evaluations, custom data structure visualizers, and targeted Swift language challenges.
+**CodeForge** is a premium, native macOS application crafted specifically for iOS developers, Swift engineers, and computer science enthusiasts. Unlike web-based coding platforms, CodeForge runs completely offline on your Mac, delivering ultra-low latency code execution, interactive test case evaluations, custom data structure visualizers, and targeted Swift language challenges.
 
-Whether you're preparing for senior iOS technical interviews, sharpening your algorithmic problem-solving in pure Swift, or deepening your knowledge of modern Swift concurrency and memory management, **SwiftForge** provides the ultimate focused developer workspace.
+Whether you're preparing for senior iOS technical interviews, sharpening your algorithmic problem-solving in pure Swift, or deepening your knowledge of modern Swift concurrency and memory management, **CodeForge** provides the ultimate focused developer workspace.
 
 ---
 

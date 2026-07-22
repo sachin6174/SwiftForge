@@ -7,13 +7,13 @@ import AppKit
 #endif
 
 @available(macOS 13.0, iOS 16.0, *)
-struct SwiftForgeShortcuts: AppShortcutsProvider {
+struct CodeForgeShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         return []
     }
 }
 
-@main struct SwiftForgeApp: App {
+@main struct CodeForgeApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()

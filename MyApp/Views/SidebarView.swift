@@ -296,7 +296,7 @@ public struct SidebarView: View {
                         )
                         .shadow(color: Color.orange.opacity(0.35), radius: 10, x: 0, y: 4)
 
-                    Image(systemName: "swift")
+                    Image(systemName: "hammer.fill")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 22, height: 22)
@@ -310,12 +310,12 @@ public struct SidebarView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("SwiftForge")
+                    Text("CodeForge")
                         .font(.system(size: 16, weight: .black))
                         .foregroundStyle(
                             LinearGradient(colors: [.white, .white.opacity(0.78)], startPoint: .top, endPoint: .bottom)
                         )
-                    Text("DSA & iOS Studio")
+                    Text("DSA & Interview Prep")
                         .font(.system(size: 9, weight: .bold, design: .monospaced))
                         .foregroundColor(Color.white.opacity(0.35))
                         .tracking(0.5)

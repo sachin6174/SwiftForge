@@ -1,7 +1,7 @@
-Thank you for reviewing SwiftForge!
+Thank you for reviewing CodeForge!
 
 App Overview:
-SwiftForge is an offline native macOS IDE for practicing Swift Data Structures, Algorithms, and iOS networking concepts.
+CodeForge is an offline native macOS IDE for practicing Swift Data Structures, Algorithms, and iOS networking concepts.
 
 Testing Guidance:
 1. Launch the app. The sidebar displays two primary practice tracks: "DSA Practice" and "Swift Practice".

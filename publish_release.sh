@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # ==============================================================================
-# SwiftForge — Master All-in-One Build, Sign, Notarize & GitHub Release Script
+# CodeForge — Master All-in-One Build, Sign, Notarize & GitHub Release Script
 # Modeled on AnalyticsMacAgent build_pkg.sh production pipeline
 # ==============================================================================
 
 echo "===================================================="
-echo "🚀 SwiftForge Master Release Pipeline Starting..."
+echo "🚀 CodeForge Master Release Pipeline Starting..."
 echo "===================================================="
 
 # 1. Load .env
@@ -27,7 +27,7 @@ echo "ℹ️  Using Xcode at: ${DEVELOPER_DIR:-$(xcode-select -p)}"
 BUILD_DIR="./build"
 DERIVED_DATA="./build/DerivedData"
 STAGING_DIR="./build/DMG_Staging"
-DMG_OUTPUT="./SwiftForge.dmg"
+DMG_OUTPUT="./CodeForge.dmg"
 RELEASE_TAG="${1:-v1.0.0}"
 
 # Helper: Staple with adaptive backoff retries for CloudKit CDN propagation
@@ -61,16 +61,16 @@ echo "🧹 Cleaning build workspace..."
 rm -rf "${STAGING_DIR}" "${DMG_OUTPUT}" "${BUILD_DIR}"
 mkdir -p "${STAGING_DIR}"
 
-echo "📦 Compiling Release SwiftForge.app..."
+echo "📦 Compiling Release CodeForge.app..."
 xcodebuild -project SwiftForge.xcodeproj \
     -scheme SwiftForge \
     -configuration Release \
     -derivedDataPath "${DERIVED_DATA}" \
     build 2>&1 | grep -E "error:|warning:|BUILD (SUCCEEDED|FAILED)"
 
-APP_PATH="${DERIVED_DATA}/Build/Products/Release/SwiftForge.app"
+APP_PATH="${DERIVED_DATA}/Build/Products/Release/CodeForge.app"
 if [ ! -d "${APP_PATH}" ]; then
-    echo "❌ Error: SwiftForge.app compilation failed!"
+    echo "❌ Error: CodeForge.app compilation failed!"
     exit 1
 fi
 
@@ -82,7 +82,7 @@ if [ -z "$SIGNING_IDENTITY" ]; then
 fi
 
 if [ -n "$SIGNING_IDENTITY" ]; then
-    echo "✍️  Signing SwiftForge.app with Identity: '$SIGNING_IDENTITY'..."
+    echo "✍️  Signing CodeForge.app with Identity: '$SIGNING_IDENTITY'..."
     find "${APP_PATH}" -depth -type d \( -name "*.framework" -o -name "*.appex" -o -name "*.xpc" \) | while read -r bundle; do
         codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$bundle"
     done
@@ -97,26 +97,41 @@ echo "🚚 Packaging DMG Staging..."
 cp -R "${APP_PATH}" "${STAGING_DIR}/"
 ln -s /Applications "${STAGING_DIR}/Applications"
 
-echo "CD Packaging SwiftForge.dmg..."
-hdiutil create -volname "SwiftForge" -srcfolder "${STAGING_DIR}" -ov -format UDZO "${DMG_OUTPUT}"
+echo "💿 Packaging CodeForge.dmg..."
+hdiutil create -volname "CodeForge" -srcfolder "${STAGING_DIR}" -ov -format UDZO "${DMG_OUTPUT}"
 
 if [ -n "$SIGNING_IDENTITY" ]; then
-    echo "✍️  Signing SwiftForge.dmg with Identity: '$SIGNING_IDENTITY'..."
+    echo "✍️  Signing CodeForge.dmg with Identity: '$SIGNING_IDENTITY'..."
     codesign --force --sign "$SIGNING_IDENTITY" "${DMG_OUTPUT}"
 else
-    echo "⚠️  Signing SwiftForge.dmg with Ad-hoc signature..."
+    echo "⚠️  Signing CodeForge.dmg with Ad-hoc signature..."
     codesign --force --sign - "${DMG_OUTPUT}"
 fi
 
-# 6. Notarize DMG & Staple
-if [ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ] && [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
-    echo "🔏 Submitting SwiftForge.dmg to Apple Notarization Service..."
+# 6. Notarize DMG (App Store Connect API key) & Staple
+if [ -n "${APP_STORE_CONNECT_API_KEY_ID:-}" ] && [ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ] && [ -n "${APP_STORE_CONNECT_API_KEY_KEY:-}" ]; then
+    echo "🔏 Submitting CodeForge.dmg to Apple Notarization Service (API key)..."
+
+    NOTARY_KEY_DIR="$(mktemp -d)"
+    trap 'rm -rf "$NOTARY_KEY_DIR"' EXIT
+    NOTARY_KEY_PATH="${NOTARY_KEY_DIR}/AuthKey.p8"
+
+    # APP_STORE_CONNECT_API_KEY_KEY may hold the raw .p8 PEM text or a base64-encoded copy of it.
+    if printf '%s' "${APP_STORE_CONNECT_API_KEY_KEY}" | grep -q "BEGIN PRIVATE KEY"; then
+        printf '%s\n' "${APP_STORE_CONNECT_API_KEY_KEY}" > "${NOTARY_KEY_PATH}"
+    else
+        printf '%s' "${APP_STORE_CONNECT_API_KEY_KEY}" | base64 --decode > "${NOTARY_KEY_PATH}"
+    fi
+
     xcrun notarytool submit "${DMG_OUTPUT}" \
-        --apple-id "${APPLE_ID}" \
-        --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
-        --team-id "${APPLE_TEAM_ID}" \
+        --key "${NOTARY_KEY_PATH}" \
+        --key-id "${APP_STORE_CONNECT_API_KEY_ID}" \
+        --issuer "${APP_STORE_CONNECT_ISSUER_ID}" \
         --wait
-    
+
+    rm -rf "${NOTARY_KEY_DIR}"
+    trap - EXIT
+
     echo "📌 Stapling Notarization Ticket..."
     staple_with_backoff "${DMG_OUTPUT}" "dmg" || true
 
@@ -126,7 +141,7 @@ if [ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ] && [ -n "${APPLE_ID:-}" ] && [ -n "
     xattr -rd com.apple.quarantine "${DMG_OUTPUT}" 2>/dev/null || true
     echo "🎉 Notarization and Stapling Complete!"
 else
-    echo "ℹ️  Notarization skipped (No APPLE_APP_SPECIFIC_PASSWORD in .env)."
+    echo "ℹ️  Notarization skipped (No APP_STORE_CONNECT_API_KEY_ID/ISSUER_ID/KEY in .env)."
 fi
 
 # 7. Git Tag & Push
@@ -137,11 +152,11 @@ git commit -m "release: ${RELEASE_TAG} - Master All-in-One Build & Package" || t
 git tag -d "${RELEASE_TAG}" 2>/dev/null || true
 git push origin ":refs/tags/${RELEASE_TAG}" 2>/dev/null || true
 
-git tag -a "${RELEASE_TAG}" -m "SwiftForge ${RELEASE_TAG} Release"
+git tag -a "${RELEASE_TAG}" -m "CodeForge ${RELEASE_TAG} Release"
 git push origin master --tags
 
 # 8. GitHub Release & DMG Upload
-echo "📤 Publishing GitHub Release & Uploading SwiftForge.dmg..."
+echo "📤 Publishing GitHub Release & Uploading CodeForge.dmg..."
 GH_TOKEN_TO_USE="${GH_TOKEN:-}"
 if [ -z "$GH_TOKEN_TO_USE" ]; then
     GH_TOKEN_TO_USE=$(security find-internet-password -s github.com -w 2>/dev/null || true)
@@ -149,8 +164,8 @@ fi
 
 if [ -n "$GH_TOKEN_TO_USE" ]; then
     GH_TOKEN="$GH_TOKEN_TO_USE" gh release create "${RELEASE_TAG}" "${DMG_OUTPUT}" \
-        --title "SwiftForge ${RELEASE_TAG}" \
-        --notes "Official SwiftForge ${RELEASE_TAG} Release — macOS & iOS Studio IDE" || \
+        --title "CodeForge ${RELEASE_TAG}" \
+        --notes "Official CodeForge ${RELEASE_TAG} Release — macOS & iOS Studio IDE" || \
     GH_TOKEN="$GH_TOKEN_TO_USE" gh release upload "${RELEASE_TAG}" "${DMG_OUTPUT}" --clobber
     echo "🎉 Release ${RELEASE_TAG} successfully published to GitHub!"
     echo "🔗 URL: https://github.com/sachin6174/SwiftForge/releases/tag/${RELEASE_TAG}"
@@ -159,5 +174,5 @@ else
 fi
 
 echo "===================================================="
-echo "✅ SwiftForge Master Release Complete!"
+echo "✅ CodeForge Master Release Complete!"
 echo "===================================================="

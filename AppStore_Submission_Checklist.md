@@ -1,6 +1,6 @@
-# 📋 SwiftForge — Master App Store Submission Checklist & Info Pack
+# 📋 CodeForge — Master App Store Submission Checklist & Info Pack
 
-This document contains **all the required information, text copy, metadata, legal documents, rating responses, and asset specifications** needed to publish **SwiftForge** to **App Store Connect**.
+This document contains **all the required information, text copy, metadata, legal documents, rating responses, and asset specifications** needed to publish **CodeForge** to **App Store Connect**.
 
 ---
 
@@ -8,8 +8,8 @@ This document contains **all the required information, text copy, metadata, lega
 
 | App Store Field | Recommended Entry | Notes / Limits |
 | :--- | :--- | :--- |
-| **App Name** | `SwiftForge: DSA & iOS Studio` | Max 30 chars |
-| **Subtitle** | `DSA & iOS Engineering IDE` | Max 30 chars |
+| **App Name** | `CodeForge: DSA Interview Prep` | Max 30 chars |
+| **Subtitle** | `DSA & Coding Interview Prep` | Max 30 chars |
 | **Bundle ID** | `in.sachinserver.swiftforge` | Set in Xcode & App Store Connect |
 | **Primary Category** | `Developer Tools` | |
 | **Secondary Category**| `Education` | |
@@ -34,9 +34,9 @@ Master Swift Data Structures, Algorithms, and iOS Engineering offline on your Ma
 
 ### Full Description
 ```
-SwiftForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
+CodeForge is the premier, native macOS IDE built specifically for iOS developers, Swift engineers, and computer science students preparing for senior technical interviews and honing algorithmic mastery.
 
-Unlike web-based coding platforms, SwiftForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
+Unlike web-based coding platforms, CodeForge runs completely offline on your Mac. It provides instant code compilation, zero network latency, real-time assertions, and interactive data structure visualizers designed for pure Swift development.
 
 FEATURES & HIGHLIGHTS
 
@@ -63,7 +63,7 @@ Build a consistent daily coding habit with automated streak counters, solved cha
 • SLEEK GLASSMORPHIC DARK DESIGN
 Designed natively for macOS Sonoma & Sequoia with custom dark glassmorphic panels, glowing accent gradients, and fluid split-pane workspace views.
 
-Boost your Swift and iOS engineering skills today with SwiftForge!
+Boost your Swift and iOS engineering skills today with CodeForge!
 ```
 
 ---
@@ -133,6 +133,6 @@ Boost your Swift and iOS engineering skills today with SwiftForge!
    ```
 3. **App Store Connect Submission**:
    - Go to [App Store Connect](https://appstoreconnect.apple.com).
-   - Select **SwiftForge** $\rightarrow$ **Mac App**.
+   - Select **CodeForge** $\rightarrow$ **Mac App**.
    - Under **Build**, select the uploaded version (v1.0.0).
    - Click **Submit for Review**.

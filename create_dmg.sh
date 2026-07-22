@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # ==============================================================================
-# SwiftForge — Production Build, Code Signing, Notarization & Stapling Pipeline
+# CodeForge — Production Build, Code Signing, Notarization & Stapling Pipeline
 # Modeled on AnalyticsMacAgent build_pkg.sh production pipeline
 # ==============================================================================
 
 echo "===================================================="
-echo "💿 Starting SwiftForge Production DMG Build, Sign & Notarize"
+echo "💿 Starting CodeForge Production DMG Build, Sign & Notarize"
 echo "===================================================="
 
 # Load environment configuration from .env if present
@@ -27,7 +27,7 @@ echo "ℹ️  Using Xcode at: ${DEVELOPER_DIR:-$(xcode-select -p)}"
 BUILD_DIR="./build"
 DERIVED_DATA="./build/DerivedData"
 STAGING_DIR="./build/DMG_Staging"
-DMG_OUTPUT="./SwiftForge.dmg"
+DMG_OUTPUT="./CodeForge.dmg"
 
 # Helper: Staple with adaptive backoff retries for CloudKit CDN propagation
 staple_with_backoff() {
@@ -61,17 +61,17 @@ rm -rf "${STAGING_DIR}" "${DMG_OUTPUT}"
 mkdir -p "${STAGING_DIR}"
 
 # 2. Build Release .app Bundle
-echo "📦 Compiling Release SwiftForge.app..."
+echo "📦 Compiling Release CodeForge.app..."
 xcodebuild -project SwiftForge.xcodeproj \
     -scheme SwiftForge \
     -configuration Release \
     -derivedDataPath "${DERIVED_DATA}" \
     build 2>&1 | grep -E "error:|warning:|BUILD (SUCCEEDED|FAILED)"
 
-APP_PATH="${DERIVED_DATA}/Build/Products/Release/SwiftForge.app"
+APP_PATH="${DERIVED_DATA}/Build/Products/Release/CodeForge.app"
 
 if [ ! -d "${APP_PATH}" ]; then
-    echo "❌ Error: SwiftForge.app not found at ${APP_PATH}"
+    echo "❌ Error: CodeForge.app not found at ${APP_PATH}"
     exit 1
 fi
 
@@ -84,7 +84,7 @@ if [ -z "$SIGNING_IDENTITY" ]; then
 fi
 
 if [ -n "$SIGNING_IDENTITY" ]; then
-    echo "✍️  Signing SwiftForge.app with Identity: '$SIGNING_IDENTITY'..."
+    echo "✍️  Signing CodeForge.app with Identity: '$SIGNING_IDENTITY'..."
     # Sign nested frameworks / plug-ins first if any exist
     find "${APP_PATH}" -depth -type d \( -name "*.framework" -o -name "*.appex" -o -name "*.xpc" \) | while read -r bundle; do
         codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$bundle"
@@ -106,30 +106,45 @@ cp -R "${APP_PATH}" "${STAGING_DIR}/"
 ln -s /Applications "${STAGING_DIR}/Applications"
 
 # 5. Create UDZO compressed DMG
-echo "💿 Packaging SwiftForge.dmg..."
-hdiutil create -volname "SwiftForge" -srcfolder "${STAGING_DIR}" -ov -format UDZO "${DMG_OUTPUT}"
+echo "💿 Packaging CodeForge.dmg..."
+hdiutil create -volname "CodeForge" -srcfolder "${STAGING_DIR}" -ov -format UDZO "${DMG_OUTPUT}"
 
 # 6. Code Sign the .dmg File
 if [ -n "$SIGNING_IDENTITY" ]; then
-    echo "✍️  Signing SwiftForge.dmg with Identity: '$SIGNING_IDENTITY'..."
+    echo "✍️  Signing CodeForge.dmg with Identity: '$SIGNING_IDENTITY'..."
     codesign --force --sign "$SIGNING_IDENTITY" "${DMG_OUTPUT}"
 else
-    echo "⚠️  Signing SwiftForge.dmg with Ad-hoc signature..."
+    echo "⚠️  Signing CodeForge.dmg with Ad-hoc signature..."
     codesign --force --sign - "${DMG_OUTPUT}"
 fi
 
-# 7. Notarize DMG with Apple Notary Service & Staple Ticket
-if [ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ] && [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
-    echo "🔏 Submitting SwiftForge.dmg to Apple Notarization Service..."
+# 7. Notarize DMG with Apple Notary Service (App Store Connect API key) & Staple Ticket
+if [ -n "${APP_STORE_CONNECT_API_KEY_ID:-}" ] && [ -n "${APP_STORE_CONNECT_ISSUER_ID:-}" ] && [ -n "${APP_STORE_CONNECT_API_KEY_KEY:-}" ]; then
+    echo "🔏 Submitting CodeForge.dmg to Apple Notarization Service (API key)..."
+
+    NOTARY_KEY_DIR="$(mktemp -d)"
+    trap 'rm -rf "$NOTARY_KEY_DIR"' EXIT
+    NOTARY_KEY_PATH="${NOTARY_KEY_DIR}/AuthKey.p8"
+
+    # APP_STORE_CONNECT_API_KEY_KEY may hold the raw .p8 PEM text or a base64-encoded copy of it.
+    if printf '%s' "${APP_STORE_CONNECT_API_KEY_KEY}" | grep -q "BEGIN PRIVATE KEY"; then
+        printf '%s\n' "${APP_STORE_CONNECT_API_KEY_KEY}" > "${NOTARY_KEY_PATH}"
+    else
+        printf '%s' "${APP_STORE_CONNECT_API_KEY_KEY}" | base64 --decode > "${NOTARY_KEY_PATH}"
+    fi
+
     xcrun notarytool submit "${DMG_OUTPUT}" \
-        --apple-id "${APPLE_ID}" \
-        --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
-        --team-id "${APPLE_TEAM_ID}" \
+        --key "${NOTARY_KEY_PATH}" \
+        --key-id "${APP_STORE_CONNECT_API_KEY_ID}" \
+        --issuer "${APP_STORE_CONNECT_ISSUER_ID}" \
         --wait
 
-    echo "📌 Stapling Notarization Ticket to SwiftForge.dmg..."
+    rm -rf "${NOTARY_KEY_DIR}"
+    trap - EXIT
+
+    echo "📌 Stapling Notarization Ticket to CodeForge.dmg..."
     staple_with_backoff "${DMG_OUTPUT}" "dmg" || true
-    
+
     echo "🔍 Validating Notarization Ticket..."
     xcrun stapler validate "${DMG_OUTPUT}" 2>&1 && echo "✅ Staple validation: PASSED"
 
@@ -138,15 +153,18 @@ if [ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ] && [ -n "${APPLE_ID:-}" ] && [ -n "
 else
     echo "===================================================="
     echo "ℹ️  DMG Created & Signed locally!"
-    echo "📍 File Location: $(pwd)/SwiftForge.dmg"
+    echo "📍 File Location: $(pwd)/CodeForge.dmg"
     echo "----------------------------------------------------"
     echo "⚠️  To enable Apple Notarization for Web Distribution:"
-    echo "   1. Create an App-Specific Password at https://appleid.apple.com"
-    echo "   2. Add APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx to your .env file"
+    echo "   1. Reuse your App Store Connect API key (App Store Connect → Users and Access → Integrations)"
+    echo "   2. Add to your .env file:"
+    echo "        APP_STORE_CONNECT_API_KEY_ID=..."
+    echo "        APP_STORE_CONNECT_ISSUER_ID=..."
+    echo "        APP_STORE_CONNECT_API_KEY_KEY=... (the .p8 key contents, or base64 of it)"
     echo "   3. Re-run ./create_dmg.sh"
     echo "===================================================="
 fi
 
 echo "===================================================="
-echo "✅ SwiftForge DMG Packaging Pipeline Complete!"
+echo "✅ CodeForge DMG Packaging Pipeline Complete!"
 echo "===================================================="

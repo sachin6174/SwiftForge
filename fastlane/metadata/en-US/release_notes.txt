@@ -1,4 +1,4 @@
-🚀 Welcome to SwiftForge v1.0.0!
+🚀 Welcome to CodeForge v1.0.0!
 
 Key Features in this Initial Release:
 • Dual Practice Tracks: DSA Algorithmic Challenges & Core Swift/iOS Architecture Practice.

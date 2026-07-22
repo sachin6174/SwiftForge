@@ -16,9 +16,9 @@ fi
 echo "🖥️ Building macOS Release Target..."
 xcodebuild -project "$XCODEPROJ" -scheme SwiftForge -configuration Release -derivedDataPath ./build/DerivedData CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=YES build > /dev/null
 
-MAC_APP="./build/DerivedData/Build/Products/Release/SwiftForge.app"
+MAC_APP="./build/DerivedData/Build/Products/Release/CodeForge.app"
 if [ -d "$MAC_APP" ]; then
-    echo "▶️ Launching SwiftForge Native macOS App..."
+    echo "▶️ Launching CodeForge Native macOS App..."
     open "$MAC_APP"
 fi
 

@@ -58,6 +58,10 @@ jobs:
           fastlane mac release
 
       - name: 💿 Build DMG Disk Image
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         run: |
           chmod +x ./create_dmg.sh
           ./create_dmg.sh
@@ -67,7 +71,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            SwiftForge.dmg
+            CodeForge.dmg
             build/AppStore/*.pkg
           draft: false
           prerelease: false
