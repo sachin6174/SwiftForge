@@ -2,20 +2,19 @@
 
 <div align="center">
 
-  ![SwiftForge Logo](https://img.shields.io/badge/SwiftForge-DSA%20%26%20iOS%20Studio-orange?style=for-the-badge&logo=swift&logoColor=white)
+  **A native, high-performance macOS & iOS app for mastering Data Structures, Algorithms, and Core iOS/Swift Engineering — 100% offline.**
 
-  **A native, high-performance macOS IDE for mastering Data Structures, Algorithms, and Core iOS/Swift Engineering.**
-
+  [![Version](https://img.shields.io/badge/version-2.0.0-orange?style=flat-square)](https://github.com/sachin6174/SwiftForge/releases/latest)
   [![macOS](https://img.shields.io/badge/macOS-12.0%2B-blue?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
   [![iOS](https://img.shields.io/badge/iOS-15.0%2B-black?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
   [![iPadOS](https://img.shields.io/badge/iPadOS-15.0%2B-purple?style=flat-square&logo=apple&logoColor=white)](https://apple.com)
-  [![Homebrew](https://img.shields.io/badge/Homebrew-brew%20install--cask%20swiftforge-FBB040?style=flat-square&logo=homebrew&logoColor=white)](https://github.com/sachin6174/homebrew-swiftforge)
+  [![Homebrew](https://img.shields.io/badge/Homebrew-brew%20install--cask%20codeforge-FBB040?style=flat-square&logo=homebrew&logoColor=white)](https://github.com/sachin6174/homebrew-swiftforge)
   [![Swift](https://img.shields.io/badge/Swift-5.10%2B-F05138?style=flat-square&logo=swift&logoColor=white)](https://swift.org)
-  [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-007ACC?style=flat-square&logo=swift&logoColor=white)](https://developer.apple.com/xcode/swiftui/)
+  [![SwiftUI](https://img.shields.io/badge/UI-SwiftUI-007ACC?style=flat-square)](https://developer.apple.com/xcode/swiftui/)
   [![License](https://img.shields.io/badge/License-MIT-green.svg?style=flat-square)](LICENSE)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 
-  [Key Features](#-key-features) • [App Architecture](#-app-architecture) • [Getting Started](#-getting-started) • [Track Highlights](#-track-highlights) • [UI & Design](#-ui--design-system)
+  [Overview](#-overview) • [Key Features](#-key-features) • [Getting Started](#-getting-started) • [Architecture](#️-app-architecture) • [Track Highlights](#-track-highlights) • [Privacy](#-privacy--data)
 
 </div>
 
@@ -23,24 +22,26 @@
 
 ## 📖 Overview
 
-**CodeForge** is a premium, native macOS application crafted specifically for iOS developers, Swift engineers, and computer science enthusiasts. Unlike web-based coding platforms, CodeForge runs completely offline on your Mac, delivering ultra-low latency code execution, interactive test case evaluations, custom data structure visualizers, and targeted Swift language challenges.
+**CodeForge** (formerly *SwiftForge*) is a premium, native macOS + iOS application crafted specifically for iOS developers, Swift engineers, and computer science enthusiasts preparing for technical interviews. Unlike web-based coding platforms, CodeForge runs completely offline — no account, no network calls, no telemetry — delivering ultra-low-latency code execution, interactive test-case evaluation, custom data-structure visualizers, and targeted Swift language challenges, all on-device.
 
-Whether you're preparing for senior iOS technical interviews, sharpening your algorithmic problem-solving in pure Swift, or deepening your knowledge of modern Swift concurrency and memory management, **CodeForge** provides the ultimate focused developer workspace.
+Whether you're preparing for senior iOS technical interviews, sharpening your algorithmic problem-solving in pure Swift, or deepening your knowledge of modern Swift concurrency and memory management, **CodeForge** provides a focused, distraction-free developer workspace.
+
+> **New in 2.0.0:** the app has been renamed from SwiftForge to **CodeForge**, with an original app icon and a cleaned-up question list (no more numeric prefixes). See [Releases](https://github.com/sachin6174/SwiftForge/releases) for the full changelog.
 
 ---
 
 ## 📸 Screenshots
 
-### 🖥️ macOS Studio Workspace
-Experience the fully integrated offline development environment with interactive visualizers, real-time local compiler outputs, and progress tracking:
+### 🖥️ macOS Workspace
+Experience the fully integrated offline development environment with interactive visualizers, real-time local compiler output, and progress tracking:
 
 <p align="center">
-  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.16%20PM.png" width="49%" alt="macOS Studio Workspace - Two Sum Challenge" />
-  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.30%20PM.png" width="49%" alt="macOS Studio Workspace - Code Run Results" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.16%20PM.png" width="49%" alt="macOS Workspace - Two Sum Challenge" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.30%20PM.png" width="49%" alt="macOS Workspace - Reference Solution" />
 </p>
 <p align="center">
-  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.40%20PM.png" width="49%" alt="macOS Studio Workspace - Swift Practice Tracker" />
-  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.49%20PM.png" width="49%" alt="macOS Studio Workspace - Analytics & Solved Metrics" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.40%20PM.png" width="49%" alt="macOS Workspace - Passing Test Suite" />
+  <img src="mac-ss/Screen%20Shot%202026-07-07%20at%2013.21.49%20PM.png" width="49%" alt="macOS Workspace - Practice Track Switcher" />
 </p>
 
 ### 📱 iOS Companion Interface
@@ -98,12 +99,94 @@ Perfect for practice on the go, with fully responsive glassmorphic layouts optim
 | **Reactive Core**| Combine | State management, user activity streams, and event handlers |
 | **Execution** | `/usr/bin/swift` subprocess + JavaScriptCore | Native subprocess runner on macOS, Swift-to-JS transpiler + `JSContext` everywhere sandboxing blocks subprocess spawning |
 | **Persistence** | FileSystem JSON | Offline local database for challenges, drafts, & streaks — no backend |
+| **Release** | Fastlane + Xcode Cloud / GitHub Actions | Automated build, notarization, and App Store Connect / TestFlight delivery |
+
+---
+
+## 🚀 Getting Started
+
+### Option A — Install via Homebrew (recommended for just running the app)
+
+```bash
+brew tap sachin6174/swiftforge
+brew install --cask codeforge
+```
+
+This installs a signed & notarized build straight from the [latest GitHub Release](https://github.com/sachin6174/SwiftForge/releases/latest) — no Xcode required. Update later with `brew upgrade --cask codeforge`.
+
+> Previously installed via `brew install --cask swiftforge`? That cask still works and now installs the same CodeForge 2.0.0 app — new installs should use `codeforge`.
+
+### Option B — Download directly
+
+Grab the notarized `.dmg` from the [latest release](https://github.com/sachin6174/SwiftForge/releases/latest), open it, and drag **CodeForge** into Applications.
+
+### Option C — Build from source
+
+#### Prerequisites
+- **macOS**: 12.0 (Monterey) or later
+- **Xcode**: 15.0 or later
+- **Swift Toolchain**: Swift 5.10+
+
+#### Installation & Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/sachin6174/SwiftForge.git
+   cd SwiftForge
+   ```
+
+2. **Open in Xcode**
+   ```bash
+   open SwiftForge.xcodeproj
+   ```
+
+3. **Build & run**
+   - Select the `SwiftForge` scheme and **My Mac** as the run destination.
+   - Press `Cmd + R` to build and launch the app.
+   - Alternatively, use the convenience script, which builds both macOS and iOS, launches the app, opens Xcode, and tails execution logs:
+     ```bash
+     chmod +x run_app.sh
+     ./run_app.sh
+     ```
+
+---
+
+## 📚 Track Highlights
+
+### 🔹 DSA Practice Track
+Practice fundamental & advanced algorithms with Swift's strong type safety and standard library (`Array`, `Dictionary`, `Set`, custom data structures):
+
+- **Two Sum**: Array hashing & optimal time complexity ($O(N)$).
+- **Valid Parentheses**: Stack data structure operations.
+- **Reverse Linked List**: Pointer manipulation & recursion.
+- **Number of Islands**: Grid traversal via DFS/BFS.
+- **LRU Cache**: Doubly-linked-list + hash-map design.
+- **Course Schedule**: Topological sort / cycle detection.
+- **Matrix Rotation / Search**: Grid navigation with the integrated Matrix Visualizer.
+
+### 🔹 Swift & iOS Practice Track
+Master critical concepts required for iOS engineering roles:
+
+- **Value vs. Reference Types**: Deep dive into `struct` vs `class` semantics, copy-on-write (COW), and performance implications.
+- **ARC & Retain Cycles**: Identifying `weak` vs `unowned` references to fix memory leaks.
+- **Concurrency & Actors**: `async`/`await`, Task Groups, Actor isolation, and thread safety.
+- **Combine Framework**: `PassthroughSubject`, `CurrentValueSubject`, operator chaining, and error handling.
+- **SwiftUI State & Binding**: Understanding `@State`, `@StateObject`, `@ObservedObject`, and `@EnvironmentObject`.
+
+### 🔹 MCQ Practice Track
+Quick multiple-choice checks across Swift language fundamentals, iOS frameworks, and CS basics — for fast concept review between coding sessions.
+
+### 🔹 Machine Round Track
+Larger, open-ended coding exercises modeled on real "machine round" interview formats — more design surface than a single-function DSA problem.
+
+### 🔹 Q&A Track
+A reading-first track: each entry pairs a prose explanation with a runnable Swift example and key-takeaway bullets, for interview questions that are better understood than "solved" (e.g. actor reentrancy, memory model subtleties).
 
 ---
 
 ## 🏗️ App Architecture
 
-SwiftForge follows a clean, decoupled **MVVM (Model-View-ViewModel)** architecture, all `@MainActor`, paired with modular Service Layers:
+CodeForge follows a clean, decoupled **MVVM (Model-View-ViewModel)** architecture, all `@MainActor`, paired with modular Service Layers:
 
 ```
 SwiftForge/
@@ -141,85 +224,13 @@ SwiftForge/
 └── SwiftForge.xcodeproj               # Xcode Project Workspace
 ```
 
----
-
-## 🚀 Getting Started
-
-### Option A — Install via Homebrew (recommended for just running the app)
-
-```bash
-brew tap sachin6174/swiftforge
-brew install --cask swiftforge
-```
-
-This installs a signed & notarized build straight from the [latest GitHub Release](https://github.com/sachin6174/SwiftForge/releases/latest) — no Xcode required. Update later with `brew upgrade --cask swiftforge`.
-
-### Option B — Build from source
-
-#### Prerequisites
-- **macOS**: 12.0 (Monterey) or later
-- **Xcode**: 15.0 or later
-- **Swift Toolchain**: Swift 5.10+
-
-#### Installation & Setup
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/sachin6174/SwiftForge.git
-   cd SwiftForge
-   ```
-
-2. **Open in Xcode**
-   ```bash
-   open SwiftForge.xcodeproj
-   ```
-
-3. **Build & Run**
-   - Select `SwiftForge` target and select **My Mac** as target destination.
-   - Press `Cmd + R` to build and launch the app.
-   - Alternatively, execute the convenience script:
-     ```bash
-     chmod +x run_app.sh
-     ./run_app.sh
-     ```
-
----
-
-## 📚 Track Highlights
-
-### 🔹 DSA Practice Track
-Practice fundamental & advanced algorithms with Swift's strong type safety and standard library (`Array`, `Dictionary`, `Set`, custom data structures):
-
-- **Two Sum**: Array hashing & optimal time complexity ($O(N)$).
-- **Valid Parentheses**: Stack data structure operations.
-- **Reverse Linked List**: Pointer manipulation & recursion.
-- **Binary Tree Max Depth**: Tree traversal (DFS/BFS).
-- **Merge Sorted Arrays**: In-place array operations.
-- **Matrix Rotation / Search**: Grid navigation with the integrated Matrix Visualizer.
-
-### 🔹 Swift & iOS Practice Track
-Master critical concepts required for iOS engineering roles:
-
-- **Value vs. Reference Types**: Deep dive into `struct` vs `class` semantics, copy-on-write (COW), and performance implications.
-- **ARC & Retain Cycles**: Identifying `weak` vs `unowned` references to fix memory leaks.
-- **Concurrency & Actors**: `async`/`await`, Task Groups, Actor isolation, and thread safety.
-- **Combine Framework**: `PassthroughSubject`, `CurrentValueSubject`, operator chaining, and error handling.
-- **SwiftUI State & Binding**: Understanding `@State`, `@StateObject`, `@ObservedObject`, and `@EnvironmentObject`.
-
-### 🔹 MCQ Practice Track
-Quick multiple-choice checks across Swift language fundamentals, iOS frameworks, and CS basics — for fast concept review between coding sessions.
-
-### 🔹 Machine Round Track
-Larger, open-ended coding exercises modeled on real "machine round" interview formats — more design surface than a single-function DSA problem.
-
-### 🔹 Q&A Track
-A reading-first track: each entry pairs a prose explanation with a runnable Swift example and key-takeaway bullets, for interview questions that are better understood than "solved" (e.g. actor reentrancy, memory model subtleties).
+> **Naming note:** the shipped app is branded **CodeForge**, but the Xcode project file, scheme, and repository are still named `SwiftForge` intentionally (renaming those wasn't required and the Bundle ID must never change once published). See `CLAUDE.md` for the full explanation.
 
 ---
 
 ## 🎨 UI & Design System
 
-SwiftForge is built with a custom **Modern Dark Glassmorphism Design System**:
+CodeForge is built with a custom **Modern Dark Glassmorphism Design System**:
 
 - **Color Palette**: Ultra-dark slate backgrounds (`#0F1117`, `#181B24`), glowing electric blue (`#3B82F6`), cyan (`#06B6D4`), vibrant orange (`#F97316`), and emerald green (`#10B981`).
 - **Typography**: System Monospaced font for code views, SF Pro Display for clean UI navigation.
@@ -227,21 +238,24 @@ SwiftForge is built with a custom **Modern Dark Glassmorphism Design System**:
 
 ---
 
+## 🔒 Privacy & Data
+
+CodeForge runs entirely offline. No account, no login, no analytics or tracking SDKs, no code you write ever leaves your device. Full details:
+
+- [Privacy Policy](PRIVACY_POLICY.md)
+- [Terms of Service / EULA](TERMS_OF_SERVICE.md)
+
+---
+
 ## 🤝 Contributing
 
-Contributions are always welcome! If you'd like to add new DSA questions, Swift practice challenges, or UI visualizers:
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/NewChallenge`)
-3. Commit your Changes (`git commit -m 'Add new Swift concurrency challenge'`)
-4. Push to the Branch (`git checkout -b feature/NewChallenge`)
-5. Open a Pull Request
+Contributions are always welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md) for how to add new DSA questions, Swift practice challenges, or UI visualizers.
 
 ---
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
 
 ---
 
