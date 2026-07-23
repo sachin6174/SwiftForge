@@ -1,9 +1,6 @@
-🚀 Welcome to CodeForge v1.0.0!
+🚀 CodeForge 2.0.0 — Rebrand & Refresh
 
-Key Features in this Initial Release:
-• Dual Practice Tracks: DSA Algorithmic Challenges & Core Swift/iOS Architecture Practice.
-• Local Code Runner: Ultra-low latency Swift compilation and execution engine right on your Mac.
-• Interactive Test Suite: Real-time assertion checks with Pass/Fail indicators and execution timing (ms).
-• Data Structure Visualizers: Dynamic 2D Matrix visualizers, Linked List pointers, Stack token streams, and DP Staircase steps.
-• Streak & Progress Tracking: Daily activity tracking and local draft auto-saving.
-• Modern Glassmorphic Dark UI: High-contrast monospace code editors with customizable typography.
+• New name, new icon: SwiftForge is now CodeForge, with an original anvil-and-spark icon.
+• Cleaner practice list: dropped the LeetCode-style numbering from question titles.
+• Dozens of transpiler and JS-execution-engine fixes across the DSA and Swift Practice test suites for more reliable "Run Suite" results.
+• General stability and polish across the editor, visualizers, and streak tracking.
